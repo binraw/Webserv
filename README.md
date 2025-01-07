@@ -86,3 +86,19 @@ open : Ouvre un fichier et renvoie un descripteur de fichier associé.
 opendir : Ouvre un répertoire et retourne un pointeur vers une structure de répertoire.
 readdir : Lit une entrée dans un répertoire ouvert, renvoyant le nom du fichier.
 closedir : Ferme un répertoire ouvert, libérant les ressources associées.
+
+
+## Infos recoltees sur different site:
+
+### (peut etre la facon de faire pour le projet)
+Historiquement, Apache fonctionne en prefork, ce qui signifie qu'un processus père lancé avec des droits étendus (root) 
+démarre des processus enfants qui traiteront chacun un certain nombre de requêtes clients. Cependant, sous Linux, 
+la multiplication des processus provoque une augmentation de consommation de ressources (mémoire, descripteurs de fichiers).
+
+
+## MACROS:
+
+FD_SET: Ajoute le descripteur de fichier fd à l'ensemble set.
+FD_ZERO: Initialiser l'ensemble à vide.
+FD_CLR: Supprime le descripteur de fichier fd de l'ensemble set.
+FD_ISSET: Verifie si le descripteur de fichier fd est present dans l'ensemble sinon zero.
