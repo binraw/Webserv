@@ -24,7 +24,8 @@ int main()
     }
 
     // Attachement du socket au port
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) 
+    {
         perror("Erreur lors de l'attachement du socket");
         exit(EXIT_FAILURE);
     }
@@ -33,13 +34,15 @@ int main()
     address.sin_port = htons(PORT);
 
     // Liaison du socket à l'adresse
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) 
+    {
         perror("Erreur de liaison");
         exit(EXIT_FAILURE);
     }
 
     // Écoute des connexions entrantes
-    if (listen(server_fd, 3) < 0) {
+    if (listen(server_fd, 3) < 0)
+    { // ici le 3 est le nombre max attente de connection
         perror("Erreur lors de l'écoute");
         exit(EXIT_FAILURE);
     }
@@ -47,7 +50,8 @@ int main()
     std::cout << "Serveur en écoute sur le port " << PORT << "..." << std::endl;
 
     // Boucle principale pour accepter les connexions
-    while (true) {
+    while (true)
+    {
         if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) 
         {
             perror("Erreur lors de l'acceptation de la connexion");

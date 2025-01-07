@@ -102,3 +102,5 @@ FD_SET: Ajoute le descripteur de fichier fd à l'ensemble set.
 FD_ZERO: Initialiser l'ensemble à vide.
 FD_CLR: Supprime le descripteur de fichier fd de l'ensemble set.
 FD_ISSET: Verifie si le descripteur de fichier fd est present dans l'ensemble sinon zero.
+
+
