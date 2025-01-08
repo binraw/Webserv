@@ -3,6 +3,8 @@
 #include <string>
 #include <cstring>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <arpa/inet.h>
 
 #define PORT 8080
@@ -10,14 +12,14 @@
 
 int main()
 {
-    int server_fd, new_socket;
+    int server_fd, client_socket;
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
     char buffer[BUFFER_SIZE] = {0};
 
     // Création du socket
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) <= 0)
     {
         perror("Erreur de création du socket");
         exit(EXIT_FAILURE);
@@ -52,22 +54,22 @@ int main()
     // Boucle principale pour accepter les connexions
     while (true)
     {
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) 
+        if ((client_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) 
         {
             perror("Erreur lors de l'acceptation de la connexion");
             exit(EXIT_FAILURE);
         }
 
         // Lire la requête du client
-        read(new_socket, buffer, BUFFER_SIZE);
+        read(client_socket, buffer, BUFFER_SIZE);
         std::cout << "Requête reçue:\n" << buffer << std::endl;
 
         // Répondre au client avec un message HTTP simple
         std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><body><h1>Hello, World!</h1></body></html>";
-        send(new_socket, response.c_str(), response.size(), 0);
+        send(client_socket, response.c_str(), response.size(), 0);
 
         // Fermer le socket de la connexion
-        close(new_socket);
+        close(client_socket);
     }
 
     return 0;
