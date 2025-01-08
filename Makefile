@@ -6,7 +6,7 @@
 #    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/08 08:40:09 by florian          ###   ########.fr        #
+#    Updated: 2025/01/08 09:50:10 by florian          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -46,6 +46,7 @@ ifeq ($(MODE), debug)
 else
 	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
 endif
+
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
