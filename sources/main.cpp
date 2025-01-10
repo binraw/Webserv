@@ -32,7 +32,7 @@ int main()
         exit(EXIT_FAILURE);
     }
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY; // Accepte des connexions de n'importe quelle adresse IP
+    address.sin_addr.s_addr = INADDR_LOOPBACK; // Accepte des connexions de n'importe quelle adresse IP
     address.sin_port = htons(PORT);
 
     // Liaison du socket à l'adresse

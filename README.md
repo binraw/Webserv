@@ -104,3 +104,8 @@ FD_CLR: Supprime le descripteur de fichier fd de l'ensemble set.
 FD_ISSET: Verifie si le descripteur de fichier fd est present dans l'ensemble sinon zero.
 
 
+## VARIOUS INFORMATION ON HTTP PROTOCOL
+
+* request line : Various ad hoc limitations on request-line length are found in practice. It is RECOMMENDED that all HTTP senders and recipients support, at a minimum, request-line lengths of 8000 octets.
+
+* 
