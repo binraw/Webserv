@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <poll.h>
 
 #define SERVICE "8080"
 #define BACKLOG 10
@@ -54,6 +55,7 @@ int main()
         freeaddrinfo(res);
 		close(fd_sock_server);
 	}
+
     if (bind(fd_sock_server, res->ai_addr, res->ai_addrlen) != 0) {
         std::cerr << "Bind impossibe" << std::endl;
         freeaddrinfo(res);
@@ -83,7 +85,7 @@ int main()
 		return (5);
 	}
 
-	std::cout << "REQUEST : " << buffer << std::endl;
+	std::cout << "REQUEST : \n" << buffer << std::endl;
 
 	const char *http_response =
     "HTTP/1.1 200 OK\r\n"

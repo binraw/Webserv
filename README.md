@@ -36,6 +36,13 @@ epoll_create : Crée un nouvel objet de gestion d'événements pour surveiller p
 epoll_ctl : Contrôle l'objet epoll en ajoutant, modifiant ou supprimant des descripteurs de fichiers à surveiller.
 epoll_wait : Attend des événements sur les descripteurs de fichiers surveillés par l'objet epoll et renvoie les descripteurs qui ont des événements prêts.
 
+## MACROS du Polling:
+
+FD_SET: Ajoute le descripteur de fichier fd à l'ensemble set.
+FD_ZERO: Initialiser l'ensemble à vide.
+FD_CLR: Supprime le descripteur de fichier fd de l'ensemble set.
+FD_ISSET: Verifie si le descripteur de fichier fd est present dans l'ensemble sinon zero.
+
 ### En resume 
 Les fonctions de sélection et de polling sont utilisées pour gérer l'entrée/sortie (E/S) dans les applications réseau et les systèmes interactifs.
 Elles permettent de surveiller plusieurs descripteurs de fichiers (comme les sockets) pour déterminer lesquels sont prêts pour une opération d'E/S.
@@ -96,20 +103,35 @@ démarre des processus enfants qui traiteront chacun un certain nombre de requê
 la multiplication des processus provoque une augmentation de consommation de ressources (mémoire, descripteurs de fichiers).
 
 
-## MACROS:
-
-FD_SET: Ajoute le descripteur de fichier fd à l'ensemble set.
-FD_ZERO: Initialiser l'ensemble à vide.
-FD_CLR: Supprime le descripteur de fichier fd de l'ensemble set.
-FD_ISSET: Verifie si le descripteur de fichier fd est present dans l'ensemble sinon zero.
 
 
 ## VARIOUS INFORMATION ON HTTP PROTOCOL
 
-* request line : Various ad hoc limitations on request-line length are found in practice. It is RECOMMENDED that all HTTP senders and recipients support, at a minimum, request-line lengths of 8000 octets.
+## METHODES
+	* 
 
-* implementation des requetes POST GET DELETE PUT
-* errors codes
-* 
+## CODE D'ETAT PROTOCOLE HTTP
 
+# ressources :
+	- https://learn.microsoft.com/fr-fr/troubleshoot/developer/webapps/iis/health-diagnostic-performance/http-status-code
+
+	- 
+
+Le premier chiffre du code d’état définit la classe de réponse. Les deux derniers chiffres n’ont pas de rôle de catégorisation. Il existe cinq valeurs possibles pour le premier chiffre :
+
+1xx (Information) : réponse provisoire : la demande a été reçue, en cours de traitement.
+2xx (Réussite) : le serveur a reçu et accepté la demande.
+3xx (Redirection) : d’autres mesures doivent être prises pour répondre à la demande.
+4xx (Erreur du client) : la demande contient une erreur et ne peut pas être satisfaite.
+5xx (Erreur du serveur) : le serveur n’a pas pu répondre à la demande.
+
+
+# codes courants
+	* 200 : succès de la requête ;
+	* 301 et 302 : redirection, respectivement permanente et temporaire ;
+	* 401 : utilisateur non authentifié ;
+	* 403 : accès refusé ;
+	* 404 : ressource non trouvée ;
+	* 500, 502 et 503 : erreurs serveur ;
+	* 504 : le serveur n'a pas répondu.
 
