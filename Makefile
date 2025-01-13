@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
+#    By: rtruvelo <rtruvelo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/08 09:50:10 by florian          ###   ########.fr        #
+#    Updated: 2025/01/13 15:42:24 by rtruvelo         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,7 +50,8 @@ endif
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp
+SRC	= main.cpp Server.cpp
+# HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
 OBJ	= $(SRC:%.cpp=$(OBJ_PATH)/%.o)
@@ -83,7 +84,7 @@ $(NAME)	: $(OBJ)
 	@echo "$(GREEN)-- linking & building completed --$(RESET)"
 
 #--------------------# ==== COMPILATION OBJ - DEPS ==== #----------------------#
-$(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile
+$(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile $(HDR_PATH)/%.hpp
 	@$(MKD) $(dir $@) $(DEP_PATH)
 	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
 	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)
