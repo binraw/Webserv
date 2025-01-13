@@ -6,7 +6,7 @@
 #    By: rtruvelo <rtruvelo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/13 15:42:24 by rtruvelo         ###   ########.fr        #
+#    Updated: 2025/01/13 16:57:46 by rtruvelo         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -84,7 +84,7 @@ $(NAME)	: $(OBJ)
 	@echo "$(GREEN)-- linking & building completed --$(RESET)"
 
 #--------------------# ==== COMPILATION OBJ - DEPS ==== #----------------------#
-$(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile $(HDR_PATH)/%.hpp
+$(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile 
 	@$(MKD) $(dir $@) $(DEP_PATH)
 	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
 	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)

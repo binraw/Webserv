@@ -24,7 +24,7 @@
 
 // int main()
 // {
-
+    // char *port = server.config.at(port);
     // int                     fd_sock_server, fd_client, ret_value, bytes_received = { 0 };
     // struct addrinfo         hints;
     // struct addrinfo         *res;
@@ -110,7 +110,7 @@
 
 int main(void)
 {
-    Server one;
+    Server one("server.conf");
 
     one.displayConfig();
     return 0;
