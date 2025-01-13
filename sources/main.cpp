@@ -47,20 +47,22 @@ int main()
         return (2);
     }
 
-    if (bind(fd_sock_server, res->ai_addr, res->ai_addrlen) != 0) {
+    if (bind(fd_sock_server, res->ai_addr, res->ai_addrlen) != 0) // lie le socket a un port et une adress
+    {
         std::cerr << "Bind impossibe" << std::endl;
         freeaddrinfo(res);
         return (3);
     }
 
-    if (listen(fd_sock_server, BACKLOG) != 0) {
+    if (listen(fd_sock_server, BACKLOG) != 0) // socket en mode écoute pour les connexions entrantes, spécifiant le nombre maximum de connexions en attente.
+    {
         std::cerr << "Error listening port" << std::endl;
         freeaddrinfo(res);
         return (4);
     }
 
     client_addr_size = sizeof(client_addr);
-    fd_client = accept(fd_sock_server, (struct sockaddr *) &client_addr, &client_addr_size);
+    fd_client = accept(fd_sock_server, (struct sockaddr *) &client_addr, &client_addr_size); // accepte la connexion et creer un nouveau socket
     if (fd_client < 0) {
         std::cerr << "Error accept client" << std::endl;
         freeaddrinfo(res);
@@ -69,7 +71,8 @@ int main()
 	memset(buffer, '\0', sizeof(buffer));
 	bytes_received = recv(fd_client, buffer, sizeof(buffer) - 1, 0);
 	
-	if (bytes_received < 0) {
+	if (bytes_received < 0) 
+    {
 		std::cerr << "Erreur lors de la réception des données" << std::endl;
 		close(fd_client);
 		freeaddrinfo(res);
@@ -82,7 +85,8 @@ int main()
     "\r\n"
     "Hello, World!";
 
-	if (send(fd_client, http_response, strlen(http_response), 0) < 0) {
+	if (send(fd_client, http_response, strlen(http_response), 0) < 0) 
+    {
 		std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
 		close(fd_client);
 		freeaddrinfo(res);
