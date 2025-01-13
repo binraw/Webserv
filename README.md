@@ -108,4 +108,8 @@ FD_ISSET: Verifie si le descripteur de fichier fd est present dans l'ensemble si
 
 * request line : Various ad hoc limitations on request-line length are found in practice. It is RECOMMENDED that all HTTP senders and recipients support, at a minimum, request-line lengths of 8000 octets.
 
+* implementation des requetes POST GET DELETE PUT
+* errors codes
 * 
+
+

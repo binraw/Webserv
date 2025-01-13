@@ -22,7 +22,7 @@
 
 int main()
 {
-    int                     fd_sock_server, fd_client, ret_value, bytes_received = { 0 };
+    int                     fd_sock_server, fd_client, ret_value, bytes_received, opt = { 0 };
     struct addrinfo         hints;
     struct addrinfo         *res;
     struct sockaddr_storage client_addr;
@@ -47,6 +47,13 @@ int main()
         return (2);
     }
 
+	opt = SO_REUSEADDR;
+	ret_value = setsockopt(fd_sock_server, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	if (ret_value) {
+		std::cerr << "Error sockopt : " << ret_value << std::endl;
+        freeaddrinfo(res);
+		close(fd_sock_server);
+	}
     if (bind(fd_sock_server, res->ai_addr, res->ai_addrlen) != 0) {
         std::cerr << "Bind impossibe" << std::endl;
         freeaddrinfo(res);
@@ -75,6 +82,9 @@ int main()
 		freeaddrinfo(res);
 		return (5);
 	}
+
+	std::cout << "REQUEST : " << buffer << std::endl;
+
 	const char *http_response =
     "HTTP/1.1 200 OK\r\n"
     "Content-Type: text/html\r\n"
@@ -89,9 +99,9 @@ int main()
 		return (6);
 	}
 
-// Fermer la connexion avec le client
-	close(fd_client);
+	// Fermer la connexion avec le client
 	std::cout << "New client : " << client_addr.ss_family << std::endl;
+	close(fd_client);
 	close(fd_sock_server);
     freeaddrinfo(res);
 
