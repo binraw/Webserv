@@ -8,28 +8,25 @@
 #include <cstring>
 #include <map>
 
+#include "Socket.hpp"
+
 class Server
 {
 private:
-    std::map<std::string, std::string> _params_config;
-    // std::string port;
-    // std::string server_name;
-    // std::string root;
-    // std::string index;
-    // std::string error_page404;
-    // std::string client_max_body_size;
-    // std::string cgi_path;
-    // std::string upload_path;
-    // std::string autoindex;
-    // std::string limit_except; 
+    std::map<std::string, std::string> _paramsConfig;
+    Socket _socket;
 
-    
 public:
     Server(const std::string& filename);
     ~Server();
-    void init_data(const std::string& filename_config);
+    void init_data();
     std::map<std::string, std::string> parseConf(const std::string& filename);
     void displayConfig();
+    int controlMap();
+    class ErrorConfigParam: public std::exception
+    {
+        virtual const char* what() const throw();
+    };
 };
 
 
