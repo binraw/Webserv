@@ -18,6 +18,7 @@ socketpair : Crée une paire de sockets connectés pour la communication entre p
 
 htons : Convertit un nombre de 16 bits de l'ordre d'octets hôte à l'ordre d'octets réseau.
 htonl : Convertit un nombre de 32 bits de l'ordre d'octets hôte à l'ordre d'octets réseau.
+
 ntohs : Convertit un nombre de 16 bits de l'ordre d'octets réseau à l'ordre d'octets hôte.
 ntohl : Convertit un nombre de 32 bits de l'ordre d'octets réseau à l'ordre d'octets hôte.
 
