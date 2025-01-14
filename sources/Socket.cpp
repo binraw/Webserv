@@ -16,14 +16,12 @@ Socket::Socket(std::map<std::string, std::string> config)
 {
     int port;
     _serverSocket = 0;
-    // _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    // if (_serverSocket < 0) 
-    //     throw FailedSocket();
     _adress_server.sin_family = AF_INET;
     std::istringstream iss(config.at("port"));
     if (!iss)
         throw PortNotDefine();
     iss >> port;
+    std::cout << "Value de port :" << port << std::endl;
     if (port < 1024 || port > 65535)
         throw PortNotDisponible();
     _adress_server.sin_port = htons(port);
@@ -36,8 +34,7 @@ Socket &Socket::operator=(const Socket &other)
     {
         this->_adress_server.sin_addr = other._adress_server.sin_addr;
         this->_adress_server.sin_family = other._adress_server.sin_family;
-        this->_adress_server.sin_addr.s_addr = other._adress_server.sin_addr.s_addr;
-        this->_adress_server.sin_port = other._adress_server.sin_addr;
+        this->_adress_server.sin_port = other._adress_server.sin_port;
         this->_serverSocket = other._serverSocket;
     }
     return *this;
@@ -46,6 +43,12 @@ Socket &Socket::operator=(const Socket &other)
 
 Socket::~Socket()
 {
+}
+
+void Socket::showSocket()
+{
+    std::cout << "adress sin family : " << this->_adress_server.sin_family << std::endl;
+    std::cout << "adress port : " << this->_adress_server.sin_port << std::endl;
 }
 
 void Socket::bindingListening()
@@ -70,11 +73,3 @@ const char* Socket::PortNotDisponible::what() const throw()
     return "Port must be between 1024 and 65535.";
 }
 
-try
-{
-    Socket sock
-}
-catch(const std::exception& e)
-{
-    std::cerr << e.what() << '\n';
-}

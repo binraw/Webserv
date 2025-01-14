@@ -11,7 +11,9 @@ Server::~Server()
 
 void Server::init_data()
 {
-    this->_socket = Socket ref(this->_paramsConfig);
+    this->_socket = Socket(this->_paramsConfig);
+    _socket.bindingListening();
+    _socket.showSocket();
 }
 
 

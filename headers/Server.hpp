@@ -7,8 +7,10 @@
 #include <string>
 #include <cstring>
 #include <map>
+#include <vector>
 
 #include "Socket.hpp"
+
 
 class Server
 {

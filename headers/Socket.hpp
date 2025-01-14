@@ -3,7 +3,12 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "Server.hpp"
+#include <map>      
+#include <string>  
+#include <sstream>
+#include <iostream>
+#include <fstream>
+#include <cstring>
 
 class Socket
 {
@@ -13,9 +18,10 @@ private:
 public:
     Socket();
     Socket(std::map<std::string, std::string> config);
-    Socket Socket &operator=(const Socket &other);
+    Socket &operator=(const Socket &other);
     ~Socket();
     void bindingListening();
+    void showSocket();
     class FailedSocket: public std::exception
     {
         virtual const char* what() const throw();
@@ -29,10 +35,6 @@ public:
         virtual const char* what() const throw();
     };
 };
-
-
-
-
 
 
 #endif

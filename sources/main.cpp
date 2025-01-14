@@ -112,6 +112,8 @@ int main(void)
 {
     Server one("server.conf");
 
-    one.displayConfig();
+    one.init_data();
+    one.controlMap();
+    
     return 0;
 }
