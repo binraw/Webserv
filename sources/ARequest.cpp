@@ -1,38 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ARequest.hpp                                       :+:      :+:    :+:   */
+/*   ARequest.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/13 14:49:59 by fberthou          #+#    #+#             */
-/*   Updated: 2025/01/14 13:20:43 by fberthou         ###   ########.fr       */
+/*   Created: 2025/01/14 13:22:25 by fberthou          #+#    #+#             */
+/*   Updated: 2025/01/14 13:24:35 by fberthou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef AREQUEST_HPP
-# define AREQUEST_HPP
+#include "ARequest.hpp"
 
-	#include <string>
-	enum e_methods
-	{
-		GET,
-		POST,
-		DELETE
-	};
+ARequest::ARequest()
+{
+	
+}
 
-	class ARequest
-	{
-		public:
-			ARequest();
-			~ARequest();
+ARequest::~ARequest()
+{	}
 
-			virtual void		execute() = 0;
-			static e_methods	findMethod();
+e_methods	ARequest::findMethod()
+{
 
-		protected:
-			std::string	_url;
-
-	};
-
-#endif
+}
