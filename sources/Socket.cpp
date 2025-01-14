@@ -53,10 +53,23 @@ void Socket::showSocket()
 
 void Socket::bindingListening()
 {
+    int addrlen = sizeof(_adress_server);
     _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     bind(_serverSocket, (struct sockaddr*)&_adress_server, sizeof(_adress_server));
     listen(_serverSocket, 5); // voir doc pour si 5 suffisant ou pas
+    // int new_socket = accept(_serverSocket, (struct sockaddr *)&address, (stocklen_t *)&addrlen);
 }
+
+void Socket::initPollFd()
+{
+    fds[0].fd = _serverSocket;
+    fds[0].events = POLLIN; // is data to read
+    for (int i = 1; i <= MAX_CLIENTS; i++)
+    {
+        fds[i].fd = -1;
+    }
+}
+
 
 const char* Socket::FailedSocket::what() const throw()
 {

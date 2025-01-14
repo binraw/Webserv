@@ -9,6 +9,9 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <poll.h>
+
+#define MAX_CLIENTS 10
 
 class Socket
 {
@@ -22,6 +25,7 @@ public:
     ~Socket();
     void bindingListening();
     void showSocket();
+    void initPollFd();
     class FailedSocket: public std::exception
     {
         virtual const char* what() const throw();
