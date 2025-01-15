@@ -1,4 +1,4 @@
-#include "../headers/Server.hpp"
+#include "Server.hpp"
 
 Server::Server(const std::string& filename)
 {
@@ -15,7 +15,6 @@ void Server::init_data()
     _socket.bindingListening();
     _socket.showSocket();
 }
-
 
 std::map<std::string, std::string> Server::parseConf(const std::string& filename)
 {
@@ -88,7 +87,6 @@ const char* Server::ErrorConfigParam::what() const throw()
 {
     return "Missing or empty configuration parameter";
 }
-
 
 void Server::displayConfig()
 {

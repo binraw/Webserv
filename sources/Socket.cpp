@@ -1,4 +1,4 @@
-#include "../headers/Socket.hpp"
+#include "Socket.hpp"
 
 Socket::Socket()
 {
@@ -40,10 +40,8 @@ Socket &Socket::operator=(const Socket &other)
     return *this;
 }
 
-
 Socket::~Socket()
-{
-}
+{   }
 
 void Socket::showSocket()
 {
