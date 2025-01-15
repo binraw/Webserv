@@ -8,7 +8,7 @@
 #include <cstring>
 #include <map>
 #include <vector>
-
+#include <unistd.h>
 #include "Socket.hpp"
 
 

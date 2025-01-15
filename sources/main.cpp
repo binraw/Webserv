@@ -113,7 +113,6 @@ int main(void)
     Server one("server.conf");
 
     one.init_data();
-    one.controlMap();
-    
+    // one.controlMap();
     return 0;
 }

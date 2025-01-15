@@ -3,6 +3,7 @@
 Socket::Socket()
 {
     int port = 8080;
+    _clientCount = 0;
     _serverSocket = 0;
     // _serverSocket = socket(AF_INET, SOCK_STREAM, 0); // AF_INET = utilisation IPV4 , SOCK_STREAM = TCP
       // et 0 par default pour TCP
@@ -16,6 +17,7 @@ Socket::Socket(std::map<std::string, std::string> config)
 {
     int port;
     _serverSocket = 0;
+    _clientCount = 0;
     _adress_server.sin_family = AF_INET;
     std::istringstream iss(config.at("port"));
     if (!iss)
@@ -36,6 +38,9 @@ Socket &Socket::operator=(const Socket &other)
         this->_adress_server.sin_family = other._adress_server.sin_family;
         this->_adress_server.sin_port = other._adress_server.sin_port;
         this->_serverSocket = other._serverSocket;
+        this->_clientCount = other._clientCount;
+        for (int i = 0; i < MAX_CLIENTS + 1; ++i) 
+            this->_fds[i] = other._fds[i];
     }
     return *this;
 }
@@ -53,7 +58,7 @@ void Socket::showSocket()
 
 void Socket::bindingListening()
 {
-    int addrlen = sizeof(_adress_server);
+    // int addrlen = sizeof(_adress_server);
     _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     bind(_serverSocket, (struct sockaddr*)&_adress_server, sizeof(_adress_server));
     listen(_serverSocket, 5); // voir doc pour si 5 suffisant ou pas
@@ -62,13 +67,92 @@ void Socket::bindingListening()
 
 void Socket::initPollFd()
 {
-    fds[0].fd = _serverSocket;
-    fds[0].events = POLLIN; // is data to read
+    _fds[0].fd = _serverSocket;
+    _fds[0].events = POLLIN; // is data to read
     for (int i = 1; i <= MAX_CLIENTS; i++)
     {
-        fds[i].fd = -1;
+        _fds[i].fd = -1;
+    }
+
+    std::cout << "Server listening on port " <<  std::endl;
+    while (true) 
+    {
+        int poll_count = poll(_fds, MAX_CLIENTS + 1, -1);
+        if (poll_count < 0)
+        {
+            perror("poll error");
+            break;
+        }
+        if (_fds[0].revents & POLLIN) // comparaison des bits si non null alors revents contient l'event chercher
+            acceptConnection();
+        for (int i = 1; i <= MAX_CLIENTS; ++i)
+            if (_fds[i].fd != -1 && (_fds[i].revents & POLLIN)) 
+                handleClient(i);
     }
 }
+void Socket::acceptConnection() 
+{
+    if (_clientCount >= MAX_CLIENTS) 
+    {
+        std::cout << "Max clients reached. Cannot accept new connections." << std::endl;
+        return;
+    }
+
+    int new_socket = accept(_serverSocket, NULL, NULL);
+    if (new_socket >= 0) 
+    {
+        std::cout << "New connection accepted" << std::endl;
+
+        // Ajouter le nouveau socket au tableau
+        for (int i = 1; i <= MAX_CLIENTS; ++i)
+        {
+            if (_fds[i].fd == -1) 
+            { // Trouver un emplacement libre
+                _fds[i].fd = new_socket;
+                _fds[i].events = POLLIN; // Écouter pour la lecture
+                _clientCount++;
+                break;
+            }
+        }
+    }
+}
+
+void Socket::handleClient(int clientIndex)
+{
+    char buffer[1024] = {0};
+    int valread = read(_fds[clientIndex].fd, buffer, sizeof(buffer));
+    if (valread > 0) 
+    {
+        std::cout << "Received request: " << buffer << std::endl;
+        const char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!";
+        send(_fds[clientIndex].fd, response, strlen(response), 0);
+    } else 
+    {
+        std::cout << "Client disconnected" << std::endl;
+        close(_fds[clientIndex].fd);
+        _fds[clientIndex].fd = -1; // Marquer comme inactif
+        _clientCount--;
+    }
+}
+
+// void Socket::run()
+// {
+//     std::cout << "Server listening on port " << PORT << std::endl;
+//     while (true) 
+//     {
+//         int poll_count = poll(fds, MAX_CLIENTS + 1, -1);
+//         if (poll_count < 0)
+//         {
+//             perror("poll error");
+//             break;
+//         }
+//         if (fds[0].revents & POLLIN) // comparaison des bits si non null alors revents contient l'event chercher
+//             acceptConnection();
+//         for (int i = 1; i <= MAX_CLIENTS; ++i)
+//             if (fds[i].fd != -1 && (fds[i].revents & POLLIN)) 
+//                 handleClient(i);
+//     }
+// }
 
 
 const char* Socket::FailedSocket::what() const throw()

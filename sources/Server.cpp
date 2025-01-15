@@ -14,6 +14,7 @@ void Server::init_data()
     this->_socket = Socket(this->_paramsConfig);
     _socket.bindingListening();
     _socket.showSocket();
+    _socket.initPollFd();
 }
 
 
