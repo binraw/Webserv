@@ -90,6 +90,7 @@ void Socket::initPollFd()
                 handleClient(i);
     }
 }
+
 void Socket::acceptConnection() 
 {
     if (_clientCount >= MAX_CLIENTS) 
@@ -102,14 +103,12 @@ void Socket::acceptConnection()
     if (new_socket >= 0) 
     {
         std::cout << "New connection accepted" << std::endl;
-
-        // Ajouter le nouveau socket au tableau
         for (int i = 1; i <= MAX_CLIENTS; ++i)
         {
             if (_fds[i].fd == -1) 
-            { // Trouver un emplacement libre
+            {
                 _fds[i].fd = new_socket;
-                _fds[i].events = POLLIN; // Écouter pour la lecture
+                _fds[i].events = POLLIN;
                 _clientCount++;
                 break;
             }
@@ -124,9 +123,15 @@ void Socket::handleClient(int clientIndex)
     if (valread > 0) 
     {
         std::cout << "Received request: " << buffer << std::endl;
-        const char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!";
+        // const char *response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World!";
+       const char *response = "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 13\r\n"
+    "\r\n"
+    "Hello, World!";
         send(_fds[clientIndex].fd, response, strlen(response), 0);
-    } else 
+    }
+    else 
     {
         std::cout << "Client disconnected" << std::endl;
         close(_fds[clientIndex].fd);
