@@ -1,8 +1,9 @@
 #include "../headers/Server.hpp"
 
-Server::Server(const std::string& filename)
+
+Server::Server(const std::map<std::string, std::string> copy_map)
 {
-     _paramsConfig = parseConf(filename);
+     _paramsConfig = copy_map;
 }
 
 Server::~Server()
@@ -11,11 +12,13 @@ Server::~Server()
 
 void Server::init_data()
 {
+    std::cout << "Initializing server on port : " << this->_paramsConfig.at("port") << std::endl;
     this->_socket = Socket(this->_paramsConfig);
     _socket.bindingListening();
     _socket.showSocket();
     _socket.initPollFd();
 }
+
 
 
 std::map<std::string, std::string> Server::parseConf(const std::string& filename)

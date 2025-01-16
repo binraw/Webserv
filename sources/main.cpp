@@ -107,12 +107,13 @@
 
 
 #include "../headers/Server.hpp"
+#include "../headers/Cluster.hpp"
 
 int main(void)
 {
-    Server one("server.conf");
+    Cluster one("./config/server.conf");
 
-    one.init_data();
-    // one.controlMap();
+    one.initAllServer();
+    
     return 0;
 }

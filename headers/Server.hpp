@@ -19,7 +19,7 @@ class Server
         Socket _socket;
 
     public:
-        Server(const std::string& filename);
+        Server(const std::map<std::string, std::string> copy_map);
         ~Server();
         void init_data();
         std::map<std::string, std::string> parseConf(const std::string& filename);
