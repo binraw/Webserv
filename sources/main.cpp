@@ -103,9 +103,7 @@
 //     return (0);
 // }
 
-
-
-#include "../headers/Server.hpp"
+#include "Server.hpp"
 
 int main(void)
 {

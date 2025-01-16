@@ -6,7 +6,7 @@
 /*   By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/13 14:49:59 by fberthou          #+#    #+#             */
-/*   Updated: 2025/01/14 13:20:43 by fberthou         ###   ########.fr       */
+/*   Updated: 2025/01/14 15:55:30 by fberthou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,7 @@
 # define AREQUEST_HPP
 
 	#include <string>
-	enum e_methods
-	{
+	enum e_methods {
 		GET,
 		POST,
 		DELETE

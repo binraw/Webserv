@@ -136,3 +136,18 @@ Le premier chiffre du code d’état définit la classe de réponse. Les deux de
 	* 500, 502 et 503 : erreurs serveur ;
 	* 504 : le serveur n'a pas répondu.
 
+
+
+## MANDATORY :
+	* le serveur doit pouvoir demarrer avec un fichier de config passe en parametre 
+		ainsi que sans fichier en parametre (il nous faut un fichier de config par default)
+	
+	* fichier default.conf :
+		. les chemins des pages d'erreur (page 404, 500, etc)
+		. un port d'ecoute par defaut (ex port:80)
+		. les methodes autorisees dans le mode default (GET POST DELETE ...)
+		. une page html par default
+		. une limite du body du client
+		-> ce fichier sera automatiquement charge a chaque demarrage du serveur
+
+	
