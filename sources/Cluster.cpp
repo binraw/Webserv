@@ -26,6 +26,12 @@ Cluster::Cluster(const std::string &filename)
 
         if (line.find("server") != std::string::npos) 
         {
+            if (!currentConfig.empty()) 
+            {
+                Server newServer(currentConfig);
+                _servers.push_back(newServer);
+                currentConfig.clear();
+            }
             continue;
         }
         size_t pos = line.find('=');
@@ -40,7 +46,7 @@ Cluster::Cluster(const std::string &filename)
     {
         Server newServer(currentConfig);
         _servers.push_back(newServer);
-        currentConfig.clear();
+        // currentConfig.clear();
     }
 
     inputFile.close();
@@ -48,9 +54,19 @@ Cluster::Cluster(const std::string &filename)
 
 void Cluster::initAllServer()
 {
+    std::cout << "Number of servers: " << _servers.size() << std::endl;
     for(size_t i = 0; i < _servers.size(); i++)
     {
+        std::cout << "Server Go: " << std::endl;
         _servers[i].init_data();
+        std::cout << "wesh " << std::endl;
     }
-    std::cout << "All Servers listening " << std::endl;
+}
+
+void Cluster::displayServersConfig()
+{
+    for(size_t i = 0; i < _servers.size(); i++)
+    {
+        _servers[i].displayConfig();
+    }
 }

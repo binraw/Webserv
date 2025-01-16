@@ -10,13 +10,47 @@ Server::~Server()
 {
 }
 
+// void Server::init_data()
+// {
+//     std::cout << "Initializing server on port : " << this->_paramsConfig.at("port") << std::endl;
+//     this->_socket = Socket(this->_paramsConfig);
+//     // _socket.bindingListening();
+//     // _socket.showSocket();
+//     // _socket.initPollFd();
+// }
+
+// void Server::init_data()
+// {
+//     // Vérifiez si la clé "port" existe dans la map
+//     std::map<std::string, std::string>::iterator it = this->_paramsConfig.find("port");
+//     if (it != this->_paramsConfig.end()) {
+//         std::cout << "Initializing server on port : " << it->second << std::endl;
+//     } else {
+//         std::cerr << "Error: 'port' key not found in configuration." << std::endl;
+//         return; // Gérer l'erreur comme nécessaire
+//     }
+
+//     this->_socket = Socket(this->_paramsConfig);
+//     // _socket.bindingListening();
+//     // _socket.showSocket();
+//     // _socket.initPollFd();
+// }
+
 void Server::init_data()
 {
-    std::cout << "Initializing server on port : " << this->_paramsConfig.at("port") << std::endl;
+    std::map<std::string, std::string>::iterator it = this->_paramsConfig.find("port");
+    if (it != this->_paramsConfig.end()) {
+        std::cout << "Initializing server on port : " << it->second << std::endl;
+    } else {
+        std::cerr << "Error: 'port' key not found in configuration." << std::endl;
+        return; // Évitez de continuer si la clé n'est pas trouvée
+    }
+
     this->_socket = Socket(this->_paramsConfig);
-    _socket.bindingListening();
-    _socket.showSocket();
-    _socket.initPollFd();
+    // Évitez d'appeler d'autres méthodes si l'initialisation échoue
+    // _socket.bindingListening();
+    // _socket.showSocket();
+    // _socket.initPollFd();
 }
 
 

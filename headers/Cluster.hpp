@@ -12,6 +12,7 @@ public:
     Cluster();
     ~Cluster();
     Cluster(const std::string &filename);
+    void displayServersConfig();
     void initAllServer();
 };
 
