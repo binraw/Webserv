@@ -14,10 +14,6 @@
 
 class Server
 {
-    private:
-        std::map<std::string, std::string> _paramsConfig;
-        Socket _socket;
-
     public:
         Server(const std::string& filename);
         ~Server();
@@ -29,6 +25,11 @@ class Server
         {
             virtual const char* what() const throw();
         };
+    
+    private:
+        std::map<std::string, std::string> _paramsConfig;
+        Socket _socket;
+
 };
 
 #endif

@@ -150,4 +150,19 @@ Le premier chiffre du code d’état définit la classe de réponse. Les deux de
 		. une limite du body du client
 		-> ce fichier sera automatiquement charge a chaque demarrage du serveur
 
-	
+MIME :
+	permet de formater les entete d'apres l'extension du fichier demande pour que le client sache comment interpreter les donnes a la reception (ex: .html -> text/html
+														.jpg -> image/jpeg
+														.css -> text/css
+														etc...)
+	voir la norme mime pour les navigateurs web
+
+
+Rôle clé de l'OS sur la gestion des sockets :
+Multiplexage : L’OS peut gérer plusieurs connexions simultanément sur un même socket (par exemple, plusieurs clients se connectant au même serveur).
+
+Il identifie chaque connexion grâce à un tuple unique : (adresse IP client, port client, adresse IP serveur, port serveur).
+Abstraction : L’application ne se soucie pas des détails bas niveau (comme la gestion des paquets TCP ou la retransmission en cas de perte). L’OS s’en occupe.
+
+Sécurité : L’OS s’assure que seules les applications autorisées accèdent aux ports ou aux données.
+
