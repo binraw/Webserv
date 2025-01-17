@@ -36,21 +36,31 @@ Server::~Server()
 //     // _socket.initPollFd();
 // }
 
-void Server::init_data()
+int Server::init_data()
 {
-    std::map<std::string, std::string>::iterator it = this->_paramsConfig.find("port");
-    if (it != this->_paramsConfig.end()) {
-        std::cout << "Initializing server on port : " << it->second << std::endl;
-    } else {
-        std::cerr << "Error: 'port' key not found in configuration." << std::endl;
-        return; // Évitez de continuer si la clé n'est pas trouvée
-    }
+    try {
+        std::map<std::string, std::string>::iterator it = this->_paramsConfig.find("port");
+        if (it == this->_paramsConfig.end()) {
+            std::cerr << "Error: clé 'port' not found." << std::endl;
+            return -1;
+        }
 
-    this->_socket = Socket(this->_paramsConfig);
-    // Évitez d'appeler d'autres méthodes si l'initialisation échoue
-    // _socket.bindingListening();
-    // _socket.showSocket();
-    // _socket.initPollFd();
+        std::cout << "Init server on port : " << it->second << std::endl;
+
+        if (controlMap() < 0) {
+            std::cerr << "Invalid configuration for server" << std::endl;
+            return -1;
+        }
+
+        this->_socket = Socket(this->_paramsConfig);
+        this->_socket.bindingListening();
+        this->_socket.initPollFd();
+        
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "Error during server initialization: " << e.what() << std::endl;
+        return -1;
+    }
 }
 
 

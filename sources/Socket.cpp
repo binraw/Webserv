@@ -58,11 +58,23 @@ void Socket::showSocket()
 
 void Socket::bindingListening()
 {
-    // int addrlen = sizeof(_adress_server);
-    _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    bind(_serverSocket, (struct sockaddr*)&_adress_server, sizeof(_adress_server));
-    listen(_serverSocket, 5); // voir doc pour si 5 suffisant ou pas
-    // int new_socket = accept(_serverSocket, (struct sockaddr *)&address, (stocklen_t *)&addrlen);
+    if ((_serverSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        throw FailedSocket();
+    }
+
+    // Permet la réutilisation de l'adresse
+    int opt = 1;
+    if (setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        throw FailedSocket();
+    }
+
+    if (bind(_serverSocket, (struct sockaddr*)&_adress_server, sizeof(_adress_server)) < 0) {
+        throw FailedSocket();
+    }
+
+    if (listen(_serverSocket, 5) < 0) {
+        throw FailedSocket();
+    }
 }
 
 void Socket::initPollFd()

@@ -21,7 +21,7 @@ class Server
     public:
         Server(const std::map<std::string, std::string> copy_map);
         ~Server();
-        void init_data();
+        int init_data();
         std::map<std::string, std::string> parseConf(const std::string& filename);
         void displayConfig();
         int controlMap();

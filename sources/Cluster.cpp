@@ -54,12 +54,27 @@ Cluster::Cluster(const std::string &filename)
 
 void Cluster::initAllServer()
 {
+    if (_servers.empty()) {
+        std::cerr << "No server configured" << std::endl;
+        return;
+    }
+
     std::cout << "Number of servers: " << _servers.size() << std::endl;
     for(size_t i = 0; i < _servers.size(); i++)
     {
-        std::cout << "Server Go: " << std::endl;
-        _servers[i].init_data();
-        std::cout << "wesh " << std::endl;
+        try
+        {
+            std::cout << "Initialisation du serveur " << i + 1 << ": " << std::endl;
+            if (_servers[i].init_data() < 0) {
+                std::cerr << "Failed to initialize server " << i + 1 << std::endl;
+                continue;
+            }
+            std::cout << "Server " << i + 1 << " initialized successfully" << std::endl;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error during server initialization " << i + 1 << ": " << e.what() << std::endl;
+        }
     }
 }
 
