@@ -19,6 +19,7 @@
     * add the local ip address 
 */
 
+#include "webserv.hpp"
 
 
 int main()
@@ -31,12 +32,20 @@ int main()
     socklen_t               client_addr_size;
 	char					buffer[BUFFER_SIZE];
 
+    struct protoent *protoName = getprotobyname("ump");
+    if (protoName == NULL) {
+        std::cerr   << RED ERROR
+                    << "getprotobyname returned error at line [" << __LINE__ << "] in " << __FILE__
+                    << RESET << std::endl;
+        return 1;
+    }
+
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;        // addr ipv4 or ipv6
     hints.ai_socktype = SOCK_STREAM;    // connexion type, here TCP (Transmission Control Protocol)
     hints.ai_flags = AI_PASSIVE;        // auto-populated ip field
 
-    ret_value = getaddrinfo(NULL, SERVICE, &hints, &res);
+    ret_value = getaddrinfo("exemple.com", SERVICE, &hints, &res);
     if (ret_value != 0) {
         std::cerr << "Here: " << gai_strerror(ret_value) << std::endl;
         return (1);

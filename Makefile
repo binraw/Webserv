@@ -6,7 +6,7 @@
 #    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/16 16:52:21 by florian          ###   ########.fr        #
+#    Updated: 2025/01/17 18:50:34 by florian          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,8 @@ MKD			= mkdir -p
 VALGRIND	= valgrind --leak-check=full 
 
 #-----------------------# ==== SOURCE CODE DIRECTORIES ==== #------------------#
-HDR_PATH	= ./headers
+INCLUDES	= ./includes
+HDR_PATH	= ./sources
 SRC_PATH	= ./sources
 
 #---------------------# ==== TEMPORARY FILES DIRECTORIES ==== #----------------#
@@ -42,7 +43,7 @@ DEP_PATH	= $(TEMP_PATH)/dep
 MODE		?= release
 
 ifeq ($(MODE), debug)
-	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98
+	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98 -DTEST
 else
 	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
 endif
@@ -51,7 +52,6 @@ DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
 SRC	= main.cpp
-# HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
 OBJ	= $(SRC:%.cpp=$(OBJ_PATH)/%.o)
@@ -86,8 +86,8 @@ $(NAME)	: $(OBJ)
 #--------------------# ==== COMPILATION OBJ - DEPS ==== #----------------------#
 $(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile 
 	@$(MKD) $(dir $@) $(DEP_PATH)
-	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
-	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)
+	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -I$(INCLUDES) -c $< -o $@
+	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH) -I$(INCLUDES)
 
 -include $(DEP)
 
