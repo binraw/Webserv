@@ -10,8 +10,8 @@ class Server
         ~Server();
     
     private:
-        std::string &   _name;
-        int             *_sockFd;
+        std::string & _name;
+        int         * _sockFd;
 
 };
 

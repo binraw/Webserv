@@ -21,14 +21,13 @@ class Cluster
         Cluster(const Cluster &);
         virtual ~Cluster();
         
-        Cluster &               operator=(const Cluster &);
-        friend std::ostream &   operator<<(std::ostream &, Cluster &);
+        Cluster &               operator=(const Cluster &) const;
+        friend std::ostream &   operator<<(std::ostream &, const Cluster &);
     
     private:
         // MEMBERS //
         protoent                            * _protocolInfo;
         std::map<std::string, std::string>  & _initInfo;
-        // un container map avec un serveur et son socket associe
         std::map<Server, int>               & _cluster;
 
         // METHODS //
