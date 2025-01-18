@@ -1,5 +1,10 @@
 #include "Cluster.hpp"
 
+std::map<std::string, std::string *> Cluster::_defaultTab =
+{
+    _defaultTab["include"] = "site1", "site2";
+    _defaultTab[""]
+}
 Cluster::Cluster()
 {
 }
@@ -10,6 +15,18 @@ Cluster::~Cluster()
 
 Cluster::Cluster(const std::string &filename)
 {
+
+    // char *str;
+
+    // try
+    // {
+    //     str = new char [10];
+    // }
+    // catch(const std::bad_alloc& e)
+    // {
+    //     std::cerr << e.what() << '\n';
+    // }
+    
     std::ifstream inputFile(filename.c_str());
     if (!inputFile.is_open()) 
     {
