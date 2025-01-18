@@ -1,54 +1,83 @@
 
 
 
-// #ifndef CLUSTER_HPP
-// # define CLUSTER_HPP
+#ifndef CLUSTER_HPP
+# define CLUSTER_HPP
 
-// #include "webserv.hpp"
+#include "webserv.hpp"
 
-// #include <string>
-// #include <map>
-// #include <vector>
+#include <map>
+#include <string>
+#include <vector>
 
-// #include <netdb.h>
 
-// class Server;
-// class ClusterException;
+class AServer;
+class ClusterException;
 
-// class Cluster
-// {
-//     public:
-//         Cluster(const std::string & file) throw(ClusterException);
-//         Cluster(const Cluster &);
-//         virtual ~Cluster();
+class Cluster
+{
+    public:
+        Cluster(const std::string & file) throw(ClusterException);
+        Cluster(const Cluster &);
+        ~Cluster();
         
-//         Cluster &               operator=(const Cluster &) const;
-//         friend std::ostream &   operator<<(std::ostream &, const Cluster &);
+        Cluster &               operator=(const Cluster &) const;
+        friend std::ostream &   operator<<(std::ostream &, const Cluster &);
     
-//     private:
-//         // MEMBERS //
-//         protoent                    * _protocolInfo;    // ok
-//         std::vector<std::string>    & _initInfo;        // 
-//         std::vector<Cluster>        _cluster;
-//         std::vector<Server>         _servers;
+    private:
+        static std::map<std::string, std::vector<std::string>>
+                _clusterParams;
+        /*
+            contient tous les parametres par defaut si aucun bloc protocole n'est defini
+        */
+        
+        std::vector<std::string>
+                & _splitedFile;    // contient tout le fichier de config renvoye par split
+        /*
+            vecteur renvoye par split()
+        */
+        std::map<std::string, std::vector<std::string>>
+                & _clusterBlock; // contient tout les blocs protocole
+        // parser ce bloc pour mettre a jour le tableau static _clusterParams
+        // en sortie de ce parsing on retourne une nouvelle map destines a etre des params des serveurs
+        
 
-//         // METHODS //
-//         protoent    * setProtcolInfo(const std::string & proto) throw(ClusterException);
-//         std::vector<std::string> \
-//                     & setInitInfo(const std::string & file) throw(ClusterException);
-//         std::vector<Server>
-//                     & setVirtualServer();
+        std::map<std::string, std::vector<AServer*>>
+                _service_servers;
+        /*  exemple de structure attendue
+            _service_servers {
+                {"http", {AServer1*, AServer2*, AServer3*}},
+                {"https", {AServer1*, AServer2*, AServer3*}}
+            }
+        */
+        /*
+            infos necessaires avant initialisation des serveurs :
+                - le nb de protocoles differents (HTTP HTTPS IRC etc)
+                - le nb de serveur virtuelles a initialiser par protocoles
 
-//         // EXCEPT CLASS //
-//         class ClusterException : std::exception
-//         {
-//             public:
-//                 const char *    what() const throw();
-//                 void            display(std::string & msg) const throw();
+            il me faut une liste de parametres par protocole
+                pour modifier les parametres static du tableau de params de Cluster
+                un tableau de params par protocoles (si plusieurs sont pris en charge, renvoie une erreur si le protocole n'est pas pris en charge (ex HTTPS))
 
-//         }
+            
+            il me faut une liste de parametre pour chaque serveur du protocole
 
 
-// } ;
+            1 vecteur de map 
+        */
+        // MEMBERS //
 
-// #endif
+
+        // EXCEPT CLASS //
+        class ClusterException : std::exception
+        {
+            public:
+                const char *    what() const throw();
+                void            display(std::string & msg) const throw();
+
+        }
+
+
+} ;
+
+#endif

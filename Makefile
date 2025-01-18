@@ -6,7 +6,7 @@
 #    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/18 17:41:57 by florian          ###   ########.fr        #
+#    Updated: 2025/01/18 19:01:54 by florian          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -49,7 +49,6 @@ else
 endif
 
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
-
 
 #------------------------# ==== FIND FILES ==== #-----------------------------#
 SRC	= $(shell find $(SRC_PATH) -name "*.cpp")

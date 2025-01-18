@@ -12,9 +12,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <string.h>
 
 #include <iostream>
@@ -49,19 +46,8 @@ int main (int argc, char **argv)
 
     try
     {
-        // Cluster cluster(configPath);
-        std::cout   << "configPath : " << configPath << std::endl;
-        int fd = open(configPath.c_str(), O_RDONLY | O_CLOEXEC);
-        if (fd < 0)
-            return 2;
-        char buffer[4096] = {'\0'};
-        if (read(fd, buffer, sizeof(buffer)) == -1)
-            return 3;
-        std::vector<std::string> vec = UtilParsing::split(std::string(buffer), std::string(" "));
-        for (size_t i = 0; i < vec.size(); i++) {
-            std::cout   << vec[i] << std::endl;
-        }
-        return close(fd);
+        Cluster cluster(configPath);
+        return 0;
         
         
 

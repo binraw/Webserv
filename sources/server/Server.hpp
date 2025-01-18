@@ -1,18 +1,25 @@
-// #ifndef SERVER_HPP
-// # define SERVER_HPP
+#ifndef SERVER_HPP
+# define SERVER_HPP
 
-// #include <string>
+#include <netdb.h>
+#include <string>
+#include "AServer.hpp"
 
-// class Server
-// {
-//     public:
-//         Server();
-//         ~Server();
+class Server : virtual public AServer
+{
+    public:
+        Server();
+        ~Server();
     
-//     private:
-//         std::string & _name;
-//         int         * _sockFd;
+    private:
+        protoent    * _protocolInfo;
+        protoent    * setProtcolInfo(const std::string & proto)
+                    throw(ClusterException); // appele dans constructeur ?
 
-// };
 
-// #endif
+        std::string & _name;
+        int         * _sockFd;
+
+};
+
+#endif
