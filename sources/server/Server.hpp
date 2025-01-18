@@ -1,18 +1,18 @@
-#ifndef SERVER_HPP
-# define SERVER_HPP
+// #ifndef SERVER_HPP
+// # define SERVER_HPP
 
-#include <string>
+// #include <string>
 
-class Server
-{
-    public:
-        Server();
-        ~Server();
+// class Server
+// {
+//     public:
+//         Server();
+//         ~Server();
     
-    private:
-        std::string & _name;
-        int         * _sockFd;
+//     private:
+//         std::string & _name;
+//         int         * _sockFd;
 
-};
+// };
 
-#endif
+// #endif

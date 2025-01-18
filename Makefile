@@ -6,7 +6,7 @@
 #    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/17 18:50:34 by florian          ###   ########.fr        #
+#    Updated: 2025/01/18 17:41:57 by florian          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,12 +50,14 @@ endif
 
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
-#------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp
+
+#------------------------# ==== FIND FILES ==== #-----------------------------#
+SRC	= $(shell find $(SRC_PATH) -name "*.cpp")
+HDR	= $(shell find $(SRC_PATH) -name "*.hpp")
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
-OBJ	= $(SRC:%.cpp=$(OBJ_PATH)/%.o)
-DEP	= $(SRC:%.cpp=$(DEP_PATH)/%.d)
+OBJ	= $(patsubst $(SRC_PATH)/%.cpp, $(OBJ_PATH)/%.o, $(SRC))
+DEP	= $(patsubst $(SRC_PATH)/%.cpp, $(DEP_PATH)/%.d, $(SRC))
 
 #==============================================================================#
 #                            COMPILATION MANDATORY                             #

@@ -11,9 +11,9 @@
 /* -------------------------------------- */
 /* --- DEFINE GENERIC ERROR MESSAGES  --- */
 /* -------------------------------------- */
-#define ERROR       "Error\n"
-#define PRINTUSAGE  std::cout   << YELLOW "USAGE :\n" \
-                        << "    -> a path to a file config (.conf)\n" \
+#define ERROR       "Error" << std::endl
+#define PRINTUSAGE  std::cout   << YELLOW "USAGE :" << std::endl \
+                        << "    -> a path to a file config (.conf)" << std::endl \
                         << "    -> no argument and default server is launch" \
                         << RESET << std::endl
 
@@ -23,8 +23,6 @@
 #define PATH_DEFAULTSERV    "./config/default.conf"
 #define PATH_DEBUGSERV      "./config/debug.conf"
 #define PATH_MIME           "./config/mime.types"
-
-
 
 
 #endif

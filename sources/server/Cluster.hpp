@@ -1,52 +1,54 @@
 
 
 
-#ifndef CLUSTER_HPP
-# define CLUSTER_HPP
+// #ifndef CLUSTER_HPP
+// # define CLUSTER_HPP
 
-#include "webserv.hpp"
+// #include "webserv.hpp"
 
-#include <string>
-#include <map>
+// #include <string>
+// #include <map>
+// #include <vector>
 
-#include <netdb.h>
+// #include <netdb.h>
 
-class Server;
-class ClusterException;
+// class Server;
+// class ClusterException;
 
-class Cluster
-{
-    public:
-        Cluster(const std::string & file) throw(ClusterException);
-        Cluster(const Cluster &);
-        virtual ~Cluster();
+// class Cluster
+// {
+//     public:
+//         Cluster(const std::string & file) throw(ClusterException);
+//         Cluster(const Cluster &);
+//         virtual ~Cluster();
         
-        Cluster &               operator=(const Cluster &) const;
-        friend std::ostream &   operator<<(std::ostream &, const Cluster &);
+//         Cluster &               operator=(const Cluster &) const;
+//         friend std::ostream &   operator<<(std::ostream &, const Cluster &);
     
-    private:
-        // MEMBERS //
-        protoent                            * _protocolInfo;
-        std::map<std::string, std::string>  & _initInfo;
-        std::map<Server, int>               & _cluster;
+//     private:
+//         // MEMBERS //
+//         protoent                    * _protocolInfo;    // ok
+//         std::vector<std::string>    & _initInfo;        // 
+//         std::vector<Cluster>        _cluster;
+//         std::vector<Server>         _servers;
 
-        // METHODS //
-        protoent    * setProtcole(const std::string & proto) throw(ClusterException);
-        std::map<std::string, std::string> \
-                    & setInitInfo(const std::string & file) throw(ClusterException);
-        std::map<Server, int>
-                    & setVirtualServer();
+//         // METHODS //
+//         protoent    * setProtcolInfo(const std::string & proto) throw(ClusterException);
+//         std::vector<std::string> \
+//                     & setInitInfo(const std::string & file) throw(ClusterException);
+//         std::vector<Server>
+//                     & setVirtualServer();
 
-        // EXCEPT CLASS //
-        class ClusterException : std::exception
-        {
-            public:
-                const char *    what() const throw();
-                void            display(std::string & msg) const throw();
+//         // EXCEPT CLASS //
+//         class ClusterException : std::exception
+//         {
+//             public:
+//                 const char *    what() const throw();
+//                 void            display(std::string & msg) const throw();
 
-        }
+//         }
 
 
-} ;
+// } ;
 
-#endif
+// #endif
