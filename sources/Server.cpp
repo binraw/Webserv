@@ -40,26 +40,30 @@ int Server::init_data()
 {
     try {
         std::map<std::string, std::string>::iterator it = this->_paramsConfig.find("port");
-        if (it == this->_paramsConfig.end()) {
+        if (it == this->_paramsConfig.end()) 
+        {
             std::cerr << "Error: clé 'port' not found." << std::endl;
-            return -1;
+            return (-1);
         }
 
         std::cout << "Init server on port : " << it->second << std::endl;
 
-        if (controlMap() < 0) {
+        if (controlMap() < 0) 
+        {
             std::cerr << "Invalid configuration for server" << std::endl;
-            return -1;
+            return (-1);
         }
 
         this->_socket = Socket(this->_paramsConfig);
         this->_socket.bindingListening();
         this->_socket.initPollFd();
         
-        return 0;
-    } catch (const std::exception& e) {
+        return (0);
+    } 
+    catch (const std::exception& e) 
+    {
         std::cerr << "Error during server initialization: " << e.what() << std::endl;
-        return -1;
+        return (-1);
     }
 }
 
@@ -120,15 +124,24 @@ int Server::controlMap()
     {
         std::map<std::string, std::string>::const_iterator paramIt = _paramsConfig.find(*it);
         if (paramIt == _paramsConfig.end() || paramIt->second.empty())
+        {
+            std::cout << "Error: config empty" << std::endl;
             return (-1);
+        }
     }
     int port;
     std::istringstream iss(_paramsConfig.at("port"));
     if (!iss)
+    {
+        std::cout << "Error: port empty" << std::endl;
         return (-1);
+    }
     iss >> port;
     if (port < 1024 || port > 65535)
+    {
+        std::cout << "Error: port bad value" << std::endl;
         return (-1);
+    }
     return (0);
 }
 

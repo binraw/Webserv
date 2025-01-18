@@ -1,5 +1,10 @@
 #include "Cluster.hpp"
 
+std::map<std::string, std::string *> Cluster::_defaultTab =
+{
+    _defaultTab["include"] = "site1", "site2";
+    _defaultTab[""]
+}
 Cluster::Cluster()
 {
 }
@@ -10,6 +15,18 @@ Cluster::~Cluster()
 
 Cluster::Cluster(const std::string &filename)
 {
+
+    // char *str;
+
+    // try
+    // {
+    //     str = new char [10];
+    // }
+    // catch(const std::bad_alloc& e)
+    // {
+    //     std::cerr << e.what() << '\n';
+    // }
+    
     std::ifstream inputFile(filename.c_str());
     if (!inputFile.is_open()) 
     {
@@ -24,31 +41,66 @@ Cluster::Cluster(const std::string &filename)
     {
         if (line.empty() || line[0] == '#') continue;
 
-        if (line.find("server") != std::string::npos) 
-        {
-            if (!currentConfig.empty()) 
-            {
-                Server newServer(currentConfig);
-                _servers.push_back(newServer);
-                currentConfig.clear();
-            }
-            continue;
-        }
-        size_t pos = line.find('=');
-        if (pos != std::string::npos) 
+        // if (line.find("server") != std::string::npos) 
+        // {
+        //     if (!currentConfig.empty()) 
+        //     {
+        //         std::cout << "Valeurs dans la map :" << std::endl;
+        //         for (std::map<std::string, std::string>::iterator it = currentConfig.begin(); it != currentConfig.end(); ++it) 
+        //         {
+        //         std::cout << it->second << std::endl;
+        //         }
+        //         Server newServer(currentConfig);
+        //         _servers.push_back(newServer);
+        //         currentConfig.clear();
+        //     }
+        //     continue;
+        // }
+         size_t pos = line.find('=');
+        // if (pos != std::string::npos) 
+        // {
+        //     std::string key = line.substr(0, pos);
+        //     std::string value = line.substr(pos + 1);
+        //     currentConfig[key] = value;
+        // }
+        if (pos != std::string::npos)
         {
             std::string key = line.substr(0, pos);
             std::string value = line.substr(pos + 1);
             currentConfig[key] = value;
-        }
-    }
-    if (!currentConfig.empty())
-    {
-        Server newServer(currentConfig);
-        _servers.push_back(newServer);
-        // currentConfig.clear();
-    }
 
+            size_t nextPos = line.find('=', pos + 1);
+            while (nextPos != std::string::npos)
+            {
+                key = line.substr(pos + 1, nextPos - pos - 1);
+                value = line.substr(nextPos + 1);
+                currentConfig[key] = value;
+                pos = nextPos;
+                nextPos = line.find('=', pos + 1);
+            }
+        }
+        // if (line.find("server") != std::string::npos)
+        // {
+        //     break;
+        // }
+    }
+    for (std::map<std::string, std::string>::iterator it = currentConfig.begin(); it != currentConfig.end(); ++it) 
+    {
+    std::cout << it->second << std::endl;
+    }
+    Server newServer(currentConfig);
+    _servers.push_back(newServer);
+    currentConfig.clear();
+    
+    // if (!currentConfig.empty())
+    // {
+    //     _servers.push_back(Server(currentConfig));
+    //     // Server newServer(currentConfig);
+    //     // _servers.push_back(newServer);
+    //     // currentConfig.clear();
+    // }
+    _servers[0].displayConfig();
+    std::cout << "Number of servers: " << _servers.size() << std::endl;
     inputFile.close();
 }
 

@@ -14,6 +14,7 @@ public:
     Cluster(const std::string &filename);
     void displayServersConfig();
     void initAllServer();
+    static std::map<std::string, std::string *> _defaultTab;
 };
 
 
