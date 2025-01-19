@@ -19,7 +19,7 @@ bool    UtilParsing::isOnlySpace(const std::string & str)
 }
 
 std::vector<std::string>
-        UtilParsing::split(const std::string & line, const std::string & set)
+        & UtilParsing::split(const std::string & line, const std::string & set)
 {
     std::vector<std::string>    result;
     
