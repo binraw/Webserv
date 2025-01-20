@@ -18,12 +18,19 @@
 						<< RESET << std::endl
 
 /* -------------------------------------- */
-/* ---		  DEFINE PATH		   --- */
+/* ---		    DEFINE PATH   	   	  --- */
 /* -------------------------------------- */
 #define PATH_DEFAULTSERV	"./config/default.conf"
 #define PATH_DEBUGSERR		"./config/debug.conf"
 #define PATH_ERRPAGE		"./error_pages"
 #define PATH_MIME			"./config/mime.types"
+
+/* -------------------------------------- */
+/* ---		   DEFAULT VALUES  	   	  --- */
+/* -------------------------------------- */
+
+# define DFLT_TIMEOUT		65
+# define DFLT_WORKCONNEX	1024
 
 
 #endif

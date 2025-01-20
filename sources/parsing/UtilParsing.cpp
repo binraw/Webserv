@@ -1,11 +1,13 @@
 
 #ifdef TEST
-    #include <iostream>
 #endif
 
 #include "UtilParsing.hpp"
 
-bool    UtilParsing::isOnlySpace(const std::string & str)
+#include <iostream>
+
+bool
+	UtilParsing::isOnlySpace(const std::string & str)
 {
     size_t  i;
     size_t  size = str.size();
@@ -19,7 +21,7 @@ bool    UtilParsing::isOnlySpace(const std::string & str)
 }
 
 std::vector<std::string>
-        & UtilParsing::split(const std::string & line, const std::string & set)
+    & UtilParsing::split(const std::string & line, const std::string & set)
 {
     std::vector<std::string>    result;
     
@@ -37,4 +39,35 @@ std::vector<std::string>
     }
 #endif
     return result;
+}
+
+/*
+	- params 1 : container avec tous les tokens ou doit se faire la recherche
+	- params 2 : a partir de quel index commencer la recherche
+					ce parametre doit pointer sur le bracket sur lequel on doit chercher
+	- return 0 si il n'y a pas de bracket fermant associe
+*/
+size_t
+	UtilParsing::findBracketClosing(const std::vector<std::string> & container, size_t i_start)
+{
+	int	count = 1;
+
+	if (container[i_start].compare("{") != 0) {
+		std::cerr	<< RED ERROR
+					<< "function : findBracketClosing()" << std::endl
+					<< "-> i_start doesn't point on the good value, expected \"{\" but got \""
+					<< container[i_start] << "\""
+					<< RESET << std::endl;
+		return 0;
+	}
+	i_start++;
+	for (i_start; i_start < container.size(); i_start++) {
+		if (container[i_start].compare("{") == true)
+			count++;
+		if (container[i_start].compare("}") == true)
+			count--;
+		if (count == 0)
+			return (i_start);
+	}
+	return (0);
 }

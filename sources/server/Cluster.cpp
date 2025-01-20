@@ -3,7 +3,7 @@
 #include <iostream>
 
 /*============================================================================*/
-                        /*### HEADER FILES ###*/
+						/*### HEADER FILES ###*/
 /*============================================================================*/
 
 #include "Cluster.hpp"
@@ -17,25 +17,25 @@
 
 
 /*============================================================================*/
-                    /*### INITIALISATION STATIC FIELD ###*/
+					/*### INITIALISATION STATIC FIELD ###*/
 /*============================================================================*/
 
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                    /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
+					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
 
 Cluster::Cluster(const std::string & file)
   : _configPath(file),
-    _configData(parseFile())
+	_configData(parseFile())
 {
-    /*
-        a partir de ce moment, _clusterParams doit etre a jour
+	/*
+		a partir de ce moment, _clusterParams doit etre a jour
 
-        _service_server doit etre prepare pour opti la memoire
-        std::map<std::string, std::vector<AServer*>> _service_server
-    */
+		_service_server doit etre prepare pour opti la memoire
+		std::map<std::string, std::vector<AServer*>> _service_server
+	*/
    _service_servers = initService(_clusterData);
 }
 /*----------------------------------------------------------------------------*/
@@ -45,7 +45,7 @@ Cluster::Cluster(const Cluster & ref)
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                        /*### DESTRUCTORS ###*/
+						/*### DESTRUCTORS ###*/
 /*============================================================================*/
 
 Cluster::~Cluster()
@@ -53,7 +53,7 @@ Cluster::~Cluster()
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                    /*### OVERLOAD OPERATOR ###*/
+					/*### OVERLOAD OPERATOR ###*/
 /*============================================================================*/
 
 Cluster & Cluster::operator=(const Cluster & ref) const
@@ -65,149 +65,148 @@ std::ostream & operator<<(std::ostream & o, const Cluster & right)
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                        /*### GETTER - SETTER ###*/
+						/*### GETTER - SETTER ###*/
 /*============================================================================*/
 
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                        /*### PRIVATE METHODS ###*/
+						/*### PRIVATE METHODS ###*/
 /*============================================================================*/
 
 std::map<std::string, std::map<std::string, std::string>>
-        & Cluster::parseFile(void) // throw(ClusterException)
+		& Cluster::parseFile(void)
 {
-    const   std::vector<std::string>
-            allFile = getFile();
+	const   std::vector<std::string>
+			allFile = getFile();
 #ifdef TEST
-    std::cout   << "FILE AFTER SPLIT METHOD: " << std::endl;
-    for (size_t i = 0; i < allFile.size(); i++) {
-        std::cout   << allFile[i] << std::endl;
-    }
+	std::cout   << "FILE AFTER SPLIT METHOD: " << std::endl;
+	for (size_t i = 0; i < allFile.size(); i++) {
+		std::cout   << allFile[i] << std::endl;
+	}
 #endif
-    return getAllProto(allFile);
+	return getAllProto(allFile);
 }
 /*----------------------------------------------------------------------------*/
 
 std::vector<std::string>
-        & Cluster::getFile(void) // throw (ClusterException)
+		& Cluster::getFile(void) // throw (ClusterException)
 {
-    char        buffer[4096] = { '\0' };
-    const int   fd = open(_configPath.c_str(), O_RDONLY | O_CLOEXEC);
-    std::string allFile;
+	char		buffer[4096] = { '\0' };
+	const int   fd = open(_configPath.c_str(), O_RDONLY | O_CLOEXEC);
+	std::string allFile;
 
-    if (fd < 0)
-        throw ClusterException().openfile(_configPath);
-    
-    for (ssize_t i = read(fd, buffer, sizeof(buffer)); i != 0;)
-    {
-        if (i == -1)
-            throw ClusterException().openfile(_configPath);
-        allFile += buffer;
-        memset(buffer, '\0', sizeof(buffer));
-    }
+	if (fd < 0)
+		throw ClusterException().openfile(_configPath);
+		
+	for (ssize_t i = read(fd, buffer, sizeof(buffer)); i != 0;)
+	{
+		if (i == -1)
+			throw ClusterException().openfile(_configPath);
+		allFile += buffer;
+		memset(buffer, '\0', sizeof(buffer));
+	}
 
-    if (close(fd) == -1)
-        throw ClusterException().openfile(_configPath);
+	if (close(fd) == -1)
+		throw ClusterException().openfile(_configPath);
 
-    return UtilParsing::split(allFile, std::string(" "));
+	return UtilParsing::split(allFile, std::string(" "));
 }
 /*----------------------------------------------------------------------------*/
 
 std::map<std::string, std::map<std::string, std::string>>
-        & Cluster::getAllProto(const std::vector<std::string> & allFile)
+		& Cluster::getAllProto(const std::vector<std::string> & allFile)
 {
-    /*
-        l'argument <allFile> contient TOUT le fichier de config, 1 mot par case du tableau
-        
-        la fonction doit extraire chaque bloc protocole de allFile et construire
-        une map<> dont voici un exemple :
-        std::map<std::string, std::map<std::string, std::string>> result {
-            "http" {
-                "server", { "{", "server_name", "localhost", ";", "listen", "8080", ";", "client_max_body_size", "200M", ";", "}" },
-                "server", { "{", "server_name", "bidule", ";", "listen", "8081", ";", "}" },
-                "server", { "{", "server_name", "127.0.0.1", ";", "listen", "8082", ";", "}" }
-            }, 
-            "https" {
-                "server", { "{", "server_name", "localhostSecure", ";", "listen", "443", ";", "client_max_body_size", "200M", ";", "}" },
-                "server", { "{", "server_name", "biduleSecure", ";", "listen", "443", ";", "}" },
-                "server", { "{", "server_name", "127.0.0.1", ";", "listen", "443", ";", "}" }
-            }
-        }
+	/*
+		l'argument <allFile> contient TOUT le fichier de config, 1 mot par case du tableau
+		
+		la fonction doit extraire chaque bloc protocole de allFile et construire
+		une map<> dont voici un exemple :
+		std::map<std::string, std::map<std::string, std::string>> result {
+			"http" {
+				"server", { "{", "server_name", "localhost", ";", "listen", "8080", ";", "client_max_body_size", "200M", ";", "}" },
+				"server", { "{", "server_name", "bidule", ";", "listen", "8081", ";", "}" },
+				"server", { "{", "server_name", "127.0.0.1", ";", "listen", "8082", ";", "}" }
+			}, 
+			"https" {
+				"server", { "{", "server_name", "localhostSecure", ";", "listen", "443", ";", "client_max_body_size", "200M", ";", "}" },
+				"server", { "{", "server_name", "biduleSecure", ";", "listen", "443", ";", "}" },
+				"server", { "{", "server_name", "127.0.0.1", ";", "listen", "443", ";", "}" }
+			}
+		}
 
-        la fonction doit aussi identifier les information qui sont dans le bloc protocole et en dehors des blocs serveur
-        elle doit mettre a jour le tableau static _clusterParams si necessaire AVANT DE RENVOYER LA MAP<>
+		la fonction doit aussi identifier les information qui sont dans le bloc protocole et en dehors des blocs serveur
+		elle doit mettre a jour le tableau static _clusterParams si necessaire AVANT DE RENVOYER LA MAP<>
 
-    */
-
-
-    std::map<std::string, std::map<std::string, std::string>>
-        result;
-    std::vector<std::string>
-        clusterParams;
-    
+	*/
 
 
-    this->setCluster(clusterParams);
-    return result;
+	std::map<std::string, std::map<std::string, std::string>>
+		result;
+	std::vector<std::string>
+		clusterParams;
+		
+	this->setCluster(clusterParams, result);
+	return result;
 }
 /*----------------------------------------------------------------------------*/
 
 void
-    Cluster::setCluster(const std::vector<std::string> & params)
+	Cluster::setCluster(const std::vector<std::string> & clusterParams, \
+						std::map<std::string, std::map<std::string, std::string>> & ref)
 {
-    /*  UTILISER <ALGORITHM>
-        la fonction met a jour le tableau static _clusterParams de l'instance courante
-        
-        affiche une erreur si un cluster demande un protocole non prit en compte
-        
-        initialise les containers a la bonne taille
-        initialise une map <string, map<string, string> avec les parametres commun a chaque serveur>
-    */
-    if (params.empty() == true)
-    {
-        // initialiser les containers pour acceuillir 1 cluster de 1 serveur
-        return ; // les parametres seront par defaut
-    }
+	/*  UTILISER <ALGORITexpressionHM>
+		la fonction met a jour la structure _clusterdefault de l'instance courante
+		avec les parametres donnes dans clusterParams
+		
+		affiche une erreur si un cluster demande un protocole non prit en compte
+		
+		initialise le container _service_servers a la bonne taille
+		grace a ref
+	*/
 
-    
-
-
-    std::vector<std::string, std::allocator<std::string>>::const_iterator
-            i = _clusterParams["protocols_handle_by_webserv"].begin();
-    
-    for (size_t i = 0; i < _clusterParams.size();) {
-        if (_clusterParams[i])
-    }
-    
-
+	// mettre a jour les infos des clusters
+	if (clusterParams.empty() == false) {
+		majClusterDefault(clusterParams);
+	}
 }
 /*----------------------------------------------------------------------------*/
 
+void
+	checkParams(const std::vector<std::string> & current)
+{
+
+}
+
+void
+	Cluster::majClusterDefault(const std::vector<std::string> & clusterParams)
+{
+
+}
 
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                        /*### PUBLIC METHODS ###*/
+						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                            /*### EXCEPTIONS ###*/
+							/*### EXCEPTIONS ###*/
 /*============================================================================*/
 
 const char
-        * Cluster::ClusterException::what() const throw() {
-    return ("During Cluster initilization\n");
+		* Cluster::ClusterException::what() const throw() {
+	return ("During Cluster initilization\n");
 }
 /*----------------------------------------------------------------------------*/
 
 void
-        Cluster::ClusterException::openfile(const std::string & file) const throw()
+		Cluster::ClusterException::openfile(const std::string & file) const throw()
 {
-    std::cerr   << RED ERROR
-                << file << " could not be open, check path & authorisation"
-                << RESET << std::endl;
+	std::cerr   << RED ERROR
+				<< file << " could not be open, check path & authorisation"
+				<< RESET << std::endl;
 }
 /*----------------------------------------------------------------------------*/

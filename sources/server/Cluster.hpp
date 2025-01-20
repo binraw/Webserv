@@ -21,11 +21,11 @@ class ClusterException;
 struct s_clusterDefault
 {
 	std::vector<std::string>	protocols_handle_by_webserv;
-	std::vector<int>			numbers_of_servers_by_clusters;
+	std::vector<int>			nb_virtual_server;
 		
 	s_clusterDefault()
 	  : protocols_handle_by_webserv(1, "http"),
-		numbers_of_servers_by_clusters(1, 1)
+		nb_virtual_server(1, 1)
 	{   }
 };
 
@@ -33,29 +33,20 @@ struct s_clusterDefault
 	contient les 
 */
 struct s_protocolData {
-	protoent
-		* protocolInfo;
-	
-	std::vector<std::string>
-		include; // ./error_pages ;
-	
-	std::vector<std::string>
-		default_type; // ;
-	
-	int
-		keepalive_timeout; // 65;
-	
-	int
-		worker_connexion; // 1024
+	protoent					* protocolInfo;
+	std::vector<std::string>	include;
+	std::string					default_type;
+	int							keepalive_timeout;
+	int							worker_connexion;
 
 	s_protocolData()
 	  : protocolInfo(getprotobyname("tcp")),
-	  	include( { "include", {PATH_ERRPAGE, PATH_MIME} } ),
-		default_type( { "default_type", { "application/octet-stream" } } ),
-		keepalive_timeout( {} )
+	  	include( { PATH_MIME } ),
+		default_type( { "application/octet-stream" } ),
+		keepalive_timeout( DFLT_TIMEOUT ),
+		worker_connexion( DFLT_WORKCONNEX )
 	{   }
 };
-
 
 typedef struct s_clusterDefault t_clusterDefault;
 typedef struct s_protocolData   t_protocolData;
@@ -67,8 +58,8 @@ class Cluster
 		Cluster(const Cluster &);
 		virtual ~Cluster();
 		
-		Cluster &			   operator=(const Cluster &) const;
-		friend std::ostream &   operator<<(std::ostream &, const Cluster &);
+		Cluster &				operator=(const Cluster &) const;
+		friend std::ostream &	operator<<(std::ostream &, const Cluster &);
 	protected:
 
 
@@ -79,24 +70,27 @@ class Cluster
 		/*  _configPath
 			copie du path du fichier de config pour eviter de le passer en parametre aux fonctions
 		*/
-		t_clusterDefault	_clusterDefault;
+
+		t_clusterDefault
+			_clusterDefault;
 		/*  _clusterDefault
 			structure qui contient tous les parametres du cluster par defaut
 			elle permetra de pouvoir lancer un cluster classique http
 			ou bien plusieur cluster avec des protocoles differents
 		*/
-		
-		std::map<t_protocolData, std::vector<std::string>>
+
+		std::map<std::string, std::vector< std::string> >
 			& _configData;
-		/*  _clusterData
+		/*  _configData
+			cette map est remplie dans la fonction "parse file"
 			key : nom du protocole
-			val : ensemble des tokens de description des serveurs SANS LES PARAMS DU CLUSTER
+			val : vector qui contient tous les parametres des serveurs
 
 			cette structure de donnee est le resultat final du parsing des blocs protocole (http / https)
 			elle sera donnee en argument a la fonction d'initialisation des serveurs
 		*/
 
-		std::map<std::string, std::vector<AServer *>>
+		std::map<std::string, std::vector<AServer *> >
 			_service_servers;
 		/*  _service_servers
 
@@ -110,13 +104,18 @@ class Cluster
 		// METHODS //
 		std::map<std::string, std::map<std::string, std::string>>
 			& parseFile(void);
+
 		std::vector<std::string>
 			& getFile(void);
+
 		std::map<std::string, std::map<std::string, std::string>>
 			& getAllProto(const std::vector<std::string> & allFile);
 
+		void	
+			setCluster(const std::vector<std::string> &, \
+						std::map<std::string, std::map<std::string, std::string>> &);
 		void
-			setCluster(const std::vector<std::string> &);
+			majClusterDefault(const std::vector<std::string> &);
 		/*
 			infos necessaires avant initialisation des serveurs :
 				- le nb de protocoles differents (HTTP HTTPS IRC etc)
