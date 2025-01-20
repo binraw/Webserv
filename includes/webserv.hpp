@@ -30,7 +30,7 @@
 /* -------------------------------------- */
 
 # define DFLT_TIMEOUT		65
+# define DFLT_UPLOAD		"./uploads"
 # define DFLT_WORKCONNEX	1024
-
 
 #endif

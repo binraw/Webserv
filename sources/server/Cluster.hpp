@@ -20,14 +20,19 @@ class ClusterException;
 */
 struct s_clusterDefault
 {
-	std::vector<std::string>	protocols_handle_by_webserv;
+	std::vector<std::string>
+		protocols_handle_by_webserv;
 	std::vector<int>			nb_virtual_server;
 		
 	s_clusterDefault()
-	  : protocols_handle_by_webserv(1, "http"),
+	  : protocols_handle_by_webserv(1, {"http"}),
 		nb_virtual_server(1, 1)
 	{   }
 };
+	// init d'une map<>
+	// std::map<std::string, std::vector<std::string> >
+	// 	protocols_handle_by_webserv;
+	// protocols_handle_by_webserv({{"http", {"GET", "POST", "PUT"}}})
 
 /*
 	contient les 
@@ -79,12 +84,18 @@ class Cluster
 			ou bien plusieur cluster avec des protocoles differents
 		*/
 
-		std::map<std::string, std::vector< std::string> >
+		std::map<std::string, std::map<std::string, std::vector<std::string> > >
 			& _configData;
 		/*  _configData
 			cette map est remplie dans la fonction "parse file"
 			key : nom du protocole
 			val : vector qui contient tous les parametres des serveurs
+
+			schema de la structure attendue
+			_service_servers {
+				{"http", {"{", "server", "{", "}", "}"}},
+				{"https", {AServer1*, AServer2*, AServer3*}}
+			}
 
 			cette structure de donnee est le resultat final du parsing des blocs protocole (http / https)
 			elle sera donnee en argument a la fonction d'initialisation des serveurs

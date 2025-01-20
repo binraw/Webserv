@@ -166,24 +166,7 @@ void
 	*/
 
 	// mettre a jour les infos des clusters
-	if (clusterParams.empty() == false) {
-		majClusterDefault(clusterParams);
-	}
 }
-/*----------------------------------------------------------------------------*/
-
-void
-	checkParams(const std::vector<std::string> & current)
-{
-
-}
-
-void
-	Cluster::majClusterDefault(const std::vector<std::string> & clusterParams)
-{
-
-}
-
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
