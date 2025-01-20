@@ -49,7 +49,11 @@
     "stdexcept": "cpp",
     "streambuf": "cpp",
     "typeinfo": "cpp",
-    "colors": "cpp"
+    "colors": "cpp",
+    "optional": "cpp",
+    "ranges": "cpp",
+    "span": "cpp",
+    "cinttypes": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
