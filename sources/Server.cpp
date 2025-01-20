@@ -1,4 +1,4 @@
-#include "../headers/Server.hpp"
+#include "Server.hpp"
 
 
 Server::Server(const std::map<std::string, std::string> copy_map)

@@ -24,14 +24,14 @@
 
 
 
-#include "../headers/Server.hpp"
-#include "../headers/Cluster.hpp"
+#include "Server.hpp"
+#include "Cluster.hpp"
 
 int main(void)
 {
-    Cluster one("./config/server.conf");
+    Cluster one("./config/default.conf");
 
-    one.initAllServer();
-    one.displayServersConfig();
+    // one.initAllServer();
+    // one.displayServersConfig();
     return 0;
 }

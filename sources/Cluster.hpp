@@ -3,11 +3,14 @@
 
 #include "Server.hpp"
 #include <vector>
+#include "UtilParsing.hpp"
 
 class Cluster
 {
 private:
-    std::vector<Server> _servers;
+    std::string _configPath;
+    std::map<std::string, std::vector<std::string> > _serverParams;
+    std::vector<std::string> _allConf;
 public:
     Cluster();
     ~Cluster();
