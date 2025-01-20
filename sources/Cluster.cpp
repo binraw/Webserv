@@ -28,8 +28,76 @@ Cluster::Cluster(const std::string &filename)
         if (line.empty() || line[0] == '#') continue;
         _allConf = UtilParsing::split(line, std::string(" "));
     }
-
+    initDefaultConf();
     inputFile.close();
+}
+
+// Ici je recolte les servers que je mets dans une map pour l'instand un seul est enregistrer 
+
+void Cluster::initDefaultConf()
+{
+    std::vector<std::string>::iterator it;
+    int i = 0;
+    int number_servers = 0;
+    for(it = _allConf.begin(); it != _allConf.end(); it++)
+    {
+        if (*it == std::string("{"))
+            i++;
+        if (i == 2 && *it == std::string("{")) // il faut que ca rentre a chaque nouveau server
+        {
+            std::cout << " RENTRE " << std::endl;
+            //faut utiliser pair pour creer des paire comme ca avec des maps tres style
+            std::pair<int, std::vector<std::string> > serverPair(number_servers, initServer(it));
+            _vectServers.insert(serverPair);
+            _defaultConf.pop_back();
+            number_servers++;
+        }
+        if (*it == std::string("}"))
+            i--;
+        if (i <= 1)
+            _defaultConf.push_back(*it);
+    }
+    //   for (size_t y = 0; y < _defaultConf.size(); y++) {
+    //     std::cout << _defaultConf[y] << std::endl;
+    // }
+
+  for (std::map<int, std::vector<std::string> >::const_iterator tic = _vectServers.begin(); tic != _vectServers.end(); ++tic) {
+        std::cout << "Server Number: " << tic->first << "\nConfigurations:\n";
+        
+        // Itération sur le vecteur de configurations
+        for (std::vector<std::string>::const_iterator configIt = tic->second.begin(); configIt != tic->second.end(); ++configIt) {
+            std::cout << "  - " << *configIt << "\n"; // Affiche chaque configuration
+        }
+    }
+
+}
+
+std::vector<std::string> Cluster::initServer(std::vector<std::string>::iterator &cursor)
+{
+    std::vector<std::string> server;
+    std::vector<std::string>::iterator it;
+    cursor--;
+    server.push_back(*cursor);
+    int i = 0;
+    int y = 0;
+    for(it = cursor;it != _allConf.end(); it++)
+    {
+        if (*it == std::string("{"))
+            i++;
+        if (*it == std::string("}"))
+            i--;
+        if (i > 0)
+            server.push_back(*it);
+        if (i == 0 && y > 0)
+            break;
+        y++;
+    }
+    // std::cout << "Value du serveur :" << std::endl;
+    // for (size_t y = 0; y < server.size(); y++) 
+    // {
+    //     std::cout << server[y] << std::endl;
+    // }
+    return server;
 }
 
 // Cluster::Cluster(const std::string &filename)
