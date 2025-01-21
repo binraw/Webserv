@@ -75,8 +75,8 @@ void Server::createMapDefaultConf() // mettre une erreur si different de 9 en si
               ++it;
             }
         }
-        for (std::map<std::string, std::string>::iterator tic = _mapConfDefault.begin(); tic != _mapConfDefault.end(); ++tic)
-        {
-            std::cout << tic->first << " " << tic->second << std::endl;
-        }
+        // for (std::map<std::string, std::string>::iterator tic = _mapConfDefault.begin(); tic != _mapConfDefault.end(); ++tic)
+        // {
+        //     std::cout << tic->first << " " << tic->second << std::endl;
+        // }
 }

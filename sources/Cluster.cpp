@@ -40,12 +40,12 @@ void Cluster::initDefaultConf()
     {
         if (*it == std::string("{"))
             i++;
-        if (*it == std::string("server")) // il faut que ca rentre a chaque nouveau server
+        if (*it == std::string("server"))
         {
             //faut utiliser pair pour creer des paire comme ca avec des maps tres style
             std::pair<int, std::vector<std::string> > serverPair(number_servers, addValuesServers(it));
             _vectServers.insert(serverPair);
-            _defaultConf.pop_back();
+            // _defaultConf.pop_back();  j enleve je sais pas si je casse tout
             number_servers++;
         }
         if (*it == std::string("}"))
@@ -53,7 +53,11 @@ void Cluster::initDefaultConf()
         if (i <= 1)
             _defaultConf.push_back(*it);
     }
-
+    cleanClusterConfDefault();
+    // for (std::vector<std::string>::iterator t = _defaultConf.begin(); t != _defaultConf.end(); t++)
+    // {
+    //     std::cout << *t << std::endl;
+    // }
 
 //   for (std::map<int, std::vector<std::string> >::const_iterator tic = _vectServers.begin(); tic != _vectServers.end(); ++tic) {
 //         std::cout << "Server Number: " << tic->first << "\nConfigurations:\n";
@@ -101,3 +105,35 @@ void Cluster::initAllServer()
     }
 }
 
+void Cluster::cleanClusterConfDefault()
+{
+    _defaultConf = UtilParsing::cleanVector(_defaultConf);
+    for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); )
+    {
+        if (*it == "{" || *it == "}" || *it == "http" || *it == "server") 
+        { 
+            it = _defaultConf.erase(it);
+        } else 
+            ++it;
+    }
+}
+
+
+// reussir a faire une map organiser des valeurs default de cluster 
+// la trouver un algo pour check quand il y a un ; et si celui d'avant et encore avant en a 
+// genre si jai pas jai pas et apres jai alors donner la key au premier 
+// et creer une string composer des autres 
+// doit etre modulable si y a 5 argument avec les methodes par exemple par la suite
+
+// void Cluster::createMapDefaultConf()
+// {
+//     // std::string key;
+//     // std::string params;
+//     // size_t i = 0;
+//     // for (std::vector<std::string>::iterator it = _defaultConf; it != _defaultConf.end(); )
+//     // {
+//     //     if (i == 0 && !(*it.find(";"))) // pour la premiere key
+
+
+//     // }
+// }
