@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
+#    By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/18 19:01:54 by florian          ###   ########.fr        #
+#    Updated: 2025/01/21 13:16:16 by fberthou         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -45,7 +45,7 @@ MODE		?= release
 ifeq ($(MODE), debug)
 	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98 -DTEST
 else
-	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
+	COMPFLAGS = -Wall -Wextra -Werror -std=c++98
 endif
 
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
