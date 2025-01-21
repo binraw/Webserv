@@ -48,18 +48,12 @@ int main (int argc, char **argv)
     {
         Cluster cluster(configPath);
         return 0;
-        
-        
-
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
     
-
-
-
     /*
         * int socket(int __domain, int __type, int __protocol)
             * cree un nouveau socket de communication.

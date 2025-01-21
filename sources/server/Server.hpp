@@ -1,49 +1,67 @@
+
 #ifndef SERVER_HPP
-# define SERVER_HPP
+#define SERVER_HPP
 
-#include <netdb.h>
 #include <string>
-#include "AServer.hpp"
-#include "AServer.hpp"
+#include <vector>
+#include <map>
 
-struct s_serverDefault
+typedef struct s_serverDefault
 {
-	std::vector<std::string>    server_name;
-	std::vector<int>            listen;
-    int                         clientBodySize;
-    int                         keepAliveTimeout;
-    std::string                 uploadPath;
+	std::map<std::string, std::vecor<std::string> >
+		defaultParams;
 		
 	s_serverDefault()
-	  : server_name(1, {"localhost"}),
-		listen(1, 8080),
-        clientBodySize(200),
-        keepAliveTimeout(65),
-        uploadPath(DFLT_UPLOAD)
-	{   }
-};
-	// init d'une map<>
-	// std::map<std::string, std::vector<std::string> >
-	// 	protocols_handle_by_webserv;
-	// protocols_handle_by_webserv({{"http", {"GET", "POST", "PUT"}}})
+	{
+		defaultParams =
+		{
+			{ "listen", { "8000" } },
+			{ "server_name", { "localhost" } },
+			{ "indexFiles", { "index.html" } },
+			{ "defaultErrorPage", {"/error_pages"} },
+			{ "defaultRoot", { "./websites" } }
+			// a completer au fil du developpement
+		};
+	}
+}	t_serverDefault;
 
-typedef struct s_serverDefault t_serverDefault;
+typedef struct s_location {
+    std::string path;                     // Chemin (ex: "/")
+    std::string root;                     // Racine des fichiers (ex: "./html")
+    std::vector<std::string> indexFiles;  // Fichiers d’index (ex: ["index.html", "index.htm"])
+    bool autoindex;                       // Activer/désactiver l’autoindex
+    std::map<int, std::string> errorPages; // Pages d’erreur spécifiques (404 -> "/404.html")
 
-class Server : virtual public AServer
-{
-    public:
-        Server();
-        ~Server();
-    
-    private:
-        protoent    * _protocolInfo;
-        protoent    * setProtcolInfo(const std::string & proto)
-                    throw(ClusterException); // appele dans constructeur ?
+    Location()
+      :	path("/")
+	  	root("./websites"),
+		indexFiles( { "index.html" } ),
+		autoindex(false),
+		errorPages( { "40x", { "error_pages/40x/" } } )
+	{	} // Initialisation par défaut
+}	t_location;
 
 
-        std::string & _name;
-        int         * _sockFd;
+class Server {
+	public:
+		Server();
+		~Server();
 
+		void		setListenPorts(const std::vector<int> & ports);
+		void		setServerNames(const std::vector<std::string> & names);
+		t_location	& addLocation(t_location & ref);
+
+		friend std::ostream &operator<<(std::ostream &, const Server &);
+
+	private:
+		t_serverDefault				_serverDefault;
+		std::vector<int>			_listenPorts;
+		std::vector<std::string>	_serverNames;
+		std::vector<t_location>		_locations;
+		
+		// Sockets associés au serveur
+        std::set<int>	_socketFDs;
 };
 
 #endif
+

@@ -12,142 +12,55 @@
 
 #include <netdb.h>
 
-class AServer;
-class ClusterException;
-
-/*
-	structure des parametres par default de l'ensemble des clusters
-*/
-struct s_clusterDefault
+typedef struct s_clusterDefault
 {
-	std::vector<std::string>
-		protocols_handle_by_webserv;
-	std::vector<int>			nb_virtual_server;
+	std::map<std::string, std::vecor<std::string> >
+		defaultParams;
 		
 	s_clusterDefault()
-	  : protocols_handle_by_webserv(1, {"http"}),
-		nb_virtual_server(1, 1)
-	{   }
-};
-	// init d'une map<>
-	// std::map<std::string, std::vector<std::string> >
-	// 	protocols_handle_by_webserv;
-	// protocols_handle_by_webserv({{"http", {"GET", "POST", "PUT"}}})
-
-/*
-	contient les 
-*/
-struct s_protocolData {
-	protoent					* protocolInfo;
-	std::vector<std::string>	include;
-	std::string					default_type;
-	int							keepalive_timeout;
-	int							worker_connexion;
-
-	s_protocolData()
-	  : protocolInfo(getprotobyname("tcp")),
-	  	include( { PATH_MIME } ),
-		default_type( { "application/octet-stream" } ),
-		keepalive_timeout( DFLT_TIMEOUT ),
-		worker_connexion( DFLT_WORKCONNEX )
-	{   }
-};
-
-typedef struct s_clusterDefault t_clusterDefault;
-typedef struct s_protocolData   t_protocolData;
+	{
+		defaultParams =
+		{
+			{ "includes", { "./includes/mime.types" } },
+			{ "default_type", { "application/octet-stream" } },
+			{ "listen", { "8000" } }
+			// a completer au fil du developpement
+		};
+	}
+}	t_clusterDefault;
 
 class Cluster
 {
 	public:
-		Cluster(const std::string & file) throw(ClusterException);
+		Cluster(const std::string & filePath);
 		Cluster(const Cluster &);
-		virtual ~Cluster();
+		~Cluster();
 		
-		Cluster &				operator=(const Cluster &) const;
+		Cluster &				operator=(const Cluster &);
 		friend std::ostream &	operator<<(std::ostream &, const Cluster &);
-	protected:
-
 
 	private:
 		// MEMBERS //
-		const std::string
-			& _configPath;
-		/*  _configPath
-			copie du path du fichier de config pour eviter de le passer en parametre aux fonctions
-		*/
+		const std::string	& _filePath;
+		// copie du path du fichier de config pour eviter de le passer en parametre aux fonctions
 
-		t_clusterDefault
-			_clusterDefault;
-		/*  _clusterDefault
-			structure qui contient tous les parametres du cluster par defaut
-			elle permetra de pouvoir lancer un cluster classique http
-			ou bien plusieur cluster avec des protocoles differents
-		*/
+		t_clusterDefault	_clusterDefault;
+		// structure qui contient tous les parametres du cluster par defaut
 
-		std::map<std::string, std::map<std::string, std::vector<std::string> > >
-			& _configData;
-		/*  _configData
-			cette map est remplie dans la fonction "parse file"
-			key : nom du protocole
-			val : vector qui contient tous les parametres des serveurs
+		protoent	* protoentry;
+		// structure initialisee par la fonction getprotobyname("tcp");
 
-			schema de la structure attendue
-			_service_servers {
-				{"http", {"{", "server", "{", "}", "}"}},
-				{"https", {AServer1*, AServer2*, AServer3*}}
-			}
-
-			cette structure de donnee est le resultat final du parsing des blocs protocole (http / https)
-			elle sera donnee en argument a la fonction d'initialisation des serveurs
-		*/
-
-		std::map<std::string, std::vector<AServer *> >
-			_service_servers;
+		std::map<int, std::vector<Server> >	servers;
 		/*  _service_servers
-
+			structure finale qui contient tous les serveurs
 			schema de la structure attendue
 			_service_servers {
-				{"http", {AServer1*, AServer2*, AServer3*}},
-				{"https", {AServer1*, AServer2*, AServer3*}}
+				{1, {AServer1*, AServer2*, AServer3*}},
+				{2, {AServer1*, AServer2*, AServer3*}}
 			}
 		*/
 
 		// METHODS //
-		std::map<std::string, std::map<std::string, std::string>>
-			& parseFile(void);
-
-		std::vector<std::string>
-			& getFile(void);
-
-		std::map<std::string, std::map<std::string, std::string>>
-			& getAllProto(const std::vector<std::string> & allFile);
-
-		void	
-			setCluster(const std::vector<std::string> &, \
-						std::map<std::string, std::map<std::string, std::string>> &);
-		void
-			majClusterDefault(const std::vector<std::string> &);
-		/*
-			infos necessaires avant initialisation des serveurs :
-				- le nb de protocoles differents (HTTP HTTPS IRC etc)
-				- le nb de serveur virtuelles a initialiser par protocoles
-
-			il me faut une liste de parametres par protocole
-				pour modifier les parametres static du tableau de params de Cluster
-				un tableau de params par protocoles (si plusieurs sont pris en charge, renvoie une erreur si le protocole n'est pas pris en charge (ex HTTPS))
-
-			
-		*/
-
-		// EXCEPT CLASS //
-		class ClusterException : std::exception
-		{
-			public:
-				ClusterException() {};
-				void			openfile(const std::string & filepath) const throw();
-				const char *	what() const throw();
-
-		};
 };
 
 #endif
