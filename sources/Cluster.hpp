@@ -8,7 +8,8 @@
 typedef struct s_DefaultParams
 {
     std::map<std::string, std::vector<std::string> > params;
-   s_DefaultParams() {
+    s_DefaultParams() 
+    {
         params["includes"].push_back("./error_pages ./mime.types;");
         params["default_type"].push_back("application/octet-stream;");
         params["keepalive_timeout"].push_back("65;");
