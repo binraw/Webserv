@@ -1,10 +1,6 @@
 #include "Cluster.hpp"
 
-// std::map<std::string, std::string *> Cluster::_defaultTab =
-// {
-//     _defaultTab["include"] = "site1", "site2";
-//     _defaultTab[""]
-// }
+
 Cluster::Cluster()
 {
 }
@@ -29,6 +25,7 @@ Cluster::Cluster(const std::string &filename)
         _allConf = UtilParsing::split(line, std::string(" "));
     }
     initDefaultConf();
+    initAllServer();
     inputFile.close();
 }
 
@@ -43,11 +40,11 @@ void Cluster::initDefaultConf()
     {
         if (*it == std::string("{"))
             i++;
-        if (i == 2 && *it == std::string("{")) // il faut que ca rentre a chaque nouveau server
+        if (*it == std::string("server")) // il faut que ca rentre a chaque nouveau server
         {
             std::cout << " RENTRE " << std::endl;
             //faut utiliser pair pour creer des paire comme ca avec des maps tres style
-            std::pair<int, std::vector<std::string> > serverPair(number_servers, initServer(it));
+            std::pair<int, std::vector<std::string> > serverPair(number_servers, addValuesServers(it));
             _vectServers.insert(serverPair);
             _defaultConf.pop_back();
             number_servers++;
@@ -72,11 +69,10 @@ void Cluster::initDefaultConf()
 
 }
 
-std::vector<std::string> Cluster::initServer(std::vector<std::string>::iterator &cursor)
+std::vector<std::string> Cluster::addValuesServers(std::vector<std::string>::iterator &cursor)
 {
     std::vector<std::string> server;
     std::vector<std::string>::iterator it;
-    cursor--;
     server.push_back(*cursor);
     int i = 0;
     int y = 0;
@@ -99,6 +95,15 @@ std::vector<std::string> Cluster::initServer(std::vector<std::string>::iterator 
     // }
     return server;
 }
+
+void Cluster::initAllServer()
+{
+    for(std::map<int, std::vector<std::string> >::const_iterator it = _vectServers.begin(); it != _vectServers.end(); it++)
+    {
+       _servers.push_back(Server(it->second));
+    }
+}
+
 
 // Cluster::Cluster(const std::string &filename)
 // {

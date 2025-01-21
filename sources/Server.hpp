@@ -10,25 +10,20 @@
 #include <vector>
 #include <unistd.h>
 #include "Socket.hpp"
+#include "UtilParsing.hpp"
 
 
 class Server
 {
     private:
-        std::map<std::string, std::string> _paramsConfig;
-        Socket _socket;
+        std::vector<std::string> _basicData;
+        std::vector<std::string> _defaultConfServer;
 
     public:
-        Server(const std::map<std::string, std::string> copy_map);
+        void initDefaultConfServ();
+        Server(std::vector<std::string> data);
         ~Server();
-        int init_data();
-        std::map<std::string, std::string> parseConf(const std::string& filename);
-        void displayConfig();
-        int controlMap();
-        class ErrorConfigParam: public std::exception
-        {
-            virtual const char* what() const throw();
-        };
+
 };
 
 #endif

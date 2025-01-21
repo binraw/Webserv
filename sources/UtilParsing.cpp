@@ -37,3 +37,13 @@ std::vector<std::string> UtilParsing::split(const std::string & line, const std:
     return result; // Now returning by value
 }
 
+std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec) {
+    for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); ) {
+        if (*it == "{" || *it == "}") 
+        { 
+            it = vec.erase(it);
+        } else 
+            ++it;
+    }
+    return vec;
+}
