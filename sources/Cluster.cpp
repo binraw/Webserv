@@ -216,32 +216,33 @@ void Cluster::createMapDefaultConf()
 {
     std::string key;
     std::string valuestr;
+    std::string keystr;
     std::vector<std::string> params;
 
     for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); ++it)
     {
-        // Vérifiez si l'élément actuel contient un point-virgule
         valuestr = *it;
-        if (it == _defaultConf.begin() || valuestr.find(';') == std::string::npos)
+        if (it != _defaultConf.begin())
+        {
+            std::vector<std::string>::iterator prev = it - 1;
+            keystr = *prev;
+            if (valuestr.find(';') == std::string::npos && keystr.find(';') != std::string::npos)
+                key = *it;
+        }
+        else if (it == _defaultConf.begin() || valuestr.find(';') == std::string::npos)
         {
             key = *it;
-
-            // std::pair<std::string, std::vector<std::string> > serverPair(key, params);
-            // _mapDefaultParamsCluster.insert(serverPair);
-            // params.clear();
         }
-        // if (it->find(";") != std::string::npos)
-        // {
-            // if (it != _defaultConf.begin()) 
-            // {
-            //     key = *(it - 1);
-            // }
         for (std::vector<std::string>::iterator tic = it + 1; tic != _defaultConf.end(); tic++)
         {
             valuestr = *(tic - 1);
+            keystr = *tic;
+            // if (valuestr.find(';') != std::string::npos && keystr.find(';') != std::string::npos)
+            //     key = valuestr;
+            // if (valuestr.find(';') == std::string::npos && keystr.find(';') != std::string::npos)
+            //     key = keystr;
             if (tic->find(";") != std::string::npos)
             {
-                // std::cout << "Adding parameter: " << *tic << std::endl;
                 params.push_back(*tic);
             }
             else if (valuestr.find(";") == std::string::npos)
@@ -254,7 +255,6 @@ void Cluster::createMapDefaultConf()
             std::pair<std::string, std::vector<std::string> > serverPair(key, params);
             _mapDefaultParamsCluster.insert(serverPair);
             params.clear();
-        // }
     }
 }
 
@@ -266,8 +266,8 @@ void Cluster::printMapDefaultParamsCluster() const
          it != _mapDefaultParamsCluster.end(); 
          ++it)
     {
-        const std::string& key = it->first;  // Clé
-        const std::vector<std::string>& params = it->second;  // Valeurs (vecteur de chaînes)
+        const std::string& key = it->first;
+        const std::vector<std::string>& params = it->second;
 
         std::cout << "Key: " << key << "\nParams: ";
 
@@ -275,7 +275,7 @@ void Cluster::printMapDefaultParamsCluster() const
              paramIt != params.end(); 
              ++paramIt)
         {
-            std::cout << *paramIt << " ";  // Affichage des paramètres
+            std::cout << *paramIt << " ";
         }
 
         std::cout << std::endl;
