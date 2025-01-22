@@ -11,7 +11,7 @@ Server::Server(/* const std::vector<std::string> & data */)
 	/*
 		trouver le champ "listen" dans la map params
 		si il n'est pas trouve il cree le champ listen et lui assigne une valeur par defaut
-	*/	
+	*/
 	if (!UtilParsing::isKeyExist<std::string, std::set<std::string> >(_params.params, "listen") \
 		|| !UtilParsing::isvalueExist<std::string, std::string>(_params.params, "listen", DFLT_LISTENPORT))
 	{
