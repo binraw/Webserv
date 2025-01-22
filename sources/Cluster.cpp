@@ -25,6 +25,8 @@ Cluster::Cluster(const std::string &filename)
         _allConf = UtilParsing::split(line, std::string(" "));
     }
     initDefaultConf();
+    createMapDefaultConf();
+    printMapDefaultParamsCluster();
     initAllServer();
     inputFile.close();
 }
@@ -127,13 +129,155 @@ void Cluster::cleanClusterConfDefault()
 
 // void Cluster::createMapDefaultConf()
 // {
-//     // std::string key;
-//     // std::string params;
-//     // size_t i = 0;
-//     // for (std::vector<std::string>::iterator it = _defaultConf; it != _defaultConf.end(); )
-//     // {
-//     //     if (i == 0 && !(*it.find(";"))) // pour la premiere key
-
-
-//     // }
+//     std::string key;
+//     std::vector<std::string>::iterator tic;
+//     size_t i = 0;
+//     std::vector<std::string> params;
+    
+//     for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); )
+//     {
+//         if (it == _defaultConf.begin())
+//         {
+//             key = *it;
+//             it++;
+//         }
+//         tic = it--;
+//         if (*tic.find(";"))
+//         {
+//             key = *tic;
+//             if (params)
+//                 std::pair<std::string,std::vector<std::string> > serverPair(key, *params);
+//                 _mapDefaultParamsCluster.insert(serverPair);
+//         }
+//         else
+//         {
+//             params.push_back(*it);
+//         }
+//         it++;
+//     }
 // }
+
+
+
+// void Cluster::createMapDefaultConf()
+// {
+//     std::string key;
+//     std::vector<std::string> params;
+
+//     for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); ++it)
+//     {
+//         // Si c'est le premier mot, le définir comme clé
+//         if (it == _defaultConf.begin())
+//         {
+//             key = *it; // Initialiser la clé
+//             continue;
+//         }
+
+//         // Si l'élément contient un point-virgule
+//         if (it->find(";") != std::string::npos)
+//         {
+//             // Ajoutez les paramètres accumulés à la map
+//             if (!params.empty())
+//             {
+//                 std::pair<std::string, std::vector<std::string> > serverPair(key, params);
+//                 _mapDefaultParamsCluster.insert(serverPair);
+//                 params.clear(); // Réinitialiser les paramètres pour le prochain groupe
+//             }
+
+//             // Définir la clé comme le mot juste avant le point-virgule
+//             key = it->substr(0, it->find(";")); // Obtenir le mot avant le point-virgule
+//             key.erase(0, key.find_first_not_of(" ")); // Supprimer les espaces au début
+
+//             // Récupérer les paramètres après le point-virgule
+//             std::string remainingParams = it->substr(it->find(";") + 1);
+//             std::istringstream iss(remainingParams);
+//             std::string param;
+
+//             // Ajouter les paramètres restants
+//             while (iss >> param) {
+//                 params.push_back(param);
+//             }
+//         }
+//         else
+//         {
+//             params.push_back(*it); // Ajouter tous les mots comme paramètres
+//         }
+//     }
+
+//     // Gérer le dernier groupe de paramètres si nécessaire
+//     if (!params.empty() || !key.empty())
+//     {
+//         std::pair<std::string, std::vector<std::string> > serverPair(key, params);
+//         _mapDefaultParamsCluster.insert(serverPair);
+//     }
+// }
+
+void Cluster::createMapDefaultConf()
+{
+    std::string key;
+    std::string valuestr;
+    std::vector<std::string> params;
+
+    for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); ++it)
+    {
+        // Vérifiez si l'élément actuel contient un point-virgule
+        valuestr = *it;
+        if (it == _defaultConf.begin() || valuestr.find(';') == std::string::npos)
+        {
+            key = *it;
+
+            // std::pair<std::string, std::vector<std::string> > serverPair(key, params);
+            // _mapDefaultParamsCluster.insert(serverPair);
+            // params.clear();
+        }
+        // if (it->find(";") != std::string::npos)
+        // {
+            // if (it != _defaultConf.begin()) 
+            // {
+            //     key = *(it - 1);
+            // }
+        for (std::vector<std::string>::iterator tic = it + 1; tic != _defaultConf.end(); tic++)
+        {
+            valuestr = *(tic - 1);
+            if (tic->find(";") != std::string::npos)
+            {
+                // std::cout << "Adding parameter: " << *tic << std::endl;
+                params.push_back(*tic);
+            }
+            else if (valuestr.find(";") == std::string::npos)
+            {
+                params.push_back(*tic);
+            }
+            else
+                break;
+        }
+            std::pair<std::string, std::vector<std::string> > serverPair(key, params);
+            _mapDefaultParamsCluster.insert(serverPair);
+            params.clear();
+        // }
+    }
+}
+
+
+
+void Cluster::printMapDefaultParamsCluster() const
+{
+    for (std::map<std::string, std::vector<std::string> >::const_iterator it = _mapDefaultParamsCluster.begin(); 
+         it != _mapDefaultParamsCluster.end(); 
+         ++it)
+    {
+        const std::string& key = it->first;  // Clé
+        const std::vector<std::string>& params = it->second;  // Valeurs (vecteur de chaînes)
+
+        std::cout << "Key: " << key << "\nParams: ";
+
+        for (std::vector<std::string>::const_iterator paramIt = params.begin(); 
+             paramIt != params.end(); 
+             ++paramIt)
+        {
+            std::cout << *paramIt << " ";  // Affichage des paramètres
+        }
+
+        std::cout << std::endl;
+    }
+}

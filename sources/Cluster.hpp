@@ -28,7 +28,7 @@ private:
     std::map<int, std::vector<std::string> > _vectServers; // utilitaire sous forme de map pour activer les servers
     std::vector<Server> _servers; // ensemble des servers present dans le cluster
     t_DefaultParams defaultParams; // default conf (createur)
-    std::map<std::string, std::string> _mapDefaultParamsCluster; // futur map default conf
+    std::map<std::string, std::vector<std::string> > _mapDefaultParamsCluster; // futur map default conf
 
 
 public:
@@ -41,6 +41,7 @@ public:
     void createMapDefaultConf(); // ici la fonction que jessaye de faire pour la map avec key + value de la defaultconf
     void initAllServer(); // init tout les serveurs et les crees 
     static std::map<std::string, std::string *> _defaultTab;
+    void printMapDefaultParamsCluster() const;
 };
 
 
