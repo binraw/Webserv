@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/florian/42/webserv_rob/sources/parsing",
-      "program": "/home/florian/42/webserv_rob/sources/parsing/build/Debug/outDebug",
+      "cwd": "/home/fberthou/42common_core/webrob/sources",
+      "program": "/home/fberthou/42common_core/webrob/sources/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

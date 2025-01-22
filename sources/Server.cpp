@@ -1,16 +1,30 @@
 #include "Server.hpp"
 
-Server::Server(std::vector<std::string> data)
+Server::Server(const std::vector<std::string> & data)
+  : _protoName(getprotobyname("tcp"))
 {
-    _basicData = data;
-    initDefaultConfServ();
+    // ouvrir tous les sockets necessaire (autant qu'il y a de port d'ecoute)
+    
+    std::set<int>	_ipv4FdSet;
+	for (auto &it = )
+    if (_ipv4FdSet.find(-1) != _ipv4FdSet.end()) {
+        std::cerr << "" << std::endl;
+    }
+
 
 }
+
+Server::Server(const Server & ref)
+{   }
 
 Server::~Server()
-{
+{   }
 
-}
+Server  & Server::operator=(const Server & ref)
+{   }
+
+std::ostream	& operator<<(std::ostream &, const Server &)
+{   }
 
 void Server::initDefaultConfServ()
 {
@@ -40,6 +54,7 @@ void Server::initDefaultConfServ()
     // }
 
 }
+
 std::vector<std::string> Server::addValuesRoads(std::vector<std::string>::iterator &cursor)
 {
     std::vector<std::string> road;
@@ -62,6 +77,7 @@ std::vector<std::string> Server::addValuesRoads(std::vector<std::string>::iterat
     // }
     return road;
 }
+
 void Server::createMapDefaultConf() // mettre une erreur si different de 9 en size en comptant 'server'
 {
         for (std::vector<std::string>::iterator it = _defaultConfServer.begin() + 1; it != _defaultConfServer.end(); )
