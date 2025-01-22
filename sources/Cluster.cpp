@@ -101,7 +101,7 @@ void Cluster::initAllServer()
 {
     for(std::map<int, std::vector<std::string> >::const_iterator it = _vectServers.begin(); it != _vectServers.end(); it++)
     {
-       _servers.push_back(Server(it->second));
+       _servers.push_back(Server(/* it->second */));
     }
 }
 

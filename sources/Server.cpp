@@ -1,16 +1,53 @@
 #include "Server.hpp"
 
-Server::Server(const std::vector<std::string> & data)
+Server::Server(/* const std::vector<std::string> & data */)
   : _protoName(getprotobyname("tcp"))
 {
     // ouvrir tous les sockets necessaire (autant qu'il y a de port d'ecoute)
     
-    std::set<int>	_ipv4FdSet;
-	for (auto &it = )
-    if (_ipv4FdSet.find(-1) != _ipv4FdSet.end()) {
-        std::cerr << "" << std::endl;
-    }
+	/*
+		trouver le champ "listen" dans la map params
+		si il n'est pas trouve il cree le champ listen et lui assigne une valeur par defaut
+	*/	
+	std::map<std::string, std::vector<std::string> >::iterator
+		it = _params.params.find("listen");
+	if (it == _params.params.end())
+	{
+		std::string					key = "listen";
+		std::vector<std::string>	value = { DFLT_LISTENPORT };
+		_params.params.insert(std::make_pair(key, value));
+		std::cout	<< YELLOW << "info :" << std::endl
+					<< "listen field added in _params server with 8000 as default value"
+					<< RESET << std::endl;
+		it = _params.params.find("listen"); // verifier le retour de fonction
+	}
+	
+	/*
+		verifie si il y a bien un port par defaut sinon il l'ajoute
+	*/
+	std::vector<std::string>::iterator
+		itt = it->second.begin();
+	if (itt == it->second.end()) {
+		try {
+			it->second.push_back(DFLT_LISTENPORT);
+		}
+		catch(const std::exception& e) {
+			std::cerr << e.what() << '\n';
+			return ;
+		}
+		std::cout	<< YELLOW << "info :" << std::endl
+					<< "no values ​​assigned to listen field, set by default to port "
+					<< DFLT_LISTENPORT
+					<< RESET << std::endl;
+		itt = it->second.begin(); // verifier le retour de fonction
+	}
 
+	// loop to create all socket
+	for (itt; itt != it->second.end(); itt++)
+	{
+		std::cout << *itt << std::endl;
+		
+	}
 
 }
 

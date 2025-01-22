@@ -11,25 +11,29 @@
 #include <sys/socket.h>
 
 #include "UtilParsing.hpp"
+#include "/home/fberthou/42common_core/webrob/includes/webserv.hpp"
 
-typedef struct s_DefaultParamsServer
+
+typedef struct s_paramsServer
 {
     std::map<std::string, std::vector<std::string> > params;
-    s_DefaultParamsServer() 
+    s_paramsServer() 
     {
-        params["server_name"].push_back("localhost;");
-        params["listen"].push_back("8080;");
-        params["client_max_body_size"].push_back("200M;");
-        params["upload_path"].push_back("./upload;");
+        params["server_name"].push_back("localhost");
+        params["listen"].push_back(DFLT_LISTENPORT);
+        params["listen"].push_back("8001");
+        params["listen"].push_back("8002");
+        params["client_max_body_size"].push_back("200M");
+        params["upload_path"].push_back("./upload");
     }
-}t_DefaultParamsServer;
+} t_paramsServer;
 
 #include <iostream>
 
 class Server
 {
 	public:
-		Server(const std::vector<std::string> & data);
+		Server(/* const std::vector<std::string> & data */);
 		Server(const Server &);
 		~Server();
 		Server & operator=(const Server &);
@@ -46,6 +50,7 @@ class Server
 
         protoent        *_protoName;
         std::set<int>   _ipv4FdSet;
+        t_paramsServer  _params;
 };
 
 std::ostream	& operator<<(std::ostream &, const Server &);
