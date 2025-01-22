@@ -3,6 +3,20 @@
 
 #include "UtilParsing.hpp"
 
+template <typename T, typename Y>
+bool	UtilParsing::isKeyExist(const std::map<T, Y> & map, const T & key) {
+	return map.find(key) != map.end();
+}
+
+template <typename T, typename Y>
+bool	UtilParsing::isvalueExist(const std::map<T, std::set<Y> > & map, const T & key, const Y & value)
+{
+	typename std::map<T, std::set<Y> >::const_iterator	it = map.find(key);
+	if (it == map.end())
+		return false;
+	return true; // HAVE TO CHECK THIS FUNCTION
+}
+
 bool    UtilParsing::isOnlySpace(const std::string & str)
 {
     size_t  i;
@@ -28,16 +42,11 @@ std::vector<std::string> UtilParsing::split(const std::string & line, const std:
         end != std::string::npos ? i = end + 1 : i = end;
     }
 
-
-    // for (size_t i = 0; i < result.size(); i++) {
-    //     std::cout << result[i] << std::endl;
-    // }
-
-
-    return result; // Now returning by value
+    return result;
 }
 
-std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec) {
+std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec)
+{
     for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); ) {
         if (*it == "{" || *it == "}") 
         { 

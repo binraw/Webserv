@@ -1,9 +1,15 @@
 #ifndef CLUSTER_HPP
 # define CLUSTER_HPP
 
+#include "UtilParsing.hpp"
 #include "Server.hpp"
 #include <vector>
-#include "UtilParsing.hpp"
+
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <cstring>
+
 
 typedef struct s_DefaultParams
 {

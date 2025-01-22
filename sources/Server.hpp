@@ -16,19 +16,14 @@
 
 typedef struct s_paramsServer
 {
-    std::map<std::string, std::vector<std::string> > params;
+    std::map<std::string, std::set<std::string> > params;
     s_paramsServer() 
     {
-        params["server_name"].push_back("localhost");
-        params["listen"].push_back(DFLT_LISTENPORT);
-        params["listen"].push_back("8001");
-        params["listen"].push_back("8002");
-        params["client_max_body_size"].push_back("200M");
-        params["upload_path"].push_back("./upload");
+        params["server_name"].insert("localhost");
+        params["client_max_body_size"].insert("200M");
+        params["upload_path"].insert("./upload");
     }
 } t_paramsServer;
-
-#include <iostream>
 
 class Server
 {
