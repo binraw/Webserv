@@ -4,29 +4,14 @@
 
 #include "Server.hpp"
 
-
 Server::Server(/* const std::vector<std::string> & data */)
   : _protoName(getprotobyname("tcp"))
 {
+	std::cout << *this;
 	/*
 		trouver le champ "listen" dans la map params
 		si il n'est pas trouve il cree le champ listen et lui assigne une valeur par defaut
 	*/
-	if (!UtilParsing::isKeyExist<std::string, std::set<std::string> >(_params.params, "listen") \
-		|| !UtilParsing::isvalueExist<std::string, std::string>(_params.params, "listen", DFLT_LISTENPORT))
-	{
-		std::set<std::string> value;
-		value.insert(DFLT_LISTENPORT);
-		_params.params["listen"] = value;
-		std::cout	<< YELLOW << "info : port " DFLT_LISTENPORT << " defined as default listenning port" 
-					<< RESET << std::endl;
-	}
-	
-	for (std::set<std::string>::iterator it = _params.params["listen"].begin(); it != _params.params["listen"].end(); it++)
-	{
-		std::cout << *it << std::endl;
-
-	}
 
 }
 
@@ -39,8 +24,57 @@ Server::~Server()
 Server  & Server::operator=(const Server & ref)
 {   }
 
-std::ostream	& operator<<(std::ostream &, const Server &)
-{   }
+std::ostream	& operator<<(std::ostream & o, const Server & ref)
+{
+	o	<< "_params :" << std::endl
+		<< ref.getParams();
+	return o;
+}
+
+std::ostream	& operator<<(std::ostream & o, const t_paramServer & ref)
+{
+	for (std::map<std::string, std::set<std::string> >::const_iterator it = ref.params.begin(); \
+		it != ref.params.end(); it++)
+	{
+		std::set<std::string>::const_iterator itt = it->second.begin();
+		o	<< "key	: [" << it->first << "]" << std::endl;
+		if (itt != it->second.end()) {
+			o	<< "values	: [" << *itt << "]" << std::endl;
+			for (++itt; itt != it->second.end(); itt++) {
+				o	<< "values	: [" << *itt << "]" << std::endl;
+			}
+		}
+		else
+			o	<< "No value";
+		o << std::endl;
+	}
+	return o;
+}
+
+// GETTERS //
+t_paramServer	& Server::getParams() const
+{ return const_cast<t_paramServer&>(_params); } // conversion d'un non constant en constant pour eviter les betises
+
+// SETTERS //
+void            Server::setParams()
+{
+	// if (!UtilParsing::isKeyExist<std::string, std::set<std::string> >(_params.params, "listen") \
+	// 	|| !UtilParsing::isvalueExist<std::string, std::string>(_params.params, "listen", DFLT_LISTENPORT))
+	// {
+	// 	std::set<std::string> value;
+	// 	value.insert(DFLT_LISTENPORT);
+	// 	_params.params["listen"] = value;
+	// 	std::cout	<< YELLOW << "info : port " DFLT_LISTENPORT << " defined as default listenning port" 
+	// 				<< RESET << std::endl;
+	// }
+	
+	// for (std::set<std::string>::iterator it = _params.params["listen"].begin(); it != _params.params["listen"].end(); it++)
+	// {
+	// 	std::cout << *it << std::endl;
+
+	// }
+
+}
 
 void Server::initDefaultConfServ()
 {

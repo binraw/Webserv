@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 
 #include "UtilParsing.hpp"
-#include "/home/fberthou/42common_core/webrob/includes/webserv.hpp"
+#include "../includes/webserv.hpp"
 
 
 typedef struct s_paramsServer
@@ -23,7 +23,7 @@ typedef struct s_paramsServer
         params["client_max_body_size"].insert("200M");
         params["upload_path"].insert("./upload");
     }
-} t_paramsServer;
+} t_paramServer;
 
 class Server
 {
@@ -37,6 +37,8 @@ class Server
         void						initDefaultConfServ(); // ou tout ce lance + seraparation default et diffente road
         void						createMapDefaultConf(); // map avec default conf des serveurs
 
+        t_paramServer &             getParams() const;
+    
     private:
         std::vector<std::string>					_basicData; // donnee donner par le cluster sur toutes les infos du server
         std::vector<std::string>					_defaultConfServer; // vector avec infos par default du serveur
@@ -44,10 +46,14 @@ class Server
         std::map<std::string, std::string>			_mapConfDefault; // map ranger des valeurs default key + value
 
         protoent        *_protoName;
+        
+        void            setParams();
+        t_paramServer  _params;
+
         std::set<int>   _ipv4FdSet;
-        t_paramsServer  _params;
 };
 
 std::ostream	& operator<<(std::ostream &, const Server &);
+std::ostream	& operator<<(std::ostream &, const t_paramServer &);
 
 #endif
