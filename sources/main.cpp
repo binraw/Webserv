@@ -24,35 +24,35 @@
     includes du fichier
     ne pas supprimer
 */
-#include "webserv.hpp"
-#include "Cluster.hpp"
+// #include "webserv.hpp"
+// #include "Cluster.hpp"
 
-int main (int argc, char **argv)
-{
-    if (argc > 2) {
-        return (PRINTUSAGE, 1);
-    }
+// int main (int argc, char **argv)
+// {
+//     if (argc > 2) {
+//         return (PRINTUSAGE, 1);
+//     }
 
-    std::string configPath;
+//     std::string configPath;
 
-#ifdef TEST
-    configPath = PATH_DEBUGSERV;
-    configPath = PATH_DEFAULTSERV
+// #ifdef TEST
+//     configPath = PATH_DEBUGSERV;
+//     configPath = PATH_DEFAULTSERV
 
-#else
-    argc == 1 ? configPath = PATH_DEFAULTSERV : configPath = argv[1];
-#endif
-    ;
+// #else
+//     argc == 1 ? configPath = PATH_DEFAULTSERV : configPath = argv[1];
+// #endif
+//     ;
 
-    try
-    {
-        Cluster cluster(configPath);
-        return 0;
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
+//     try
+//     {
+//         Cluster cluster(configPath);
+//         return 0;
+//     }
+//     catch(const std::exception& e)
+//     {
+//         std::cerr << e.what() << '\n';
+//     }
     
     /*
         * int socket(int __domain, int __type, int __protocol)
@@ -171,5 +171,18 @@ int main (int argc, char **argv)
 	// close(fd_sock_server);
     // freeaddrinfo(res);
 
-    return (0);
+//     return (0);
+// }
+
+
+#include "Server.hpp"
+#include "Cluster.hpp"
+
+int main(void)
+{
+    Cluster one("./config/default.conf");
+
+    // one.initAllServer();
+    // one.displayServersConfig();
+    return 0;
 }

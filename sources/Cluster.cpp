@@ -1,195 +1,139 @@
-
-
-#include <iostream>
-
-/*============================================================================*/
-						/*### HEADER FILES ###*/
-/*============================================================================*/
-
 #include "Cluster.hpp"
-#include "UtilParsing.hpp"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 
-/*============================================================================*/
-					/*### INITIALISATION STATIC FIELD ###*/
-/*============================================================================*/
-
-/*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
-/*============================================================================*/
-
-Cluster::Cluster(const std::string & file)
-  : _configPath(file),
-	_configData(parseFile())
+Cluster::Cluster()
 {
-	/*
-		a partir de ce moment, _clusterParams doit etre a jour
-
-		_service_server doit etre prepare pour opti la memoire
-		std::map<std::string, std::vector<AServer*>> _service_server
-	*/
-   _service_servers = initService(_clusterData);
 }
-/*----------------------------------------------------------------------------*/
-
-Cluster::Cluster(const Cluster & ref)
-{   }
-/*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-						/*### DESTRUCTORS ###*/
-/*============================================================================*/
 
 Cluster::~Cluster()
-{   }
-/*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-					/*### OVERLOAD OPERATOR ###*/
-/*============================================================================*/
-
-Cluster & Cluster::operator=(const Cluster & ref) const
-{   }
-/*----------------------------------------------------------------------------*/
-
-std::ostream & operator<<(std::ostream & o, const Cluster & right)
-{   }
-/*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-						/*### GETTER - SETTER ###*/
-/*============================================================================*/
-
-/*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-						/*### PRIVATE METHODS ###*/
-/*============================================================================*/
-
-std::map<std::string, std::map<std::string, std::string>>
-		& Cluster::parseFile(void)
 {
-	const   std::vector<std::string>
-			allFile = getFile();
-#ifdef TEST
-	std::cout   << "FILE AFTER SPLIT METHOD: " << std::endl;
-	for (size_t i = 0; i < allFile.size(); i++) {
-		std::cout   << allFile[i] << std::endl;
-	}
-#endif
-	return getAllProto(allFile);
 }
-/*----------------------------------------------------------------------------*/
 
-std::vector<std::string>
-		& Cluster::getFile(void) // throw (ClusterException)
+Cluster::Cluster(const std::string &filename)
 {
-	char		buffer[4096] = { '\0' };
-	const int   fd = open(_configPath.c_str(), O_RDONLY | O_CLOEXEC);
-	std::string allFile;
-
-	if (fd < 0)
-		throw ClusterException().openfile(_configPath);
-		
-	for (ssize_t i = read(fd, buffer, sizeof(buffer)); i != 0;)
-	{
-		if (i == -1)
-			throw ClusterException().openfile(_configPath);
-		allFile += buffer;
-		memset(buffer, '\0', sizeof(buffer));
-	}
-
-	if (close(fd) == -1)
-		throw ClusterException().openfile(_configPath);
-
-	return UtilParsing::split(allFile, std::string(" "));
+    _configPath = filename;
+    std::ifstream inputFile(filename.c_str());
+    std::string line;
+    if (!inputFile.is_open()) 
+    {
+        std::cerr << "Could not open conf file" << std::endl;
+        return;
+    }
+    while (std::getline(inputFile, line))
+    {
+        if (line.empty() || line[0] == '#') continue;
+        _allConf = UtilParsing::split(line, std::string(" "));
+    }
+    initDefaultConf();
+    initAllServer();
+    inputFile.close();
 }
-/*----------------------------------------------------------------------------*/
 
-std::map<std::string, std::map<std::string, std::string>>
-		& Cluster::getAllProto(const std::vector<std::string> & allFile)
+// Ici je recolte les servers que je mets dans une map 
+
+void Cluster::initDefaultConf()
 {
-	/*
-		l'argument <allFile> contient TOUT le fichier de config, 1 mot par case du tableau
-		
-		la fonction doit extraire chaque bloc protocole de allFile et construire
-		une map<> dont voici un exemple :
-		std::map<std::string, std::map<std::string, std::string>> result {
-			"http" {
-				"server", { "{", "server_name", "localhost", ";", "listen", "8080", ";", "client_max_body_size", "200M", ";", "}" },
-				"server", { "{", "server_name", "bidule", ";", "listen", "8081", ";", "}" },
-				"server", { "{", "server_name", "127.0.0.1", ";", "listen", "8082", ";", "}" }
-			}, 
-			"https" {
-				"server", { "{", "server_name", "localhostSecure", ";", "listen", "443", ";", "client_max_body_size", "200M", ";", "}" },
-				"server", { "{", "server_name", "biduleSecure", ";", "listen", "443", ";", "}" },
-				"server", { "{", "server_name", "127.0.0.1", ";", "listen", "443", ";", "}" }
-			}
-		}
+    std::vector<std::string>::iterator it;
+    int i = 0;
+    int number_servers = 0;
+    for(it = _allConf.begin(); it != _allConf.end(); it++)
+    {
+        if (*it == std::string("{"))
+            i++;
+        if (*it == std::string("server"))
+        {
+            //faut utiliser pair pour creer des paire comme ca avec des maps tres style
+            std::pair<int, std::vector<std::string> > serverPair(number_servers, addValuesServers(it));
+            _vectServers.insert(serverPair);
+            // _defaultConf.pop_back();  j enleve je sais pas si je casse tout
+            number_servers++;
+        }
+        if (*it == std::string("}"))
+            i--;
+        if (i <= 1)
+            _defaultConf.push_back(*it);
+    }
+    cleanClusterConfDefault();
+    // for (std::vector<std::string>::iterator t = _defaultConf.begin(); t != _defaultConf.end(); t++)
+    // {
+    //     std::cout << *t << std::endl;
+    // }
 
-		la fonction doit aussi identifier les information qui sont dans le bloc protocole et en dehors des blocs serveur
-		elle doit mettre a jour le tableau static _clusterParams si necessaire AVANT DE RENVOYER LA MAP<>
+//   for (std::map<int, std::vector<std::string> >::const_iterator tic = _vectServers.begin(); tic != _vectServers.end(); ++tic) {
+//         std::cout << "Server Number: " << tic->first << "\nConfigurations:\n";
+        
+//         // Itération sur le vecteur de configurations
+//         for (std::vector<std::string>::const_iterator configIt = tic->second.begin(); configIt != tic->second.end(); ++configIt) {
+//             std::cout << "  - " << *configIt << "\n"; // Affiche chaque configuration
+//         }
+//     }
 
-	*/
-
-
-	std::map<std::string, std::map<std::string, std::string>>
-		result;
-	std::vector<std::string>
-		clusterParams;
-		
-	this->setCluster(clusterParams, result);
-	return result;
 }
-/*----------------------------------------------------------------------------*/
 
-void
-	Cluster::setCluster(const std::vector<std::string> & clusterParams, \
-						std::map<std::string, std::map<std::string, std::string>> & ref)
+std::vector<std::string> Cluster::addValuesServers(std::vector<std::string>::iterator &cursor)
 {
-	/*  UTILISER <ALGORITexpressionHM>
-		la fonction met a jour la structure _clusterdefault de l'instance courante
-		avec les parametres donnes dans clusterParams
-		
-		affiche une erreur si un cluster demande un protocole non prit en compte
-		
-		initialise le container _service_servers a la bonne taille
-		grace a ref
-	*/
-
-	// mettre a jour les infos des clusters
+    std::vector<std::string> server;
+    std::vector<std::string>::iterator it;
+    server.push_back(*cursor);
+    int i = 0;
+    int y = 0;
+    for(it = cursor;it != _allConf.end(); it++)
+    {
+        if (*it == std::string("{"))
+            i++;
+        if (*it == std::string("}"))
+            i--;
+        if (i > 0)
+            server.push_back(*it);
+        if (i == 0 && y > 0)
+            break;
+        y++;
+    }
+    // std::cout << "Value du serveur :" << std::endl;
+    // for (size_t y = 0; y < server.size(); y++) 
+    // {
+    //     std::cout << server[y] << std::endl;
+    // }
+    return server;
 }
-/*----------------------------------------------------------------------------*/
 
-/*============================================================================*/
-						/*### PUBLIC METHODS ###*/
-/*============================================================================*/
-
-/*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-							/*### EXCEPTIONS ###*/
-/*============================================================================*/
-
-const char
-		* Cluster::ClusterException::what() const throw() {
-	return ("During Cluster initilization\n");
-}
-/*----------------------------------------------------------------------------*/
-
-void
-		Cluster::ClusterException::openfile(const std::string & file) const throw()
+void Cluster::initAllServer()
 {
-	std::cerr   << RED ERROR
-				<< file << " could not be open, check path & authorisation"
-				<< RESET << std::endl;
+    for(std::map<int, std::vector<std::string> >::const_iterator it = _vectServers.begin(); it != _vectServers.end(); it++)
+    {
+       _servers.push_back(Server(it->second));
+    }
 }
-/*----------------------------------------------------------------------------*/
+
+void Cluster::cleanClusterConfDefault()
+{
+    _defaultConf = UtilParsing::cleanVector(_defaultConf);
+    for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); )
+    {
+        if (*it == "{" || *it == "}" || *it == "http" || *it == "server") 
+        { 
+            it = _defaultConf.erase(it);
+        } else 
+            ++it;
+    }
+}
+
+
+// reussir a faire une map organiser des valeurs default de cluster 
+// la trouver un algo pour check quand il y a un ; et si celui d'avant et encore avant en a 
+// genre si jai pas jai pas et apres jai alors donner la key au premier 
+// et creer une string composer des autres 
+// doit etre modulable si y a 5 argument avec les methodes par exemple par la suite
+
+// void Cluster::createMapDefaultConf()
+// {
+//     // std::string key;
+//     // std::string params;
+//     // size_t i = 0;
+//     // for (std::vector<std::string>::iterator it = _defaultConf; it != _defaultConf.end(); )
+//     // {
+//     //     if (i == 0 && !(*it.find(";"))) // pour la premiere key
+
+
+//     // }
+// }

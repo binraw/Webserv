@@ -1,33 +1,33 @@
 
 
 /* 
-	* class UtilParsing
-	* Interface that brings together several static functions for string parsing
-	* function list :
-		-> split()
-		-> 
+    * class IParsing
+    * Interface that brings together several static functions for string parsing
+    * function list :
+        -> split()
+        -> 
  */
 
-#ifndef UTILPARSING_HPP
-# define UTILPARSING_HPP
-
-# include "webserv.hpp"
+#ifndef IPARSING_HPP
+# define IPARSING_HPP
 
 # include <string>
 # include <vector>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <cstring>
 
 class UtilParsing
 {
-	public:
-		static  std::vector<std::string>
-				& split(const std::string & line, const std::string & set); 
-		static  bool
-				isOnlySpace(const std::string & str);
-		static size_t
-				findBracketClosing(const std::vector<std::string> & container, size_t i_start);
+    public:
+        static  std::vector<std::string> split(const std::string & line, const std::string & set); 
+        static  bool isOnlySpace(const std::string & str);
+        static  std::vector<std::string> cleanVector(const std::vector<std::string> vec);
 
-	private:
-		UtilParsing() {};
+    private:
+        UtilParsing() {};
 };
 
 #endif

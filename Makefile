@@ -1,14 +1,7 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/21 13:16:16 by fberthou         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+
+
+
+
 
 #==============================================================================#
 #                              SETTING VARIABLES                               #
@@ -30,8 +23,7 @@ MKD			= mkdir -p
 VALGRIND	= valgrind --leak-check=full 
 
 #-----------------------# ==== SOURCE CODE DIRECTORIES ==== #------------------#
-INCLUDES	= ./includes
-HDR_PATH	= ./sources
+HDR_PATH	= ./headers
 SRC_PATH	= ./sources
 
 #---------------------# ==== TEMPORARY FILES DIRECTORIES ==== #----------------#
@@ -43,20 +35,20 @@ DEP_PATH	= $(TEMP_PATH)/dep
 MODE		?= release
 
 ifeq ($(MODE), debug)
-	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98 -DTEST
+	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98
 else
 	COMPFLAGS = -Wall -Wextra -Werror -std=c++98
 endif
 
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
-#------------------------# ==== FIND FILES ==== #-----------------------------#
-SRC	= $(shell find $(SRC_PATH) -name "*.cpp")
-HDR	= $(shell find $(SRC_PATH) -name "*.hpp")
+#------------------------# ==== MANDATORY FILES ==== #-------------------------#
+SRC	= main.cpp Server.cpp Socket.cpp Cluster.cpp UtilParsing.cpp
+# HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
-OBJ	= $(patsubst $(SRC_PATH)/%.cpp, $(OBJ_PATH)/%.o, $(SRC))
-DEP	= $(patsubst $(SRC_PATH)/%.cpp, $(DEP_PATH)/%.d, $(SRC))
+OBJ	= $(SRC:%.cpp=$(OBJ_PATH)/%.o)
+DEP	= $(SRC:%.cpp=$(DEP_PATH)/%.d)
 
 #==============================================================================#
 #                            COMPILATION MANDATORY                             #
@@ -75,9 +67,9 @@ debug:
 	@echo
 
 test:
+	clear
 	$(MAKE) re MODE=debug
-	@echo
-	$(VALGRIND) --leak-check=full --track-fds=yes ./$(NAME)
+	$(VALGRIND) ./$(NAME)
 #-------------------# ==== LINKING & BUILDING PROGRAM ==== #-------------------#
 $(NAME)	: $(OBJ)
 	@echo "$(GREEN)-- compilation completed --$(RESET)"
@@ -87,8 +79,8 @@ $(NAME)	: $(OBJ)
 #--------------------# ==== COMPILATION OBJ - DEPS ==== #----------------------#
 $(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile 
 	@$(MKD) $(dir $@) $(DEP_PATH)
-	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -I$(INCLUDES) -c $< -o $@
-	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH) -I$(INCLUDES)
+	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
+	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)
 
 -include $(DEP)
 
