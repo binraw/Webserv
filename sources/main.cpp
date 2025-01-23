@@ -180,8 +180,8 @@
 
 int main(void)
 {
-    // Cluster one("./config/default.conf");
-    Server server;
+    Cluster one("./config/default.conf");
+    Server server();
 
     // one.initAllServer();
     // one.displayServersConfig();

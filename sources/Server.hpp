@@ -20,6 +20,7 @@ typedef struct s_paramsServer
     s_paramsServer() 
     {
         params["server_name"].insert("localhost");
+        params["listen"].insert("8000");
         params["client_max_body_size"].insert("200M");
         params["upload_path"].insert("./upload");
     }
@@ -28,7 +29,7 @@ typedef struct s_paramsServer
 class Server
 {
 	public:
-		Server(/* const std::vector<std::string> & data */);
+		Server(const std::vector<std::string> & data);
 		Server(const Server &);
 		~Server();
 		Server & operator=(const Server &);

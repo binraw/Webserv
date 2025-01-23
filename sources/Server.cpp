@@ -4,10 +4,17 @@
 
 #include "Server.hpp"
 
-Server::Server(/* const std::vector<std::string> & data */)
+#include <algorithm>
+
+void	print(std::string & msg) {
+	std::cout << msg << std::endl;
+}
+
+Server::Server(const std::vector<std::string> & data)
   : _protoName(getprotobyname("tcp"))
 {
-	std::cout << *this;
+	std::for_each(data.begin(), data.end(), print);
+	// std::cout << *this;
 	/*
 		trouver le champ "listen" dans la map params
 		si il n'est pas trouve il cree le champ listen et lui assigne une valeur par defaut
@@ -54,6 +61,7 @@ std::ostream	& operator<<(std::ostream & o, const t_paramServer & ref)
 // GETTERS //
 t_paramServer	& Server::getParams() const
 { return const_cast<t_paramServer&>(_params); } // conversion d'un non constant en constant pour eviter les betises
+
 
 // SETTERS //
 void            Server::setParams()
