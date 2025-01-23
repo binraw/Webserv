@@ -1,13 +1,21 @@
 #include "Cluster.hpp"
 
 
-Cluster::Cluster()
-{
-}
 
-Cluster::~Cluster()
-{
-}
+
+/*============================================================================*/
+                        /*### HEADER FILES ###*/
+/*============================================================================*/
+
+/*============================================================================*/
+                    /*### INITIALISATION STATIC FIELD ###*/
+/*============================================================================*/
+
+/*----------------------------------------------------------------------------*/
+
+/*============================================================================*/
+                    /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
+/*============================================================================*/
 
 Cluster::Cluster(const std::string &filename)
 {
@@ -24,13 +32,48 @@ Cluster::Cluster(const std::string &filename)
         if (line.empty() || line[0] == '#') continue;
         _allConf = UtilParsing::split(line, std::string(" "));
     }
+    inputFile.close();
     initDefaultConf();
     initAllServer();
-    inputFile.close();
 }
+/*----------------------------------------------------------------------------*/
 
+Cluster::Cluster(const Cluster & ref)
+{   }
+/*----------------------------------------------------------------------------*/
+
+/*============================================================================*/
+                        /*### DESTRUCTORS ###*/
+/*============================================================================*/
+Cluster::~Cluster()
+{   }
+/*----------------------------------------------------------------------------*/
+
+/*============================================================================*/
+                    /*### OVERLOAD OPERATOR ###*/
+/*============================================================================*/
+Cluster &	Cluster::operator=(const Cluster & ref)
+{
+    return *this;
+}
+/*----------------------------------------------------------------------------*/
+
+/*============================================================================*/
+                        /*### GETTER - SETTER ###*/
+/*============================================================================*/
+
+/*----------------------------------------------------------------------------*/
+
+/*============================================================================*/
+                        /*### PRIVATE METHODS ###*/
+/*============================================================================*/
+
+/*----------------------------------------------------------------------------*/
+
+/*============================================================================*/
+                        /*### PUBLIC METHODS ###*/
+/*============================================================================*/
 // Ici je recolte les servers que je mets dans une map 
-
 void Cluster::initDefaultConf()
 {
     std::vector<std::string>::iterator it;
@@ -69,6 +112,7 @@ void Cluster::initDefaultConf()
 //     }
 
 }
+/*----------------------------------------------------------------------------*/
 
 std::vector<std::string> Cluster::addValuesServers(std::vector<std::string>::iterator &cursor)
 {
@@ -96,14 +140,22 @@ std::vector<std::string> Cluster::addValuesServers(std::vector<std::string>::ite
     // }
     return server;
 }
+/*----------------------------------------------------------------------------*/
 
 void Cluster::initAllServer()
 {
-    for(std::map<int, std::vector<std::string> >::const_iterator it = _vectServers.begin(); it != _vectServers.end(); it++)
+    for(std::map<int, std::vector<std::string> >::const_iterator it = _vectServers.begin(); \
+        it != _vectServers.end(); it++)
     {
-       _servers.push_back(Server(/* it->second */));
+        for (std::vector<std::string>::const_iterator itt = it->second.begin(); \
+            itt != it->second.end(); itt++) {
+            std::cout << *itt << std::endl;
+        }
+        std::cout << std::endl << std::endl;
+       _servers.push_back(Server(it->second));
     }
 }
+/*----------------------------------------------------------------------------*/
 
 void Cluster::cleanClusterConfDefault()
 {
@@ -117,7 +169,7 @@ void Cluster::cleanClusterConfDefault()
             ++it;
     }
 }
-
+/*----------------------------------------------------------------------------*/
 
 // reussir a faire une map organiser des valeurs default de cluster 
 // la trouver un algo pour check quand il y a un ; et si celui d'avant et encore avant en a 
@@ -137,3 +189,9 @@ void Cluster::cleanClusterConfDefault()
 
 //     // }
 // }
+
+/*============================================================================*/
+                            /*### EXCEPTIONS ###*/
+/*============================================================================*/
+
+/*----------------------------------------------------------------------------*/

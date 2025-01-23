@@ -13,7 +13,7 @@ void	print(std::string & msg) {
 Server::Server(const std::vector<std::string> & data)
   : _protoName(getprotobyname("tcp"))
 {
-	std::for_each(data.begin(), data.end(), print);
+	// std::for_each(data.begin(), data.end(), print);
 	// std::cout << *this;
 	/*
 		trouver le champ "listen" dans la map params
@@ -29,7 +29,7 @@ Server::~Server()
 {   }
 
 Server  & Server::operator=(const Server & ref)
-{   }
+{ return *this; }
 
 std::ostream	& operator<<(std::ostream & o, const Server & ref)
 {
