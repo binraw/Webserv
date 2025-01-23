@@ -13,17 +13,36 @@
 
 typedef struct s_DefaultParams
 {
-	std::map<std::string, std::vector<std::string> > params; // mettre juste std::string et std::string ?
-	// car je ne vois pas utiliter de faire un vector en deuxieme arg
+	std::map<std::string, std::string>
+		mimes;
+	std::map<std::string, std::vector<std::string> >
+		params;
 	s_DefaultParams() 
 	{
-		params["includes"].push_back("./error_pages ./mime.types;");
+		mimes[".bin"].assign("application/octet-stream");
+		mimes[".js"].assign("application/javascript");
+		mimes[".doc"].assign("application/msword");
+		mimes[".csh"].assign("application/x-csh");
+		mimes[".json"].assign("application/json");
+		mimes[".pdf"].assign("application/pdf");
+		mimes[".sh"].assign("application/x-sh");
+
+		mimes[".html"].assign("text/html");
+		mimes[".htm"].assign("text/html");
+		mimes[".css"].assign("text/css");
+		mimes[".csv"].assign("text/csv");
+		mimes[".jpeg"].assign("image/jpeg");
+		mimes[".jpg"].assign("image/jpeg");
+		mimes[".bmp"].assign("image/bmp");
+		mimes[".gif"].assign("image/gif");
+		mimes[".png"].assign("image/png");
+
+		params["includes"].push_back("./error_pages");
 		params["default_type"].push_back("application/octet-stream;");
 		params["keepalive_timeout"].push_back("65;");
 		params["worker_connexion"].push_back("1024;");
 	}
-}t_DefaultParams;
-
+}	t_DefaultParams;
 
 class Cluster
 {
@@ -65,11 +84,6 @@ class Cluster
 
 		std::vector<Server>
 				_servers; // ensemble des servers present dans le cluster
-
-		
 };
-
-
-
 
 #endif
