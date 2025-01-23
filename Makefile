@@ -6,7 +6,7 @@
 #    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/18 07:43:41 by florian          ###   ########.fr        #
+#    Updated: 2025/01/23 07:32:48 by florian          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,13 +44,13 @@ MODE		?= release
 ifeq ($(MODE), debug)
 	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98
 else
-	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
+	COMPFLAGS = -Wall -Wextra -Werror -std=c++98
 endif
 
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp Server.cpp Socket.cpp Cluster.cpp
+SRC	= main.cpp Server.cpp Socket.cpp Cluster.cpp UtilParsing.cpp
 # HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
