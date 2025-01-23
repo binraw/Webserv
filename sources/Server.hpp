@@ -11,8 +11,8 @@
 
 # include <sys/socket.h>
 # include <sys/types.h>
-# include <netdb.h>
 # include <unistd.h>
+# include <netdb.h>
 
 #include "UtilParsing.hpp"
 #include "../includes/webserv.hpp"
@@ -33,7 +33,7 @@ typedef struct s_paramsServer
 class Server
 {
 	public:
-		Server(/* const std::vector<std::string> & */);
+		Server();
 		Server(const std::vector<std::string> &);
 		Server(const Server &);
 		~Server();
@@ -45,7 +45,7 @@ class Server
 
 		t_paramServer				& getParams() const;
 		std::set<int>				& getFdSet() const;
-		void	closeFdSet() const ; // provisoirement en public
+		void	closeFdSet() const ; // provisoirement en public pour les tests
 		
 	private:
 		/*
