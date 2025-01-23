@@ -1,14 +1,14 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#include <iostream>
-#include <string>
-#include <map>
-#include <vector>
-#include <set>
+# include <iostream>
+# include <string>
+# include <map>
+# include <vector>
+# include <set>
 
-#include <netdb.h>
-#include <sys/socket.h>
+# include <sys/socket.h>
+# include <netdb.h>
 
 #include "UtilParsing.hpp"
 #include "../includes/webserv.hpp"
