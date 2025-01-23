@@ -57,10 +57,11 @@ class Cluster
 		
 		std::map<int, std::vector<std::string> >
 				_vectServers; // utilitaire sous forme de map pour activer les servers
-		t_DefaultParams
-				defaultParams; // default conf (createur)
 		std::map<std::string, std::string>
 				_mapDefaultParamsCluster; // futur map default conf
+		
+		t_DefaultParams
+				defaultParams; // default conf (createur)
 
 		std::vector<Server>
 				_servers; // ensemble des servers present dans le cluster
