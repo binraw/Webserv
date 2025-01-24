@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+# include <stdexcept>
 # include <iostream>
 # include <cstring>
 # include <cerrno>
@@ -68,7 +69,7 @@ class Server
 		*/
 		void	setSocket();
 		void	freeAllServer(const std::string &file, const int line, const std::string & msg) const;
-		void	setSockOptSafe(const int fd, struct addrinfo * res) const throw(InitException);
+		void	setSockOptSafe(int fd, struct addrinfo * res);
 
 		std::set<int>	_fdSet;
 		const int		_backLog; // = Cluster::_defaultParams.params[worker_connexion]
@@ -80,19 +81,11 @@ class Server
 				const int 			_line;
 				const std::string &	_msg;
 			public:
-				InitException(const std::string & file, const int line, const std::string & msg)
+				InitException(const std::string & file, int line, const std::string & msg)
 				  : _file(file), _line(line), _msg(msg)
-				{	}
-				
-				void	setSockExcept(const int fd, struct addrinfo * res) const throw() {
-					close(fd);
-					freeaddrinfo(res);
-					std::cerr	<< "Error at file [" << _file << "] line [" << _line << "]"
-								<< std::endl;
-				}
-				const char *	what() const throw() {
-					return _msg.c_str();
-				}
+				{	}				
+				void		setOptionExcept(const int fd, const struct addrinfo * res) const throw();
+				const char * what() const throw();
 		};
 };
 

@@ -137,7 +137,7 @@ void	Server::setSocket() // voir wireshark
 			try {
 				setSockOptSafe(fd, res);
 			} catch(const InitException& e) {
-				e.setSockExcept(fd, res);
+				e.setOptionExcept(fd, res);
 				closeFdSet();
 				throw;
 			}
@@ -186,12 +186,11 @@ void	Server::setSocket() // voir wireshark
 }
 /*----------------------------------------------------------------------------*/
 
-void	Server::setSockOptSafe(const int fd, struct addrinfo * res) const
-throw(InitException)
+void	Server::setSockOptSafe(int fd, struct addrinfo * res)
 {
 	int opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == 0) {
-		throw InitException(__FILE__, __LINE__, std::string("Error -> setsockopt()"));
+		throw InitException(__FILE__, __LINE__, "Error -> setsockopt()");
 	}
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
 		throw InitException(__FILE__, __LINE__, "Error -> setsockopt()");
@@ -312,4 +311,18 @@ void Server::createMapDefaultConf()
                             /*### EXCEPTIONS ###*/
 /*============================================================================*/
 
+const char * Server::InitException::what() const throw() {
+	return "_msg.c_str()";
+}
 /*----------------------------------------------------------------------------*/
+
+void	Server::InitException::setOptionExcept(const int fd, const struct addrinfo * res)
+const throw()
+{
+	close(fd);
+	freeaddrinfo(const_cast<struct addrinfo *>(res));
+	std::cerr	<< "Error at file [" <<  "] line [" <<  "]"
+				<< std::endl;
+}
+/*----------------------------------------------------------------------------*/
+
