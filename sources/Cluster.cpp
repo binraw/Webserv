@@ -25,6 +25,9 @@ Cluster::Cluster(const std::string &filename)
         _allConf = UtilParsing::split(line, std::string(" "));
     }
     initDefaultConf();
+    // if (controlParseFileConf() == -1)    IL FAUT QUE JE TROUVE COMMENT RETURN UNE ERREUR ICI
+    //     return ;
+    cleanClusterConfDefault();
     createMapDefaultConf();
     // printMapDefaultParamsCluster();
     initAllServer();
@@ -55,7 +58,8 @@ void Cluster::initDefaultConf()
         if (i <= 1)
             _defaultConf.push_back(*it);
     }
-    cleanClusterConfDefault();
+
+    // cleanClusterConfDefault();
     // for (std::vector<std::string>::iterator t = _defaultConf.begin(); t != _defaultConf.end(); t++)
     // {
     //     std::cout << *t << std::endl;
@@ -70,6 +74,30 @@ void Cluster::initDefaultConf()
 //         }
 //     }
 
+}
+
+
+// rajouter le controle aucun {} dans un vector pas seul.
+
+
+int Cluster::controlParseFileConf()
+{
+    int i = 0;
+    int y = 0;
+    std::string word;
+    for(std::vector<std::string>::iterator it = _allConf.begin(); it != _allConf.end(); it++)
+    {
+        word = *it;
+        if (*it == std::string("{"))
+            i++;
+        else if (*it == std::string("}"))
+            y++;
+        else if ((word.find('{') || word.find('}')) && word.length() > 1)
+            return (-1);
+    }
+    if (i == 0 || i != y)
+        return (-1);
+    return 0;
 }
 
 std::vector<std::string> Cluster::addValuesServers(std::vector<std::string>::iterator &cursor)
@@ -186,3 +214,4 @@ void Cluster::printMapDefaultParamsCluster() const
         std::cout << std::endl;
     }
 }
+

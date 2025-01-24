@@ -42,6 +42,7 @@ public:
     void initAllServer(); // init tout les serveurs et les crees 
     static std::map<std::string, std::string *> _defaultTab;
     void printMapDefaultParamsCluster() const;
+    int controlParseFileConf();
 };
 
 

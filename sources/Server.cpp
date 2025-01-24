@@ -14,7 +14,6 @@ Server::~Server()
 
 void Server::initDefaultConfServ()
 {
-    // std::cout << "WESH" << std::endl;
     std::vector<std::string>::iterator it;
     int i = 0;
     int number_road = 0;
@@ -37,7 +36,7 @@ void Server::initDefaultConfServ()
     createMapDefaultConf();
     for (int y = 0; y < number_road; y++)
         createMapRoads(y);
-    UtilParsing::printMapVector(_allMapRoads);
+    // UtilParsing::printMapVector(_allMapRoads);
     // std::cout << "VALUES  DEFAULT SERVER :" <<  std::endl;
     //   for (size_t y = 0; y < _defaultConfServer.size(); y++) {
     //     std::cout << _defaultConfServer[y] << std::endl;
@@ -139,7 +138,6 @@ void Server::createMapRoads(int nb)
         }
             std::pair<std::string, std::vector<std::string> > serverPair(key, params);
             _allMapRoads[nb].insert(serverPair);
-            // _mapRoads.insert(serverPair);
             params.clear();
     }
 }

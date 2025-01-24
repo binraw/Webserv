@@ -46,8 +46,7 @@ class Server
         std::vector<std::string> _defaultConfServer; // vector avec infos par default du serveur
         std::map<int, std::vector<std::string> > _vectRoads; // map avec les different localisation du server
         std::map<std::string, std::string> _mapConfDefault; // map ranger des valeurs default key + value
-        std::map<std::string, std::vector<std::string> > _mapRoads;
-        std::map<int, std::map<std::string, std::vector<std::string> > > _allMapRoads;
+        std::map<int, std::map<std::string, std::vector<std::string> > > _allMapRoads; // map avec toutes les info location avec un index
         
 
     public:
