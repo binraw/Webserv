@@ -26,7 +26,7 @@ Cluster::Cluster(const std::string &filename)
     }
     initDefaultConf();
     createMapDefaultConf();
-    printMapDefaultParamsCluster();
+    // printMapDefaultParamsCluster();
     initAllServer();
     inputFile.close();
 }
@@ -121,97 +121,6 @@ void Cluster::cleanClusterConfDefault()
 }
 
 
-// reussir a faire une map organiser des valeurs default de cluster 
-// la trouver un algo pour check quand il y a un ; et si celui d'avant et encore avant en a 
-// genre si jai pas jai pas et apres jai alors donner la key au premier 
-// et creer une string composer des autres 
-// doit etre modulable si y a 5 argument avec les methodes par exemple par la suite
-
-// void Cluster::createMapDefaultConf()
-// {
-//     std::string key;
-//     std::vector<std::string>::iterator tic;
-//     size_t i = 0;
-//     std::vector<std::string> params;
-    
-//     for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); )
-//     {
-//         if (it == _defaultConf.begin())
-//         {
-//             key = *it;
-//             it++;
-//         }
-//         tic = it--;
-//         if (*tic.find(";"))
-//         {
-//             key = *tic;
-//             if (params)
-//                 std::pair<std::string,std::vector<std::string> > serverPair(key, *params);
-//                 _mapDefaultParamsCluster.insert(serverPair);
-//         }
-//         else
-//         {
-//             params.push_back(*it);
-//         }
-//         it++;
-//     }
-// }
-
-
-
-// void Cluster::createMapDefaultConf()
-// {
-//     std::string key;
-//     std::vector<std::string> params;
-
-//     for (std::vector<std::string>::iterator it = _defaultConf.begin(); it != _defaultConf.end(); ++it)
-//     {
-//         // Si c'est le premier mot, le définir comme clé
-//         if (it == _defaultConf.begin())
-//         {
-//             key = *it; // Initialiser la clé
-//             continue;
-//         }
-
-//         // Si l'élément contient un point-virgule
-//         if (it->find(";") != std::string::npos)
-//         {
-//             // Ajoutez les paramètres accumulés à la map
-//             if (!params.empty())
-//             {
-//                 std::pair<std::string, std::vector<std::string> > serverPair(key, params);
-//                 _mapDefaultParamsCluster.insert(serverPair);
-//                 params.clear(); // Réinitialiser les paramètres pour le prochain groupe
-//             }
-
-//             // Définir la clé comme le mot juste avant le point-virgule
-//             key = it->substr(0, it->find(";")); // Obtenir le mot avant le point-virgule
-//             key.erase(0, key.find_first_not_of(" ")); // Supprimer les espaces au début
-
-//             // Récupérer les paramètres après le point-virgule
-//             std::string remainingParams = it->substr(it->find(";") + 1);
-//             std::istringstream iss(remainingParams);
-//             std::string param;
-
-//             // Ajouter les paramètres restants
-//             while (iss >> param) {
-//                 params.push_back(param);
-//             }
-//         }
-//         else
-//         {
-//             params.push_back(*it); // Ajouter tous les mots comme paramètres
-//         }
-//     }
-
-//     // Gérer le dernier groupe de paramètres si nécessaire
-//     if (!params.empty() || !key.empty())
-//     {
-//         std::pair<std::string, std::vector<std::string> > serverPair(key, params);
-//         _mapDefaultParamsCluster.insert(serverPair);
-//     }
-// }
-
 void Cluster::createMapDefaultConf()
 {
     std::string key;
@@ -237,10 +146,6 @@ void Cluster::createMapDefaultConf()
         {
             valuestr = *(tic - 1);
             keystr = *tic;
-            // if (valuestr.find(';') != std::string::npos && keystr.find(';') != std::string::npos)
-            //     key = valuestr;
-            // if (valuestr.find(';') == std::string::npos && keystr.find(';') != std::string::npos)
-            //     key = keystr;
             if (tic->find(";") != std::string::npos)
             {
                 params.push_back(*tic);

@@ -18,6 +18,7 @@
 #include <fstream>
 #include <string>
 #include <cstring>
+#include <map>
 
 class UtilParsing
 {
@@ -25,7 +26,8 @@ class UtilParsing
         static  std::vector<std::string> split(const std::string & line, const std::string & set); 
         static  bool isOnlySpace(const std::string & str);
         static  std::vector<std::string> cleanVector(const std::vector<std::string> vec);
-
+        static  std::vector<std::string> cleanVectorClose(const std::vector<std::string> vec);
+        static  void printMapVector(std::map<std::string, std::vector<std::string> > vec);
     private:
         UtilParsing() {};
 };

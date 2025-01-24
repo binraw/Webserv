@@ -47,3 +47,38 @@ std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec) 
     }
     return vec;
 }
+
+
+std::vector<std::string> UtilParsing::cleanVectorClose(std::vector<std::string> vec)
+{
+    for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); ) {
+        if (*it == "}") 
+        { 
+            it = vec.erase(it);
+        } else 
+            ++it;
+    }
+    return vec;
+}
+
+void UtilParsing::printMapVector(std::map<std::string, std::vector<std::string> > vec)
+{
+    for (std::map<std::string, std::vector<std::string> >::iterator it = vec.begin(); 
+         it != vec.end(); 
+         ++it)
+    {
+        const std::string& key = it->first;
+        const std::vector<std::string>& params = it->second;
+
+        std::cout << "Key: " << key << "\nParams: ";
+
+        for (std::vector<std::string>::const_iterator paramIt = params.begin(); 
+             paramIt != params.end(); 
+             ++paramIt)
+        {
+            std::cout << *paramIt << " ";
+        }
+
+        std::cout << std::endl;
+    }
+}

@@ -34,6 +34,8 @@ void Server::initDefaultConfServ()
     }
     _defaultConfServer = UtilParsing::cleanVector(_defaultConfServer);
     createMapDefaultConf();
+    createMapRoads();
+    UtilParsing::printMapVector(_mapRoads);
     // std::cout << "VALUES  DEFAULT SERVER :" <<  std::endl;
     //   for (size_t y = 0; y < _defaultConfServer.size(); y++) {
     //     std::cout << _defaultConfServer[y] << std::endl;
@@ -43,16 +45,12 @@ void Server::initDefaultConfServ()
 std::vector<std::string> Server::addValuesRoads(std::vector<std::string>::iterator &cursor)
 {
     std::vector<std::string> road;
-    std::vector<std::string>::iterator it;
-    int i = 0;
-    for(it = cursor;it != _basicData.end(); it++)
+
+    for(;cursor != _basicData.end(); cursor++)
     {
-        if (*it == std::string("}"))
-            i++;
-        if (i > 0)
+        if (*cursor == std::string("}"))
             break;
-        road.push_back(*it);
-        
+        road.push_back(*cursor); 
     }
     road = UtilParsing::cleanVector(road);
     // std::cout << "Value de la localisation :" << std::endl;
@@ -79,4 +77,82 @@ void Server::createMapDefaultConf() // mettre une erreur si different de 9 en si
         // {
         //     std::cout << tic->first << " " << tic->second << std::endl;
         // }
+}
+
+
+// reflexion sur comment faire pour faire la meme fonction que pour cluster mais pour la localisation 
+// des roads car les pattern ne sont pas les memes car les deux premier du vector sont forcement ensemble 
+// mais jai limpression que dans le vector ca peut etre pas forcement dans le bon ordre donc piste a verifier
+
+
+void Server::createMapRoads()
+{
+    if (_vectRoads.empty()) 
+        return;
+
+    std::string key;
+    std::string keystr;
+    std::string valuestr;
+    std::vector<std::string> params;
+
+    // for (std::vector<std::string>::iterator tic = _vectRoads[0].begin(); tic != _vectRoads[0].end(); tic++)
+    // {
+    //     std::cout << *tic << std::endl;
+    //     // key = *tic;
+    //     // params.push_back(*(tic + 1));
+    //     // std::pair<std::string, std::vector<std::string> > serverPair(key, params);
+    //     // _mapRoads.insert(serverPair);
+    //     // params.clear();
+    //     // break ; 
+    // }
+    // for (std::vector<std::string>::iterator tic = _vectRoads[0].begin(); tic != _vectRoads[0].begin(); tic++)
+    // {
+    //     std::cout << "RENTRE" << std::endl;
+    //     key = *tic;
+    //     params.push_back(*(tic + 1));
+    //     std::pair<std::string, std::vector<std::string> > serverPair(key, params);
+    //     _mapRoads.insert(serverPair);
+    //     params.clear();
+    //     // break ; 
+    // }
+
+  
+    for (std::vector<std::string>::iterator it = _vectRoads[0].begin(); it != _vectRoads[0].end(); ++it)
+    {
+        valuestr = *it;
+        if (it != _vectRoads[0].begin())
+        {
+            std::vector<std::string>::iterator prev = it - 1;
+            keystr = *prev;
+            if (valuestr.find(';') == std::string::npos && keystr.find(';') != std::string::npos)
+                key = *it;
+        }
+        else if (it == _vectRoads[0].begin() || valuestr.find(';') == std::string::npos)
+        {
+            key = *it;
+        }
+        for (std::vector<std::string>::iterator tic = it + 1; tic != _vectRoads[0].end(); tic++)
+        {
+            valuestr = *(tic - 1);
+            keystr = *tic;
+            if (tic->find(";") == std::string::npos && valuestr.find("location") != std::string::npos)
+            {
+                params.push_back(*tic);
+                break;
+            }
+            if (tic->find(";") != std::string::npos)
+            {
+                params.push_back(*tic);
+            }
+            else if (valuestr.find(";") == std::string::npos)
+            {
+                params.push_back(*tic);
+            }
+            else
+                break;
+        }
+            std::pair<std::string, std::vector<std::string> > serverPair(key, params);
+            _mapRoads.insert(serverPair);
+            params.clear();
+    }
 }
