@@ -181,8 +181,14 @@
 int main(void)
 {
     // Cluster one("./config/default.conf");
-    Server server;
-    server.closeFdSet();
+    try {
+        Server server;
+        server.closeFdSet();
+        /* code */
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << '\n';
+    }
+    
 
 
     // one.initAllServer();

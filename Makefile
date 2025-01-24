@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
+#    By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/23 07:32:48 by florian          ###   ########.fr        #
+#    Updated: 2025/01/24 07:27:32 by fberthou         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,6 +32,7 @@ VALGRIND	= valgrind --leak-check=full
 #-----------------------# ==== SOURCE CODE DIRECTORIES ==== #------------------#
 HDR_PATH	= ./headers
 SRC_PATH	= ./sources
+INC_PATH	= ./include
 
 #---------------------# ==== TEMPORARY FILES DIRECTORIES ==== #----------------#
 TEMP_PATH	= .temp
@@ -44,13 +45,13 @@ MODE		?= release
 ifeq ($(MODE), debug)
 	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98
 else
-	COMPFLAGS = -Wall -Wextra -Werror -std=c++98
+	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
 endif
 
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp Server.cpp Socket.cpp Cluster.cpp UtilParsing.cpp
+SRC	= main.cpp Server.cpp Cluster.cpp UtilParsing.cpp
 # HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
@@ -87,7 +88,7 @@ $(NAME)	: $(OBJ)
 $(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile 
 	@$(MKD) $(dir $@) $(DEP_PATH)
 	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
-	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)
+	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH) -I$(INC_PATH)
 
 -include $(DEP)
 

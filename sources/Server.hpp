@@ -17,6 +17,8 @@
 #include "UtilParsing.hpp"
 #include "../includes/webserv.hpp"
 
+class InitException;
+
 typedef struct s_paramsServer
 {
 	std::map<std::string, std::set<std::string> > params;
@@ -24,6 +26,8 @@ typedef struct s_paramsServer
 	{
 		params["server_name"].insert("localhost");
 		params["listen"].insert("8000");
+		params["listen"].insert("443");
+		params["listen"].insert("8001");
 		params["client_max_body_size"].insert("200M");
 		params["upload_path"].insert("./upload");
 		
@@ -63,10 +67,33 @@ class Server
 			socket setters members & methods
 		*/
 		void	setSocket();
-		void	freeAllServer(const std::string &file, int line, struct addrinfo *res) const;
+		void	freeAllServer(const std::string &file, const int line, const std::string & msg) const;
+		void	setSockOptSafe(const int fd, struct addrinfo * res) const throw(InitException);
 
 		std::set<int>	_fdSet;
 		const int		_backLog; // = Cluster::_defaultParams.params[worker_connexion]
+
+		class   InitException : virtual public std::exception
+		{
+			protected:
+				const std::string &	_file;
+				const int 			_line;
+				const std::string &	_msg;
+			public:
+				InitException(const std::string & file, const int line, const std::string & msg)
+				  : _file(file), _line(line), _msg(msg)
+				{	}
+				
+				void	setSockExcept(const int fd, struct addrinfo * res) const throw() {
+					close(fd);
+					freeaddrinfo(res);
+					std::cerr	<< "Error at file [" << _file << "] line [" << _line << "]"
+								<< std::endl;
+				}
+				const char *	what() const throw() {
+					return _msg.c_str();
+				}
+		};
 };
 
 std::ostream	& operator<<(std::ostream &, const Server &);

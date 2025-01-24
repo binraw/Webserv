@@ -9,6 +9,7 @@
 /*============================================================================*/
                     /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
+
 Server::Server(/* const std::vector<std::string> & data */)
   : _backLog(1024)
 {
@@ -102,58 +103,101 @@ void	Server::setParams(std::vector<std::string> & token)
 /*============================================================================*/
                         /*### PRIVATE METHODS ###*/
 /*============================================================================*/
-
-void	Server::setSocket()
+#include <arpa/inet.h>
+void	Server::setSocket() // voir wireshark
 {
 	struct addrinfo			hints, *res, *nextNode;
 	
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags = AI_PASSIVE;
 	
 	for (std::set<std::string>::const_iterator it = _params.params["listen"].begin(); \
-		it != _params.params["listen"].end(); it++)
-	{	
-		int ret = getaddrinfo("localhost", it->c_str(), &hints, &res);
+											it != _params.params["listen"].end(); it++)
+	{
+		int ret = getaddrinfo(NULL, it->c_str(), &hints, &res);
 		if (ret != 0) {
-			std::cerr << gai_strerror(ret) << std::endl;
+			std::cerr	<< gai_strerror(ret) << " on port [ " << *it << " ]"
+						<< std::endl;
 			closeFdSet();
-			// throw() ??
+			throw std::runtime_error("Error -> getaddrinfo()");
 		}
 		for (nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
 		{
-			int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
+			int fd = socket(nextNode->ai_family, nextNode->ai_socktype | SOCK_NONBLOCK, nextNode->ai_protocol);
 			if (fd < 0) {
-				freeAllServer(__FILE__, __LINE__, res);
-				// throw() ??
+				freeaddrinfo(res);
+				freeAllServer(__FILE__, __LINE__, "Error -> socket()"); // continuer init ?
+				throw std::runtime_error("");
 			}
-			else
-				_fdSet.insert(fd);
+			
+			
+			try {
+				setSockOptSafe(fd, res);
+			} catch(const InitException& e) {
+				e.setSockExcept(fd, res);
+				closeFdSet();
+				throw;
+			}
+			
 
-			int opt = 1;
-			if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-				freeAllServer(__FILE__, __LINE__, res);
-				// throw() ??
+			{ // bloc test
+				char buffer[1024];
+				if (nextNode->ai_family == AF_INET) { // Adresse IPv4
+					// il faut caster l'adresse en structure sockaddr_in pour récupérer
+					// l'adresse IP, comme le champ ai_addr pourrait être soit
+					// un sockaddr_in soit un sockaddr_in6
+					struct sockaddr_in *ipv4 = (struct sockaddr_in *)nextNode->ai_addr;
+					// Transforme l'entier en adresse IP lisible
+					inet_ntop(nextNode->ai_family, &(ipv4->sin_addr), buffer, sizeof buffer);
+					std::cout << "IPv4: " << buffer << std::endl;;
+				} else { // Adresse IPv6
+					struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)nextNode->ai_addr;
+					inet_ntop(nextNode->ai_family, &(ipv6->sin6_addr), buffer, sizeof buffer);
+					std::cout << "IPv6: " << buffer << std::endl;;
+				}
 			}
 
 			// lie le socket a un port et une adresse
-			if (bind(fd, res->ai_addr, res->ai_addrlen) != 0) {
-				freeAllServer(__FILE__, __LINE__, res);
-				// throw() ??
+			if (bind(fd, nextNode->ai_addr, nextNode->ai_addrlen) != 0) {
+				freeaddrinfo(res);
+				freeAllServer(__FILE__, __LINE__, "Error -> bind()");
+				std::cout   << "port : " << *it << std::endl;
+				std::cout   << "fd : " << fd << std::endl;
+				throw std::runtime_error("");
 			}
-			
+
 			// socket en mode écoute pour les connexions entrantes,
 			// spécifiant le nombre maximum de connexions en attente.
 			if (listen(fd, 10) != 0) {
-				freeAllServer(__FILE__, __LINE__, res);
-				// throw() ??
+				freeaddrinfo(res);
+				freeAllServer(__FILE__, __LINE__, "Error -> listen()");
+				throw std::runtime_error("");
 			}
-			std::cout   << "fd : " << fd << std::endl
-						<< "addr : " << std::endl;
+			std::cout   << "fd : " << fd << std::endl;
+			std::cout   << "port : " << *it << std::endl;
+			
+			_fdSet.insert(fd);
 		}
 		freeaddrinfo(res);
+	}
+}
+/*----------------------------------------------------------------------------*/
+
+void	Server::setSockOptSafe(const int fd, struct addrinfo * res) const
+throw(InitException)
+{
+	int opt = 1;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == 0) {
+		throw InitException(__FILE__, __LINE__, std::string("Error -> setsockopt()"));
+	}
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
+		throw InitException(__FILE__, __LINE__, "Error -> setsockopt()");
+	}
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1) {
+		throw InitException(__FILE__, __LINE__, "Error -> setsockopt()");
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -165,18 +209,16 @@ void	Server::closeFdSet() const
 	{
 		if (close(*it))
 			std::cerr << "Error close" << std::endl;
-			// THROW () ?
 	}
 }
 /*----------------------------------------------------------------------------*/
 
-void	Server::freeAllServer(const std::string &file, int line, struct addrinfo *res) const
+void	Server::freeAllServer(const std::string &file, const int line, const std::string & msg) const
 {
-	std::cerr   << strerror(errno) 
-				<< " at file : " << file << " line [ " << line << " ]"
+	std::cerr   << msg
+				<< " at file : [" << file << "] line : [" << line << "]" << std::endl
+				<< strerror(errno) 
 				<< std::endl;
-	if (res != NULL)
-		freeaddrinfo(res);
 	closeFdSet();
 }
 /*----------------------------------------------------------------------------*/

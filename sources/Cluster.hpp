@@ -26,16 +26,15 @@ typedef struct s_DefaultParams
 		mimes[".json"].assign("application/json");
 		mimes[".pdf"].assign("application/pdf");
 		mimes[".sh"].assign("application/x-sh");
-
-		mimes[".html"].assign("text/html");
-		mimes[".htm"].assign("text/html");
-		mimes[".css"].assign("text/css");
-		mimes[".csv"].assign("text/csv");
 		mimes[".jpeg"].assign("image/jpeg");
 		mimes[".jpg"].assign("image/jpeg");
 		mimes[".bmp"].assign("image/bmp");
 		mimes[".gif"].assign("image/gif");
 		mimes[".png"].assign("image/png");
+		mimes[".html"].assign("text/html");
+		mimes[".htm"].assign("text/html");
+		mimes[".css"].assign("text/css");
+		mimes[".csv"].assign("text/csv");
 
 		params["includes"].push_back("./error_pages");
 		params["default_type"].push_back("application/octet-stream;");
@@ -48,7 +47,7 @@ class Cluster
 {
 	public:
 		Cluster(const std::string &filename);	// constructor
-		Cluster(const Cluster &);			// copy
+		Cluster(const Cluster &);				// copy
 		~Cluster();
 		Cluster &	operator=(const Cluster &);
 
@@ -68,22 +67,22 @@ class Cluster
 
 	private:
 		std::string
-				_configPath; // chemin du fichier de conf
+				_configPath;		// chemin du fichier de conf
 		std::vector<std::string>
-				_allConf; // tout le fichier
+				_allConf;			// tout le fichier
 		std::vector<std::string>
-				_defaultConf; // partie default du cluster clean
+				_defaultConf;		// partie default du cluster clean
 		
 		std::map<int, std::vector<std::string> >
-				_vectServers; // utilitaire sous forme de map pour activer les servers
+				_vectServers; 				// utilitaire sous forme de map pour activer les servers
 		std::map<std::string, std::string>
-				_mapDefaultParamsCluster; // futur map default conf
+				_mapDefaultParamsCluster;	// futur map default conf
 		
 		t_DefaultParams
-				defaultParams; // default conf (createur)
+				defaultParams;				// default conf (createur)
 
 		std::vector<Server>
-				_servers; // ensemble des servers present dans le cluster
+				_servers;					// ensemble des servers present dans le cluster
 };
 
 #endif
