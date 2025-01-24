@@ -14,6 +14,7 @@ Server::~Server()
 
 void Server::initDefaultConfServ()
 {
+    // std::cout << "WESH" << std::endl;
     std::vector<std::string>::iterator it;
     int i = 0;
     int number_road = 0;
@@ -34,8 +35,9 @@ void Server::initDefaultConfServ()
     }
     _defaultConfServer = UtilParsing::cleanVector(_defaultConfServer);
     createMapDefaultConf();
-    createMapRoads();
-    UtilParsing::printMapVector(_mapRoads);
+    for (int y = 0; y < number_road; y++)
+        createMapRoads(y);
+    UtilParsing::printMapVector(_allMapRoads);
     // std::cout << "VALUES  DEFAULT SERVER :" <<  std::endl;
     //   for (size_t y = 0; y < _defaultConfServer.size(); y++) {
     //     std::cout << _defaultConfServer[y] << std::endl;
@@ -46,7 +48,8 @@ std::vector<std::string> Server::addValuesRoads(std::vector<std::string>::iterat
 {
     std::vector<std::string> road;
 
-    for(;cursor != _basicData.end(); cursor++)
+    // std::cout << "WESH" << std::endl;
+    for( ;cursor != _basicData.end(); cursor++)
     {
         if (*cursor == std::string("}"))
             break;
@@ -60,6 +63,9 @@ std::vector<std::string> Server::addValuesRoads(std::vector<std::string>::iterat
     // }
     return road;
 }
+
+
+
 void Server::createMapDefaultConf() // mettre une erreur si different de 9 en size en comptant 'server'
 {
         for (std::vector<std::string>::iterator it = _defaultConfServer.begin() + 1; it != _defaultConfServer.end(); )
@@ -85,53 +91,33 @@ void Server::createMapDefaultConf() // mettre une erreur si different de 9 en si
 // mais jai limpression que dans le vector ca peut etre pas forcement dans le bon ordre donc piste a verifier
 
 
-void Server::createMapRoads()
+
+
+void Server::createMapRoads(int nb)
 {
-    if (_vectRoads.empty()) 
+    if (_vectRoads[nb].empty()) 
         return;
 
     std::string key;
     std::string keystr;
     std::string valuestr;
     std::vector<std::string> params;
-
-    // for (std::vector<std::string>::iterator tic = _vectRoads[0].begin(); tic != _vectRoads[0].end(); tic++)
-    // {
-    //     std::cout << *tic << std::endl;
-    //     // key = *tic;
-    //     // params.push_back(*(tic + 1));
-    //     // std::pair<std::string, std::vector<std::string> > serverPair(key, params);
-    //     // _mapRoads.insert(serverPair);
-    //     // params.clear();
-    //     // break ; 
-    // }
-    // for (std::vector<std::string>::iterator tic = _vectRoads[0].begin(); tic != _vectRoads[0].begin(); tic++)
-    // {
-    //     std::cout << "RENTRE" << std::endl;
-    //     key = *tic;
-    //     params.push_back(*(tic + 1));
-    //     std::pair<std::string, std::vector<std::string> > serverPair(key, params);
-    //     _mapRoads.insert(serverPair);
-    //     params.clear();
-    //     // break ; 
-    // }
-
   
-    for (std::vector<std::string>::iterator it = _vectRoads[0].begin(); it != _vectRoads[0].end(); ++it)
+    for (std::vector<std::string>::iterator it = _vectRoads[nb].begin(); it != _vectRoads[nb].end(); ++it)
     {
         valuestr = *it;
-        if (it != _vectRoads[0].begin())
+        if (it != _vectRoads[nb].begin())
         {
             std::vector<std::string>::iterator prev = it - 1;
             keystr = *prev;
             if (valuestr.find(';') == std::string::npos && keystr.find(';') != std::string::npos)
                 key = *it;
         }
-        else if (it == _vectRoads[0].begin() || valuestr.find(';') == std::string::npos)
+        else if (it == _vectRoads[nb].begin() || valuestr.find(';') == std::string::npos)
         {
             key = *it;
         }
-        for (std::vector<std::string>::iterator tic = it + 1; tic != _vectRoads[0].end(); tic++)
+        for (std::vector<std::string>::iterator tic = it + 1; tic != _vectRoads[nb].end(); tic++)
         {
             valuestr = *(tic - 1);
             keystr = *tic;
@@ -152,7 +138,8 @@ void Server::createMapRoads()
                 break;
         }
             std::pair<std::string, std::vector<std::string> > serverPair(key, params);
-            _mapRoads.insert(serverPair);
+            _allMapRoads[nb].insert(serverPair);
+            // _mapRoads.insert(serverPair);
             params.clear();
     }
 }

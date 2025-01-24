@@ -61,24 +61,60 @@ std::vector<std::string> UtilParsing::cleanVectorClose(std::vector<std::string> 
     return vec;
 }
 
-void UtilParsing::printMapVector(std::map<std::string, std::vector<std::string> > vec)
+// void UtilParsing::printMapVector(std::map<std::string, std::vector<std::string> > vec)
+// {
+//     for (std::map<std::string, std::vector<std::string> >::iterator it = vec.begin(); 
+//          it != vec.end(); 
+//          ++it)
+//     {
+//         const std::string& key = it->first;
+//         const std::vector<std::string>& params = it->second;
+
+//         std::cout << "Key: " << key << "\nParams: ";
+
+//         for (std::vector<std::string>::const_iterator paramIt = params.begin(); 
+//              paramIt != params.end(); 
+//              ++paramIt)
+//         {
+//             std::cout << *paramIt << " ";
+//         }
+
+//         std::cout << std::endl;
+//     }
+// }
+
+
+void UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::vector<std::string> > >& allMapRoads)
 {
-    for (std::map<std::string, std::vector<std::string> >::iterator it = vec.begin(); 
-         it != vec.end(); 
-         ++it)
+    // Itérateur pour la map de niveau supérieur
+    for (std::map<int, std::map<std::string, std::vector<std::string> > >::const_iterator outerIt = allMapRoads.begin(); 
+         outerIt != allMapRoads.end(); 
+         ++outerIt)
     {
-        const std::string& key = it->first;
-        const std::vector<std::string>& params = it->second;
+        int index = outerIt->first; // clé de niveau supérieur
+        const std::map<std::string, std::vector<std::string> >& innerMap = outerIt->second;
 
-        std::cout << "Key: " << key << "\nParams: ";
+        std::cout << "Index: " << index << std::endl;
 
-        for (std::vector<std::string>::const_iterator paramIt = params.begin(); 
-             paramIt != params.end(); 
-             ++paramIt)
+        // Itérateur pour la map de niveau inférieur
+        for (std::map<std::string, std::vector<std::string> >::const_iterator innerIt = innerMap.begin(); 
+             innerIt != innerMap.end(); 
+             ++innerIt)
         {
-            std::cout << *paramIt << " ";
-        }
+            const std::string& key = innerIt->first; // clé de niveau inférieur
+            const std::vector<std::string>& params = innerIt->second;
 
-        std::cout << std::endl;
+            std::cout << "  Key: " << key << "\n  Params: ";
+
+            // Itérateur pour le vecteur de chaînes
+            for (std::vector<std::string>::const_iterator paramIt = params.begin(); 
+                 paramIt != params.end(); 
+                 ++paramIt)
+            {
+                std::cout << *paramIt << " ";
+            }
+
+            std::cout << std::endl;
+        }
     }
 }

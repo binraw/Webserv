@@ -47,7 +47,7 @@ class Server
         std::map<int, std::vector<std::string> > _vectRoads; // map avec les different localisation du server
         std::map<std::string, std::string> _mapConfDefault; // map ranger des valeurs default key + value
         std::map<std::string, std::vector<std::string> > _mapRoads;
-
+        std::map<int, std::map<std::string, std::vector<std::string> > > _allMapRoads;
         
 
     public:
@@ -55,7 +55,7 @@ class Server
         Server(std::vector<std::string> data); // constructor
         std::vector<std::string> addValuesRoads(std::vector<std::string>::iterator &cursor); // creer vector avec les 'localisation' differentes roads du server
         void createMapDefaultConf(); // map avec default conf des serveurs
-        void createMapRoads(); // map avec toutes les infos roads
+        void createMapRoads(int nb); // map avec toutes les infos roads
         ~Server();
 
 };

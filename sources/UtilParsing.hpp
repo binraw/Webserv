@@ -27,7 +27,8 @@ class UtilParsing
         static  bool isOnlySpace(const std::string & str);
         static  std::vector<std::string> cleanVector(const std::vector<std::string> vec);
         static  std::vector<std::string> cleanVectorClose(const std::vector<std::string> vec);
-        static  void printMapVector(std::map<std::string, std::vector<std::string> > vec);
+        // static  void printMapVector(std::map<std::string, std::vector<std::string> > vec);
+         static void printMapVector(const std::map<int, std::map<std::string, std::vector<std::string> > >& allMapRoads);
     private:
         UtilParsing() {};
 };
