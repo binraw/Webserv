@@ -36,6 +36,7 @@ int main(void)
     }
     catch(const std::exception& e)
     {
+        std::cout << "dans le main" << std::endl;
         std::cerr << e.what();
     }
     
