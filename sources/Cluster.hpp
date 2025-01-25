@@ -43,7 +43,7 @@ public:
     static std::map<std::string, std::string *> _defaultTab;
     void printMapDefaultParamsCluster() const;
     void controlParseFileConf() throw(ErrorNumberOfBracket, ErrorBracketStick);
-    void controlLineOfFile();
+    void controlLineOfFile() throw(ErrorEndOfLine, ErrorOpenFile);
 
     
     class ErrorNumberOfBracket : public std::exception
@@ -52,6 +52,16 @@ public:
 	};
 
     class ErrorBracketStick : public std::exception
+    {
+        virtual const char* what() const throw();
+    };
+
+    class ErrorEndOfLine : public std::exception
+    {
+        virtual const char* what() const throw();
+    };
+
+    class ErrorOpenFile : public std::exception
     {
         virtual const char* what() const throw();
     };

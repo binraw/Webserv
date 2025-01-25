@@ -14,11 +14,12 @@ Cluster::Cluster(const std::string &filename)
     _configPath = filename;
     std::ifstream inputFile(filename.c_str());
     std::string line;
-    if (!inputFile.is_open()) 
-    {
-        std::cerr << "Could not open conf file" << std::endl;
-        return;
-    }
+    controlLineOfFile();
+    // if (!inputFile.is_open()) 
+    // {
+    //     std::cerr << "Could not open conf file" << std::endl;
+    //     return;
+    // }
     while (std::getline(inputFile, line))
     {
         if (line.empty() || line[0] == '#') continue;
@@ -31,6 +32,7 @@ Cluster::Cluster(const std::string &filename)
     }
     catch (std::exception &e)
     {
+        inputFile.close();
         throw;
     } 
     cleanClusterConfDefault();
@@ -105,11 +107,27 @@ void Cluster::controlParseFileConf() throw(ErrorNumberOfBracket, ErrorBracketSti
         throw ErrorNumberOfBracket();
 }
 
-// futur fct qui va check si bien tout mes ligne se finissent avant leur \n par ';' ou '{' ou '}'
 
-void Cluster::controlLineOfFile()
+void Cluster::controlLineOfFile() throw(ErrorOpenFile, ErrorEndOfLine)
 {
-
+    std::ifstream inputFile(_configPath.c_str());
+    std::string line;
+    if (!inputFile.is_open())
+        throw ErrorOpenFile();
+    while (std::getline(inputFile, line))
+    {
+        if (line.empty() || line[0] == '#') continue;
+        if (line.length() >= 1) 
+        {
+            char last = line[line.length() - 1];
+            // std::cout << "le dernier caractère est : " << last << std::endl;
+        if (last != ' ' && last != ';' && last != '{' && last != '}')
+        {
+            inputFile.close();
+            throw ErrorEndOfLine();
+        }
+        }
+    }
 }
 
 
@@ -239,3 +257,12 @@ const char* Cluster::ErrorBracketStick::what() const throw()
     return "Error Parsing: Bracket stick with word.";
 }
 
+const char* Cluster::ErrorEndOfLine::what() const throw()
+{
+    return "Error Parsing: End of line isn't valid.";
+}
+
+const char* Cluster::ErrorOpenFile::what() const throw()
+{
+    return "Error: File can't open.";
+}
