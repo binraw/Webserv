@@ -165,7 +165,8 @@ throw(InitException)
 # endif
 }
 /*----------------------------------------------------------------------------*/
-
+#include <unistd.h>
+#include <fcntl.h>
 void	Server::setSockOptSafe(const struct addrinfo *currNode, int &fd)
 const throw(InitException)
 {
@@ -173,6 +174,8 @@ const throw(InitException)
 	if (fd < 0) {		
 		throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL);
 	}
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0)
+		std::cerr << "FCNLT\n";
 
 	int opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
@@ -195,7 +198,7 @@ const throw(InitException)
 	}
 	// socket en mode écoute pour les connexions entrantes,
 	// spécifiant le nombre maximum de connexions en attente BACKLOG.
-	if (listen(sockFd, 10/*BACKLOG*/ ) != 0) {
+	if (listen(sockFd, DFLT_BACKLOG ) != 0) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> listen()", currPort);
 	}
 }

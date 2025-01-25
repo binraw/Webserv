@@ -103,34 +103,10 @@
 
 
 
-// #if (TEST )
-    // lauch server with test_file.conf
-    // Cluster main(PATH_DEBUGSERV)
-// #else
-    // lauch server with default_server.conf
-    // Cluster main(PATH_DEFAULTSERV)
-// #endif
-
-    // int                     fd_sock_server, fd_client, ret_value, bytes_received = { 0 };
-    // struct addrinfo         hints;
-    // struct addrinfo         *res;
     // struct sockaddr_storage client_addr;
     // socklen_t               client_addr_size;
 	// char					buffer[1024];
 
-    // if (bind(fd_sock_server, res->ai_addr, res->ai_addrlen) != 0) // lie le socket a un port et une adress
-    // {
-    //     std::cerr << "Bind impossibe" << std::endl;
-    //     freeaddrinfo(res);
-    //     return (3);
-    // }
-
-    // if (listen(fd_sock_server, 10) != 0) // socket en mode écoute pour les connexions entrantes, spécifiant le nombre maximum de connexions en attente.
-    // {
-    //     std::cerr << "Error listening port" << std::endl;
-    //     freeaddrinfo(res);
-    //     return (4);
-    // }
 
     // client_addr_size = sizeof(client_addr);
     // fd_client = accept(fd_sock_server, (struct sockaddr *) &client_addr, &client_addr_size); // accepte la connexion et creer un nouveau socket

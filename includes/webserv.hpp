@@ -32,6 +32,7 @@
 #define DFLT_TIMEOUT		65
 #define DFLT_UPLOAD		"./uploads"
 #define DFLT_WORKCONNEX	1024
+#define DFLT_BACKLOG	20
 #define DFLT_TYPE			"application/octet-stream"
 
 #ifndef DFLT_LISTENPORT
