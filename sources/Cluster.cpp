@@ -25,8 +25,14 @@ Cluster::Cluster(const std::string &filename)
         _allConf = UtilParsing::split(line, std::string(" "));
     }
     initDefaultConf();
-    // if (controlParseFileConf() == -1)    IL FAUT QUE JE TROUVE COMMENT RETURN UNE ERREUR ICI
-    //     return ;
+    try 
+    {
+        controlParseFileConf();
+    }
+    catch (std::exception &e)
+    {
+        throw;
+    } 
     cleanClusterConfDefault();
     createMapDefaultConf();
     // printMapDefaultParamsCluster();
@@ -58,7 +64,7 @@ void Cluster::initDefaultConf()
         if (i <= 1)
             _defaultConf.push_back(*it);
     }
-
+    // std::cout << controlParseFileConf() << std::endl;
     // cleanClusterConfDefault();
     // for (std::vector<std::string>::iterator t = _defaultConf.begin(); t != _defaultConf.end(); t++)
     // {
@@ -77,10 +83,7 @@ void Cluster::initDefaultConf()
 }
 
 
-// rajouter le controle aucun {} dans un vector pas seul.
-
-
-int Cluster::controlParseFileConf()
+void Cluster::controlParseFileConf() throw(ErrorNumberOfBracket, ErrorBracketStick)
 {
     int i = 0;
     int y = 0;
@@ -92,13 +95,23 @@ int Cluster::controlParseFileConf()
             i++;
         else if (*it == std::string("}"))
             y++;
-        else if ((word.find('{') || word.find('}')) && word.length() > 1)
-            return (-1);
+        if (word.find("{") != std::string::npos || word.find("}") != std::string::npos)
+        {
+            if (word.length() > 1) 
+                throw ErrorBracketStick();
+        }
     }
     if (i == 0 || i != y)
-        return (-1);
-    return 0;
+        throw ErrorNumberOfBracket();
 }
+
+// futur fct qui va check si bien tout mes ligne se finissent avant leur \n par ';' ou '{' ou '}'
+
+void Cluster::controlLineOfFile()
+{
+
+}
+
 
 std::vector<std::string> Cluster::addValuesServers(std::vector<std::string>::iterator &cursor)
 {
@@ -213,5 +226,16 @@ void Cluster::printMapDefaultParamsCluster() const
 
         std::cout << std::endl;
     }
+}
+
+const char* Cluster::ErrorNumberOfBracket::what() const throw()
+{
+    return "Error Parsing: not same number of '{' and '}'.";
+}
+
+
+const char* Cluster::ErrorBracketStick::what() const throw()
+{
+    return "Error Parsing: Bracket stick with word.";
 }
 

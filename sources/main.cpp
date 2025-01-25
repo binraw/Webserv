@@ -29,7 +29,16 @@
 
 int main(void)
 {
-    Cluster one("./config/default.conf");
+    try
+    {
+        Cluster one("./config/default.conf");
+        /* code */
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what();
+    }
+    
 
     // one.initAllServer();
     // one.displayServersConfig();

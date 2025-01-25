@@ -42,7 +42,19 @@ public:
     void initAllServer(); // init tout les serveurs et les crees 
     static std::map<std::string, std::string *> _defaultTab;
     void printMapDefaultParamsCluster() const;
-    int controlParseFileConf();
+    void controlParseFileConf() throw(ErrorNumberOfBracket, ErrorBracketStick);
+    void controlLineOfFile();
+
+    
+    class ErrorNumberOfBracket : public std::exception
+	{
+        virtual const char*	what() const throw();
+	};
+
+    class ErrorBracketStick : public std::exception
+    {
+        virtual const char* what() const throw();
+    };
 };
 
 

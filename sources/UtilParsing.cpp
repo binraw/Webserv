@@ -86,34 +86,28 @@ std::vector<std::string> UtilParsing::cleanVectorClose(std::vector<std::string> 
 
 void UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::vector<std::string> > >& allMapRoads)
 {
-    // Itérateur pour la map de niveau supérieur
     for (std::map<int, std::map<std::string, std::vector<std::string> > >::const_iterator outerIt = allMapRoads.begin(); 
          outerIt != allMapRoads.end(); 
          ++outerIt)
     {
-        int index = outerIt->first; // clé de niveau supérieur
+        int index = outerIt->first;
         const std::map<std::string, std::vector<std::string> >& innerMap = outerIt->second;
 
         std::cout << "Index: " << index << std::endl;
-
-        // Itérateur pour la map de niveau inférieur
         for (std::map<std::string, std::vector<std::string> >::const_iterator innerIt = innerMap.begin(); 
              innerIt != innerMap.end(); 
              ++innerIt)
         {
-            const std::string& key = innerIt->first; // clé de niveau inférieur
+            const std::string& key = innerIt->first;
             const std::vector<std::string>& params = innerIt->second;
 
             std::cout << "  Key: " << key << "\n  Params: ";
-
-            // Itérateur pour le vecteur de chaînes
             for (std::vector<std::string>::const_iterator paramIt = params.begin(); 
                  paramIt != params.end(); 
                  ++paramIt)
             {
                 std::cout << *paramIt << " ";
             }
-
             std::cout << std::endl;
         }
     }
