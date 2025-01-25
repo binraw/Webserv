@@ -26,8 +26,10 @@ typedef struct s_paramsServer
 	{
 		params["server_name"].insert("localhost");
 		params["listen"].insert("8000");
-		params["listen"].insert("443");
+		// params["listen"].insert("http");
 		params["listen"].insert("8001");
+		params["listen"].insert("8002");
+		params["listen"].insert("8003");
 		params["client_max_body_size"].insert("200M");
 		params["upload_path"].insert("./upload");
 		
@@ -37,7 +39,7 @@ typedef struct s_paramsServer
 class Server
 {
 	public:
-		Server();
+		Server(/* const std::vector<std::string> & data */) throw(InitException);
 		Server(const std::vector<std::string> &);
 		Server(const Server &);
 		~Server();
@@ -47,6 +49,7 @@ class Server
 		void						initDefaultConfServ(); // ou tout ce lance + seraparation default et diffente road
 		void						createMapDefaultConf(); // map avec default conf des serveurs
 
+		
 		t_paramServer				& getParams() const;
 		std::set<int>				& getFdSet() const;
 		void	closeFdSet() const ; // provisoirement en public pour les tests
@@ -66,33 +69,30 @@ class Server
 		/*
 			socket setters members & methods
 		*/
-		void	setSocket();
-		void	freeAllServer(const std::string &file, const int line, const std::string & msg) const;
-		void	setSockOptSafe(const int fd, struct addrinfo * res) const throw(InitException);
+		void	setSocket()																	throw(InitException);
+		void	setSockOptSafe(const struct addrinfo * currNode, int &fd) const 			throw(InitException);
+		void	linkSocket(const int, const struct addrinfo *, const char *currPort) const	throw(InitException);
 
+		void	runServer();
 		std::set<int>	_fdSet;
 		const int		_backLog; // = Cluster::_defaultParams.params[worker_connexion]
 
+		
+
 		class   InitException : virtual public std::exception
 		{
-			protected:
-				const std::string &	_file;
-				const int 			_line;
-				const std::string &	_msg;
 			public:
-				InitException(const std::string & file, const int line, const std::string & msg)
-				  : _file(file), _line(line), _msg(msg)
+				InitException(const char *file, int line, const char *msg, const char *port)
+				  : _file(file), _line(line), _msg(msg), _port(port)
 				{	}
-				
-				void	setSockExcept(const int fd, struct addrinfo * res) const throw() {
-					close(fd);
-					freeaddrinfo(res);
-					std::cerr	<< "Error at file [" << _file << "] line [" << _line << "]"
-								<< std::endl;
-				}
-				const char *	what() const throw() {
-					return _msg.c_str();
-				}
+				const char *	what() const throw();
+				void			setSockExcept() const throw();
+
+			private:
+				const char *	_file;
+				const int 		_line;
+				const char *	_msg;
+				const char *	_port;			
 		};
 };
 

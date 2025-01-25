@@ -6,7 +6,7 @@
 #    By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/24 07:27:32 by fberthou         ###   ########.fr        #
+#    Updated: 2025/01/25 14:34:13 by fberthou         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,7 @@ CXX			= c++
 #---------------------------# ==== SHELL CMDS ==== #---------------------------#
 RM          = rm -rf
 MKD			= mkdir -p
-VALGRIND	= valgrind --leak-check=full 
+VALGRIND	= valgrind --track-fds=yes --leak-check=full
 
 #-----------------------# ==== SOURCE CODE DIRECTORIES ==== #------------------#
 HDR_PATH	= ./headers
@@ -43,7 +43,7 @@ DEP_PATH	= $(TEMP_PATH)/dep
 MODE		?= release
 
 ifeq ($(MODE), debug)
-	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98
+	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98 -DTEST
 else
 	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
 endif
@@ -77,7 +77,7 @@ debug:
 test:
 	clear
 	$(MAKE) re MODE=debug
-	$(VALGRIND) ./$(NAME)
+	$(VALGRIND) ./$(NAME) 
 #-------------------# ==== LINKING & BUILDING PROGRAM ==== #-------------------#
 $(NAME)	: $(OBJ)
 	@echo "$(GREEN)-- compilation completed --$(RESET)"

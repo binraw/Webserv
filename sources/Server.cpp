@@ -4,6 +4,7 @@
 /*============================================================================*/
                         /*### HEADER FILES ###*/
 /*============================================================================*/
+#include "../includes/webserv.hpp"
 #include "Server.hpp"
 
 /*============================================================================*/
@@ -11,9 +12,10 @@
 /*============================================================================*/
 
 Server::Server(/* const std::vector<std::string> & data */)
-  : _backLog(1024)
+throw(InitException) : _backLog(1024)
 {
 	setSocket();
+	runServer();
 }
 /*----------------------------------------------------------------------------*/
 
@@ -47,6 +49,13 @@ std::ostream	& operator<<(std::ostream & o, const Server & ref)
 {
 	o	<< "_params :" << std::endl
 		<< ref.getParams();
+	if (ref.getFdSet().empty() != true) {
+		o	<< std::endl << "_fdSet	: ";
+		for (std::set<int>::iterator it = ref.getFdSet().begin(); \
+			it != ref.getFdSet().end(); it ++)
+			o << *it << " : ";
+		o << std::endl;	
+	}
 	return o;
 }
 /*----------------------------------------------------------------------------*/
@@ -65,8 +74,7 @@ std::ostream	& operator<<(std::ostream & o, const t_paramServer & ref)
 			}
 		}
 		else
-			o	<< "No value";
-		o << std::endl;
+			o	<< "No value" << std::endl;
 	}
 	return o;
 }
@@ -103,123 +111,107 @@ void	Server::setParams(std::vector<std::string> & token)
 /*============================================================================*/
                         /*### PRIVATE METHODS ###*/
 /*============================================================================*/
-#include <arpa/inet.h>
-void	Server::setSocket() // voir wireshark
+
+void	Server::setSocket()
+throw(InitException)
 {
-	struct addrinfo			hints, *res, *nextNode;
+	struct addrinfo			hints, *res = NULL, *nextNode = NULL;
 	
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
-	
+	hints.ai_family = AF_INET6;					// Spécifie qu'on utilise des adresses IPv6. Avec AI_V4MAPPED, cela permettra aussi de supporter IPv4.
+	hints.ai_socktype = SOCK_STREAM;			// Indique un socket pour une communication par flux de données (orienté connexion, comme TCP).
+	hints.ai_protocol = IPPROTO_TCP;			// Définit le protocole de transport comme étant TCP (Transmission Control Protocol).
+	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
+												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
+# ifdef TEST
+	std::cout	<< "Function -> setSocket()"
+				<< std::endl;
+# endif
 	for (std::set<std::string>::const_iterator it = _params.params["listen"].begin(); \
 											it != _params.params["listen"].end(); it++)
 	{
 		int ret = getaddrinfo(NULL, it->c_str(), &hints, &res);
 		if (ret != 0) {
-			std::cerr	<< gai_strerror(ret) << " on port [ " << *it << " ]"
-						<< std::endl;
+			std::cerr	<< RED << gai_strerror(ret) << " on port [ " << it->c_str() << " ]"
+						<< RESET << std::endl;
 			closeFdSet();
-			throw std::runtime_error("Error -> getaddrinfo()");
+			throw InitException(__FILE__, __LINE__, "Error -> getaddrinfo()", NULL);
 		}
 		for (nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
 		{
-			int fd = socket(nextNode->ai_family, nextNode->ai_socktype | SOCK_NONBLOCK, nextNode->ai_protocol);
-			if (fd < 0) {
-				freeaddrinfo(res);
-				freeAllServer(__FILE__, __LINE__, "Error -> socket()"); // continuer init ?
-				throw std::runtime_error("");
-			}
-			
-			
+			int fd = -1;
 			try {
-				setSockOptSafe(fd, res);
-			} catch(const InitException& e) {
-				e.setSockExcept(fd, res);
+				setSockOptSafe(nextNode, fd);
+				linkSocket(fd, nextNode, it->c_str());
+			}
+			catch(const InitException& e) {
+				fd > 0 ? close(fd) : fd;
 				closeFdSet();
+				freeaddrinfo(res);
+				e.setSockExcept();
 				throw;
 			}
-			
-
-			{ // bloc test
-				char buffer[1024];
-				if (nextNode->ai_family == AF_INET) { // Adresse IPv4
-					// il faut caster l'adresse en structure sockaddr_in pour récupérer
-					// l'adresse IP, comme le champ ai_addr pourrait être soit
-					// un sockaddr_in soit un sockaddr_in6
-					struct sockaddr_in *ipv4 = (struct sockaddr_in *)nextNode->ai_addr;
-					// Transforme l'entier en adresse IP lisible
-					inet_ntop(nextNode->ai_family, &(ipv4->sin_addr), buffer, sizeof buffer);
-					std::cout << "IPv4: " << buffer << std::endl;;
-				} else { // Adresse IPv6
-					struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)nextNode->ai_addr;
-					inet_ntop(nextNode->ai_family, &(ipv6->sin6_addr), buffer, sizeof buffer);
-					std::cout << "IPv6: " << buffer << std::endl;;
-				}
-			}
-
-			// lie le socket a un port et une adresse
-			if (bind(fd, nextNode->ai_addr, nextNode->ai_addrlen) != 0) {
-				freeaddrinfo(res);
-				freeAllServer(__FILE__, __LINE__, "Error -> bind()");
-				std::cout   << "port : " << *it << std::endl;
-				std::cout   << "fd : " << fd << std::endl;
-				throw std::runtime_error("");
-			}
-
-			// socket en mode écoute pour les connexions entrantes,
-			// spécifiant le nombre maximum de connexions en attente.
-			if (listen(fd, 10) != 0) {
-				freeaddrinfo(res);
-				freeAllServer(__FILE__, __LINE__, "Error -> listen()");
-				throw std::runtime_error("");
-			}
-			std::cout   << "fd : " << fd << std::endl;
-			std::cout   << "port : " << *it << std::endl;
-			
 			_fdSet.insert(fd);
+# ifdef TEST
+			std::cout	<< "Socket : fd = " << fd << " at port " << it->c_str()
+						<< std::endl;
+# endif
 		}
 		freeaddrinfo(res);
+	}
+# ifdef TEST
+	std::cout	<< "\nServer	:\n" << *this
+				<< std::endl;
+# endif
+}
+/*----------------------------------------------------------------------------*/
+
+void	Server::setSockOptSafe(const struct addrinfo *currNode, int &fd)
+const throw(InitException)
+{
+	fd = socket(currNode->ai_family, currNode->ai_socktype | SOCK_NONBLOCK, currNode->ai_protocol);
+	if (fd < 0) {		
+		throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL);
+	}
+
+	int opt = 1;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL);
+	}
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
+		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL);
+	}
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1) {
+		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL);
 	}
 }
 /*----------------------------------------------------------------------------*/
 
-void	Server::setSockOptSafe(const int fd, struct addrinfo * res) const
-throw(InitException)
+void	Server::linkSocket(const int sockFd, const struct addrinfo * currNode, const char *currPort)
+const throw(InitException)
 {
-	int opt = 1;
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == 0) {
-		throw InitException(__FILE__, __LINE__, std::string("Error -> setsockopt()"));
+	if (bind(sockFd, currNode->ai_addr, currNode->ai_addrlen) != 0) {
+		throw InitException(__FILE__, __LINE__ - 1, "Error -> bind()", currPort);
 	}
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
-		throw InitException(__FILE__, __LINE__, "Error -> setsockopt()");
+	// socket en mode écoute pour les connexions entrantes,
+	// spécifiant le nombre maximum de connexions en attente BACKLOG.
+	if (listen(sockFd, 10/*BACKLOG*/ ) != 0) {
+		throw InitException(__FILE__, __LINE__ - 1, "Error -> listen()", currPort);
 	}
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1) {
-		throw InitException(__FILE__, __LINE__, "Error -> setsockopt()");
-	}
+}
+/*----------------------------------------------------------------------------*/
+
+void	Server::runServer()
+{
+	
+
 }
 /*----------------------------------------------------------------------------*/
 
 void	Server::closeFdSet() const
 {
-	for (std::set<int>::iterator it = _fdSet.begin(); \
-		it != _fdSet.end(); it++)
-	{
-		if (close(*it))
-			std::cerr << "Error close" << std::endl;
-	}
-}
-/*----------------------------------------------------------------------------*/
-
-void	Server::freeAllServer(const std::string &file, const int line, const std::string & msg) const
-{
-	std::cerr   << msg
-				<< " at file : [" << file << "] line : [" << line << "]" << std::endl
-				<< strerror(errno) 
-				<< std::endl;
-	closeFdSet();
+	for (std::set<int>::iterator it = _fdSet.begin(); it != _fdSet.end(); it++)
+		close(*it);
 }
 /*----------------------------------------------------------------------------*/
 
@@ -312,4 +304,18 @@ void Server::createMapDefaultConf()
                             /*### EXCEPTIONS ###*/
 /*============================================================================*/
 
+void	Server::InitException::setSockExcept() const throw() {
+	std::cerr	<< RED << strerror(errno)
+				<< std::endl
+				<< YELLOW "at file [" << _file << "] line [" << _line << "]";
+	if (_port != NULL) {
+		std::cerr	<< " ( port [" << _port << "] )";
+	}
+	std::cerr	<< RESET << std::endl;
+}
+/*----------------------------------------------------------------------------*/
+
+const char *	Server::InitException::what() const throw() {
+	return _msg;
+}
 /*----------------------------------------------------------------------------*/

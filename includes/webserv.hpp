@@ -4,14 +4,14 @@
 
 #include "colors"
 
-# ifdef TEST
-#  define TEST
-# endif 
+// # ifdef TEST
+// #  define TEST
+// # endif 
 
 /* -------------------------------------- */
 /* --- DEFINE GENERIC ERROR MESSAGES  --- */
 /* -------------------------------------- */
-#define ERROR	   "Error" << std::endl
+#define ERROR	   "Error\n"
 #define PRINTUSAGE  std::cout   << YELLOW "USAGE :" << std::endl \
 						<< "	-> a path to a file config (.conf)" << std::endl \
 						<< "	-> no argument and default server is launch" \
