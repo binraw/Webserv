@@ -11,30 +11,29 @@
                     /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
 
-Server::Server(/* const std::vector<std::string> & data */)
-throw(InitException) : _backLog(1024)
-{
-	setSocket();
-	runServer();
-}
-/*----------------------------------------------------------------------------*/
-
 Server::Server(const std::vector<std::string> &)
-  : _backLog(1024)
-{	}
+throw(std::exception) : _backLog(1024)
+{
+	std::cout << "HERE DFLT CONST\n" ;
+	setSocket();
+	//closeFdSet(); // uniquement pour les tests
+	
+}
 /*----------------------------------------------------------------------------*/
 
 Server::Server(const Server & ref)
   : _backLog(ref._backLog)
-{   }
+{  std::cout << "HERE CPY CONST\n" ; }
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
                         /*### DESTRUCTORS ###*/
 /*============================================================================*/
 
-Server::~Server()
-{   }
+Server::~Server() {
+	std::cout << "DESTRUCTOR SERVER\n" << std::endl;
+	closeFdSet();
+}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
@@ -84,23 +83,31 @@ std::ostream	& operator<<(std::ostream & o, const t_paramServer & ref)
                         	/*### GETTER ###*/
 /*============================================================================*/
 
-/*
-	conversion d'un non constant en constant pour eviter les betises
+/*	* conversion en constant sur les membres non constant pour eviter les betises
+	*
 */
-t_paramServer	& Server::getParams() const
-{ return const_cast<t_paramServer&>(_params); }
+
+const t_paramServer	& Server::getParams() const {
+	return const_cast<t_paramServer&>(_params);
+}
 /*----------------------------------------------------------------------------*/
 
-std::set<int>	& Server::getFdSet() const
-{ return const_cast<std::set<int>&>(_fdSet); }
+const std::set<int>	& Server::getFdSet() const {
+	return const_cast<std::set<int>&>(_fdSet);
+}
+/*----------------------------------------------------------------------------*/
+
+const int	& Server::getBacklog() const{
+	return _backLog;
+}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
                         	/*### SETTERS ###*/
 /*============================================================================*/
 
-/*
-	initialise la variable _params
+/*	* initialise la variable _params
+	*
 */
 void	Server::setParams(std::vector<std::string> &)
 {
@@ -166,7 +173,6 @@ throw(InitException)
 }
 /*----------------------------------------------------------------------------*/
 
-#include <unistd.h>
 #include <fcntl.h>
 void	Server::setSockOptSafe(const struct addrinfo *currNode, int &fd)
 const throw(InitException)
@@ -175,7 +181,7 @@ const throw(InitException)
 	if (fd < 0) {		
 		throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL);
 	}
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0)
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0) // R T MANUAL
 		std::cerr << "FCNLT\n";
 
 	int opt = 1;
@@ -205,19 +211,13 @@ const throw(InitException)
 }
 /*----------------------------------------------------------------------------*/
 
-void	Server::runServer()
-{
-	
-
-}
-/*----------------------------------------------------------------------------*/
-
-void	Server::closeFdSet() const
+void	Server::closeFdSet()
 {
 	for (std::set<int>::iterator it = _fdSet.begin(); it != _fdSet.end(); it++)
-		if (close(*it) != 0)
+		if (*it > 0 && close(*it) != 0)
 			std::cerr	<< RED "Error when closing fd " << *it
 						<< RESET << std::endl;
+	_fdSet.clear();
 }
 /*----------------------------------------------------------------------------*/
 
@@ -225,8 +225,8 @@ void	Server::closeFdSet() const
                         /*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
-/*
-	PARSING METHODS
+/*	* PARSING METHODS
+	*
 */
 
 void Server::initDefaultConfServ()
@@ -283,8 +283,8 @@ std::vector<std::string> Server::addValuesRoads(std::vector<std::string>::iterat
 }
 /*----------------------------------------------------------------------------*/
 
-/*
-	mettre une erreur si different de 9 en size en comptant 'server'
+/*	* mettre une erreur si different de 9 en size en comptant 'server'
+	*
 */
 void Server::createMapDefaultConf()
 {

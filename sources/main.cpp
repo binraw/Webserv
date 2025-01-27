@@ -157,14 +157,15 @@
 int main(void)
 {
     try {
-        // Cluster one("./config/default.conf");
-        Server server;
-        server.closeFdSet();
-    } catch(const std::exception& e) {
-        std::cerr   << YELLOW << e.what()
-                    << RESET << std::endl;
+        Cluster one("./config/exemple.conf");
+        for (std::vector<Server>::const_iterator it = one.getAllServer().begin(); \
+            it != one.getAllServer().end(); it++)
+            std::cout << *it << std::endl;
+    }
+    catch(const std::exception& e) {
+        std::cerr	<< YELLOW << e.what()
+					<< RESET << std::endl;
         return 1;
     }
-    
     return 0;
 }

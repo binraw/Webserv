@@ -1,23 +1,19 @@
 #ifndef CLUSTER_HPP
 # define CLUSTER_HPP
 
-#include "UtilParsing.hpp"
 #include "Server.hpp"
-#include <vector>
 
 #include <sstream>
 #include <fstream>
-#include <string>
-#include <cstring>
 
 
-typedef struct s_DefaultParams
+typedef struct s_paramsServer
 {
 	std::map<std::string, std::string>
 		mimes;
 	std::map<std::string, std::vector<std::string> >
 		params;
-	s_DefaultParams() 
+	s_paramsServer() 
 	{
 		mimes[".bin"].assign("application/octet-stream");
 		mimes[".js"].assign("application/javascript");
@@ -41,48 +37,68 @@ typedef struct s_DefaultParams
 		params["keepalive_timeout"].push_back("65;");
 		params["worker_connexion"].push_back("1024;");
 	}
-}	t_DefaultParams;
+}	t_paramsServer;
 
 class Cluster
 {
 	public:
-		Cluster(const std::string &filename);	// constructor
-		Cluster(const Cluster &);				// copy
+	/*	* CANONICAL FORM
+		*
+	*/
+		Cluster(const std::string &filename) throw(std::exception);
 		~Cluster();
-		Cluster &	operator=(const Cluster &);
 
-		void
-			initDefaultConf(); // init la default conf et separe les serveurs
+	/*	* PUBLIC METHODS
+		*
+	*/
+		void	initDefaultConf();			// init la default conf et separe les serveurs
+		void	cleanClusterConfDefault();	// clean le vector default conf
 		std::vector<std::string>
-			addValuesServers(std::vector<std::string>::iterator &cursor);
-		void
-			cleanClusterConfDefault(); // clean le vector default conf
-		void
-			createMapDefaultConf(); // ici la fonction que jessaye de faire pour la map avec key + value de la defaultconf
-		void
-			initAllServer(); // init tout les serveurs et les crees 
-	
-	protected:
-		
+				addValuesServers(std::vector<std::string>::iterator &cursor);
+
+	/*	* GETTERS
+		*
+	*/
+		const std::string			& getFileConfig()	const;
+		const t_paramsServer		& getParams()		const;
+		const std::vector<Server>	& getAllServer()	const;
 
 	private:
-		std::string
-				_configPath;		// chemin du fichier de conf
-		std::vector<std::string>
-				_allConf;			// tout le fichier
-		std::vector<std::string>
-				_defaultConf;		// partie default du cluster clean
-		
-		std::map<int, std::vector<std::string> >
-				_vectServers; 				// utilitaire sous forme de map pour activer les servers
-		std::map<std::string, std::string>
-				_mapDefaultParamsCluster;	// futur map default conf
-		
-		t_DefaultParams
-				defaultParams;				// default conf (createur)
+	/*	* PRIVATE CONSTRUCTORS
+		*
+	*/
+	Cluster(const Cluster &);
+	Cluster &	operator=(const Cluster &);
 
-		std::vector<Server>
-				_servers;					// ensemble des servers present dans le cluster
+
+	/*	* PRIVATE MEMBERS
+		*
+	*/
+		std::string			_configPath;	// chemin vers fichier de config
+		t_paramsServer		_params;		// config par defaut
+		std::vector<Server>	_servers;		// ensemble des servers present dans le cluster
+
+	/*	* SETTERS
+		*
+	*/
+		void	setParams();	// init le membre prive _params
+		void	setAllServer();	// init le membre prive _servers 
+	
+	/*	* PRIVATE METHODS
+		* 1er bloc parsing
+		* 2em bloc Init
+	*/
+		std::vector<std::string>	_allConf;		// tout le fichier
+		std::vector<std::string>	_defaultConf;	// partie default du cluster clean
+		std::map<int, std::vector<std::string> >
+				_vectServers;					 	// utilitaire sous forme de map pour activer les servers
+		std::map<std::string, std::string>
+				_mapDefaultParamsCluster;			// futur map default conf
+
+	/*	* EXCEPTION
+		*
+	*/
+
 };
 
 #endif
