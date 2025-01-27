@@ -9,7 +9,7 @@ bool	UtilParsing::isKeyExist(const std::map<T, Y> & map, const T & key) {
 }
 
 template <typename T, typename Y>
-bool	UtilParsing::isvalueExist(const std::map<T, std::set<Y> > & map, const T & key, const Y & value)
+bool	UtilParsing::isvalueExist(const std::map<T, std::set<Y> > & map, const T & key, const Y & )
 {
 	typename std::map<T, std::set<Y> >::const_iterator	it = map.find(key);
 	if (it == map.end())

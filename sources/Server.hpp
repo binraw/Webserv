@@ -27,9 +27,9 @@ typedef struct s_paramsServer
 		params["server_name"].insert("localhost");
 		params["listen"].insert("8000");
 		// params["listen"].insert("http");
-		params["listen"].insert("8001");
-		params["listen"].insert("8002");
-		params["listen"].insert("8003");
+		// params["listen"].insert("8001");
+		// params["listen"].insert("8002");
+		// params["listen"].insert("8003");
 		params["client_max_body_size"].insert("200M");
 		params["upload_path"].insert("./upload");
 		
@@ -70,7 +70,7 @@ class Server
 			socket setters members & methods
 		*/
 		void	setSocket()																	throw(InitException);
-		void	setSockOptSafe(const struct addrinfo * currNode, int &fd) const 			throw(InitException);
+		void	setSockOptSafe(const struct addrinfo *currNode, int &fd) const 			throw(InitException);
 		void	linkSocket(const int, const struct addrinfo *, const char *currPort) const	throw(InitException);
 
 		void	runServer();

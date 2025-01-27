@@ -38,7 +38,7 @@ Cluster::Cluster(const std::string &filename)
 }
 /*----------------------------------------------------------------------------*/
 
-Cluster::Cluster(const Cluster & ref)
+Cluster::Cluster(const Cluster & )
 {   }
 /*----------------------------------------------------------------------------*/
 
@@ -52,7 +52,7 @@ Cluster::~Cluster()
 /*============================================================================*/
                     /*### OVERLOAD OPERATOR ###*/
 /*============================================================================*/
-Cluster &	Cluster::operator=(const Cluster & ref)
+Cluster &	Cluster::operator=(const Cluster & )
 {
     return *this;
 }

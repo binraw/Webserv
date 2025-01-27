@@ -19,7 +19,7 @@ throw(InitException) : _backLog(1024)
 }
 /*----------------------------------------------------------------------------*/
 
-Server::Server(const std::vector<std::string> & data)
+Server::Server(const std::vector<std::string> &)
   : _backLog(1024)
 {	}
 /*----------------------------------------------------------------------------*/
@@ -41,7 +41,7 @@ Server::~Server()
                     /*### OVERLOAD OPERATOR ###*/
 /*============================================================================*/
 
-Server  & Server::operator=(const Server & ref)
+Server  & Server::operator=(const Server &)
 { return *this; }
 /*----------------------------------------------------------------------------*/
 
@@ -102,7 +102,7 @@ std::set<int>	& Server::getFdSet() const
 /*
 	initialise la variable _params
 */
-void	Server::setParams(std::vector<std::string> & token)
+void	Server::setParams(std::vector<std::string> &)
 {
 	/* code */
 }
@@ -115,7 +115,7 @@ void	Server::setParams(std::vector<std::string> & token)
 void	Server::setSocket()
 throw(InitException)
 {
-	struct addrinfo			hints, *res = NULL, *nextNode = NULL;
+	struct addrinfo	hints, *res = NULL;
 	
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;					// Spécifie qu'on utilise des adresses IPv6. Avec AI_V4MAPPED, cela permettra aussi de supporter IPv4.
@@ -124,8 +124,8 @@ throw(InitException)
 	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
 												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
 # ifdef TEST
-	std::cout	<< "Function -> setSocket()"
-				<< std::endl;
+	std::cout	<< BOLD BLUE << "Function -> setSocket()"
+				<< RESET << std::endl;
 # endif
 	for (std::set<std::string>::const_iterator it = _params.params["listen"].begin(); \
 											it != _params.params["listen"].end(); it++)
@@ -137,14 +137,14 @@ throw(InitException)
 			closeFdSet();
 			throw InitException(__FILE__, __LINE__, "Error -> getaddrinfo()", NULL);
 		}
-		for (nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
+		for (struct addrinfo *nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
 		{
 			int fd = -1;
 			try {
 				setSockOptSafe(nextNode, fd);
 				linkSocket(fd, nextNode, it->c_str());
 			}
-			catch(const InitException& e) {
+			catch(const InitException &e) {
 				fd > 0 ? close(fd) : fd;
 				closeFdSet();
 				freeaddrinfo(res);
@@ -153,18 +153,19 @@ throw(InitException)
 			}
 			_fdSet.insert(fd);
 # ifdef TEST
-			std::cout	<< "Socket : fd = " << fd << " at port " << it->c_str()
-						<< std::endl;
+			std::cout	<< BLUE << "Socket : fd = " << fd << " at port " << it->c_str()
+						<< RESET << std::endl;
 # endif
 		}
 		freeaddrinfo(res);
 	}
 # ifdef TEST
-	std::cout	<< "\nServer	:\n" << *this
-				<< std::endl;
+	std::cout	<< BLUE << "\nServer	:\n" << *this
+				<< RESET << std::endl;
 # endif
 }
 /*----------------------------------------------------------------------------*/
+
 #include <unistd.h>
 #include <fcntl.h>
 void	Server::setSockOptSafe(const struct addrinfo *currNode, int &fd)
@@ -214,7 +215,9 @@ void	Server::runServer()
 void	Server::closeFdSet() const
 {
 	for (std::set<int>::iterator it = _fdSet.begin(); it != _fdSet.end(); it++)
-		close(*it);
+		if (close(*it) != 0)
+			std::cerr	<< RED "Error when closing fd " << *it
+						<< RESET << std::endl;
 }
 /*----------------------------------------------------------------------------*/
 
