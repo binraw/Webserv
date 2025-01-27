@@ -12,7 +12,7 @@
 /*============================================================================*/
 
 Server::Server(/* const std::vector<std::string> & data */)
-throw(InitException) : _backLog(1024)
+throw(std::exception) : _backLog(1024)
 {
 	setSocket();
 	runServer();

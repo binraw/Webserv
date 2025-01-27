@@ -40,7 +40,7 @@ typedef struct s_paramsServer
 class Server
 {
 	public:
-		Server(/* const std::vector<std::string> & data */) throw(InitException);
+		Server(/* const std::vector<std::string> & data */) throw(std::exception);
 		Server(const std::vector<std::string> &);
 		Server(const Server &);
 		~Server();
@@ -71,14 +71,13 @@ class Server
 			socket setters members & methods
 		*/
 		void	setSocket()																	throw(InitException);
-		void	setSockOptSafe(const struct addrinfo *currNode, int &fd) const 			throw(InitException);
+		void	setSockOptSafe(const struct addrinfo *currNode, int &fd) const 				throw(InitException);
 		void	linkSocket(const int, const struct addrinfo *, const char *currPort) const	throw(InitException);
 
 		void	runServer();
 		std::set<int>	_fdSet;
 		const int		_backLog; // = Cluster::_defaultParams.params[worker_connexion]
 
-		
 
 		class   InitException : virtual public std::exception
 		{
@@ -96,6 +95,7 @@ class Server
 				const char *	_port;			
 		};
 };
+
 
 std::ostream	& operator<<(std::ostream &, const Server &);
 std::ostream	& operator<<(std::ostream &, const t_paramServer &);
