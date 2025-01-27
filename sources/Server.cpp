@@ -108,7 +108,7 @@ void Server::createMapRoads(int nb)
             if (valuestr.find(';') == std::string::npos && keystr.find(';') != std::string::npos)
                 key = *it;
         }
-        else if (it == _vectRoads[nb].begin() || valuestr.find(';') == std::string::npos)
+        else if (it == _vectRoads[nb].begin() /*|| valuestr.find(';') == std::string::npos*/)
         {
             key = *it;
         }
@@ -132,12 +132,20 @@ void Server::createMapRoads(int nb)
             else
                 break;
         }
-        // std::cout << key << std::endl;
             std::pair<std::string, std::vector<std::string> > serverPair(key, params);
             _allMapRoads[nb].insert(serverPair);
             params.clear();
     }
 }
+
+
+
+
+
+
+
+
+
 void s_DefaultParamsServer::addValuesParamsServerDefault(std::map<std::string, std::vector<std::string> > mapRecover)
 {
     for (std::map<std::string, std::vector<std::string> >::iterator it = mapRecover.begin(); it != mapRecover.end(); it++)

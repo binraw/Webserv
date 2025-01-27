@@ -114,6 +114,7 @@ void UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::
 }
 void UtilParsing::controlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads, std::string keyValue)
 {
+    int index = 0;
     for (std::map<int, std::map<std::string, std::vector<std::string> > >::const_iterator outerIt = allMapRoads.begin(); 
          outerIt != allMapRoads.end(); 
          ++outerIt)
@@ -127,15 +128,17 @@ void UtilParsing::controlMapLocation(std::map<int, std::map<std::string, std::ve
         }
         else 
         {
-            std::cout << "Probleme aucune key : " << keyValue << " dans index : " <<  std::endl;
+            std::cout << "Probleme aucune key : " << keyValue << " dans index : " << index <<  std::endl;
         }
+        index++;
     }
 }
 
 void UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads)
 {
-    // UtilParsing::controlMapLocation(allMapRoads, "location");
+    UtilParsing::controlMapLocation(allMapRoads, "location");
     UtilParsing::controlMapLocation(allMapRoads, "root");
-    // UtilParsing::controlMapLocation(allMapRoads, "index");
-    // UtilParsing::controlMapLocation(allMapRoads, "methods_accept");
+    UtilParsing::controlMapLocation(allMapRoads, "index");
+    UtilParsing::controlMapLocation(allMapRoads, "methods_accept");
 }
+// je pense rajouter la possibilite de supprimer la location si il manque un des 4 pre-requis
