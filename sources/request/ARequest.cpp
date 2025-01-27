@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ARequest.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+        */
+/*   By: florian <florian@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/14 13:22:25 by fberthou          #+#    #+#             */
-/*   Updated: 2025/01/14 15:56:15 by fberthou         ###   ########.fr       */
+/*   Updated: 2025/01/27 15:59:52 by florian          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,4 @@ ARequest::~ARequest()
 {	}
 
 e_methods	ARequest::findMethod()
-{
-
-}
+{	}

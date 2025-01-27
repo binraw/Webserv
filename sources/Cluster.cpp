@@ -34,9 +34,7 @@ Cluster::Cluster(const std::string &filename) throw(std::exception)
 /*----------------------------------------------------------------------------*/
 
 Cluster::Cluster(const Cluster & )
-{
-	std::cout << "HHHHHHHHHHHHHHHHERE" ;
-}
+{	}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
@@ -54,6 +52,45 @@ Cluster &	Cluster::operator=(const Cluster & ) {
 }
 /*----------------------------------------------------------------------------*/
 
+std::ostream	& operator<<(std::ostream & o, Cluster & ref)
+{
+	o	<< BOLD PURPLE << "CLUSTER :" << std::endl
+		<< "_configPath : " RESET PURPLE << ref.getFileConfig() << std::endl
+		<< BOLD "_params	: " RESET PURPLE << std::endl
+		<< ref.getParams();
+	if (ref.getAllServer().empty() != true) {
+		for (std::vector<Server>::const_iterator it = ref.getAllServer().begin();
+			it != ref.getAllServer().end(); it++)
+			o << *it << std::endl;
+	}
+	return o;
+}
+/*----------------------------------------------------------------------------*/
+
+std::ostream	& operator<<(std::ostream & o, const t_paramsCluster & ref)
+{
+	o	<< BOLD BRIGHT_PURPLE << "mimes	: std::map<std::string, std::string> \n" << RESET BRIGHT_PURPLE
+		<< "define in /sources/Cluster.hpp" << std::endl
+		<< BOLD "Map params : std::map<std::string, std::vector<std::string> >" << RESET BRIGHT_PURPLE << std::endl;
+	for (std::map<std::string, std::vector<std::string> >::const_iterator it = ref.params.begin(); \
+		it != ref.params.end(); it++)
+	{
+		std::vector<std::string>::const_iterator itt = it->second.begin();
+		o	<< "key	: [" << it->first << "]" << std::endl;
+		if (itt != it->second.end()) {
+			o	<< "values	: [" << *itt << "]" << std::endl;
+			for (++itt; itt != it->second.end(); itt++) {
+				o	<< "values	: [" << *itt << "]" << std::endl;
+			}
+			o << std::endl;
+		}
+		else
+			o	<< "No value" << std::endl;
+	}
+	return o << RESET, o;
+}
+/*----------------------------------------------------------------------------*/
+
 /*============================================================================*/
                         	/*### GETTER ###*/
 /*============================================================================*/
@@ -62,8 +99,8 @@ const std::string	& Cluster::getFileConfig() const {
 }
 /*----------------------------------------------------------------------------*/
 
-const t_paramsServer	& Cluster::getParams()	 const {
-	return const_cast<t_paramsServer &>(_params);
+const t_paramsCluster	& Cluster::getParams()	 const {
+	return const_cast<t_paramsCluster &>(_params);
 }
 /*----------------------------------------------------------------------------*/
 
@@ -78,8 +115,6 @@ const std::vector<Server>	& Cluster::getAllServer() const{
 
 void	Cluster::setParams()
 {	/*code*/	}
-/*----------------------------------------------------------------------------*/
-
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/

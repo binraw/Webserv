@@ -4,34 +4,33 @@
 /*============================================================================*/
                         /*### HEADER FILES ###*/
 /*============================================================================*/
-#include "../includes/webserv.hpp"
 #include "Server.hpp"
 
 /*============================================================================*/
                     /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
-
 Server::Server(const std::vector<std::string> &)
-throw(std::exception) : _backLog(1024)
+//throw(std::exception)
+  : _backLog(1024)
 {
-	std::cout << "HERE DFLT CONST\n" ;
 	setSocket();
-	//closeFdSet(); // uniquement pour les tests
-	
+// # ifdef TEST
+// 	std::cout	<< BOLD CYAN << "\nServer	:\n"
+// 				<< *this
+// 				<< RESET << std::endl;
+// # endif
 }
 /*----------------------------------------------------------------------------*/
 
 Server::Server(const Server & ref)
   : _backLog(ref._backLog)
-{  std::cout << "HERE CPY CONST\n" ; }
+{	}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
                         /*### DESTRUCTORS ###*/
 /*============================================================================*/
-
 Server::~Server() {
-	std::cout << "DESTRUCTOR SERVER\n" << std::endl;
 	closeFdSet();
 }
 /*----------------------------------------------------------------------------*/
@@ -39,28 +38,29 @@ Server::~Server() {
 /*============================================================================*/
                     /*### OVERLOAD OPERATOR ###*/
 /*============================================================================*/
-
 Server  & Server::operator=(const Server &)
 { return *this; }
 /*----------------------------------------------------------------------------*/
 
 std::ostream	& operator<<(std::ostream & o, const Server & ref)
 {
-	o	<< "_params :" << std::endl
-		<< ref.getParams();
+	o	<< BOLD CYAN << "SERVER :" << std::endl
+		<< "_params :" << std::endl
+		<< ref.getParams()
+		<< "HERE\n";
 	if (ref.getFdSet().empty() != true) {
-		o	<< std::endl << "_fdSet	: ";
+		o << "NOT HERE" << std::endl << BOLD CYAN "_fdSet	: " << RESET CYAN;
 		for (std::set<int>::iterator it = ref.getFdSet().begin(); \
 			it != ref.getFdSet().end(); it ++)
 			o << *it << " : ";
-		o << std::endl;	
 	}
-	return o;
+	return o << RESET, o;
 }
 /*----------------------------------------------------------------------------*/
 
 std::ostream	& operator<<(std::ostream & o, const t_paramServer & ref)
 {
+	o << BOLD BRIGHT_CYAN "Map params :" << RESET BRIGHT_CYAN << std::endl;
 	for (std::map<std::string, std::set<std::string> >::const_iterator it = ref.params.begin(); \
 		it != ref.params.end(); it++)
 	{
@@ -71,11 +71,12 @@ std::ostream	& operator<<(std::ostream & o, const t_paramServer & ref)
 			for (++itt; itt != it->second.end(); itt++) {
 				o	<< "values	: [" << *itt << "]" << std::endl;
 			}
+			o << std::endl;
 		}
 		else
 			o	<< "No value" << std::endl;
 	}
-	return o;
+	return o << RESET, o;
 }
 /*----------------------------------------------------------------------------*/
 
@@ -119,8 +120,7 @@ void	Server::setParams(std::vector<std::string> &)
                         /*### PRIVATE METHODS ###*/
 /*============================================================================*/
 
-void	Server::setSocket()
-throw(InitException)
+void	Server::setSocket()// throw(InitException)
 {
 	struct addrinfo	hints, *res = NULL;
 	
@@ -139,17 +139,17 @@ throw(InitException)
 	{
 		int ret = getaddrinfo(NULL, it->c_str(), &hints, &res);
 		if (ret != 0) {
-			std::cerr	<< RED << gai_strerror(ret) << " on port [ " << it->c_str() << " ]"
+			std::cerr	<< RED << gai_strerror(ret) << " on port [" << it->c_str() << "]"
 						<< RESET << std::endl;
 			closeFdSet();
 			throw InitException(__FILE__, __LINE__, "Error -> getaddrinfo()", NULL);
 		}
-		for (struct addrinfo *nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
+		for (struct addrinfo *currNode = res; currNode != NULL; currNode = currNode->ai_next)
 		{
 			int fd = -1;
 			try {
-				setSockOptSafe(nextNode, fd);
-				linkSocket(fd, nextNode, it->c_str());
+				setSockOptSafe(currNode, fd);
+				linkSocket(fd, currNode, it->c_str());
 			}
 			catch(const InitException &e) {
 				fd > 0 ? close(fd) : fd;
@@ -159,23 +159,19 @@ throw(InitException)
 				throw;
 			}
 			_fdSet.insert(fd);
-# ifdef TEST
-			std::cout	<< BLUE << "Socket : fd = " << fd << " at port " << it->c_str()
-						<< RESET << std::endl;
-# endif
+// # ifdef TEST
+// 			std::cout	<< BLUE << "Socket : fd = " << fd << " at port " << it->c_str()
+// 						<< RESET << std::endl;
+// # endif
 		}
 		freeaddrinfo(res);
 	}
-# ifdef TEST
-	std::cout	<< BLUE << "\nServer	:\n" << *this
-				<< RESET << std::endl;
-# endif
 }
 /*----------------------------------------------------------------------------*/
 
 #include <fcntl.h>
 void	Server::setSockOptSafe(const struct addrinfo *currNode, int &fd)
-const throw(InitException)
+const //throw(InitException)
 {
 	fd = socket(currNode->ai_family, currNode->ai_socktype | SOCK_NONBLOCK, currNode->ai_protocol);
 	if (fd < 0) {		
@@ -198,7 +194,7 @@ const throw(InitException)
 /*----------------------------------------------------------------------------*/
 
 void	Server::linkSocket(const int sockFd, const struct addrinfo * currNode, const char *currPort)
-const throw(InitException)
+const //throw(InitException)
 {
 	if (bind(sockFd, currNode->ai_addr, currNode->ai_addrlen) != 0) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> bind()", currPort);

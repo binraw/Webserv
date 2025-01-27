@@ -18,7 +18,6 @@
 # include <unistd.h>
 # include <netdb.h>
 
-
 typedef struct s_paramServer
 {
     std::map<std::string, std::set<std::string> > params;
@@ -28,6 +27,7 @@ typedef struct s_paramServer
         params["listen"].insert("8080");
         params["listen"].insert("8081");
         params["listen"].insert("8081");
+        params["listen"].insert("1000000000000");
         params["client_max_body_size"].insert("200M");
         params["upload_path"].insert("./upload");
     }
@@ -39,7 +39,7 @@ class Server
 	/*	* CANONICAL FORM
 		*
 	*/
-		Server(const std::vector<std::string> & data) throw(std::exception);
+		Server(const std::vector<std::string> & data);// throw(std::exception);
 		Server(const Server &);
 		~Server();
 
@@ -79,13 +79,13 @@ class Server
 		* 
 	*/
 		void	setParams(std::vector<std::string> & token);
-		void	setSocket()	throw(InitException);
+		void	setSocket();//	throw(InitException);
 
 	/*	* PRIVATE METHODS
 		*
 	*/
-		void	setSockOptSafe(const struct addrinfo *currNode, int &fd)				const throw(InitException);
-		void	linkSocket(const int, const struct addrinfo *, const char *currPort)	const throw(InitException);
+		void	setSockOptSafe(const struct addrinfo *currNode, int &fd)				const;// throw(InitException);
+		void	linkSocket(const int, const struct addrinfo *, const char *currPort)	const;// throw(InitException);
 		void	closeFdSet();
 
 	/*	* EXCEPTIONS

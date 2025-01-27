@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: fberthou <fberthou@student.42.fr>          +#+  +:+       +#+         #
+#    By: florian <florian@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/27 07:40:57 by fberthou         ###   ########.fr        #
+#    Updated: 2025/01/27 18:46:36 by florian          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -75,7 +75,7 @@ debug:
 	@echo
 
 test:
-	$(MAKE) re MODE=debug
+	$(MAKE) MODE=debug
 	$(VALGRIND) ./$(NAME) 
 #-------------------# ==== LINKING & BUILDING PROGRAM ==== #-------------------#
 $(NAME)	: $(OBJ)

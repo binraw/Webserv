@@ -37,7 +37,8 @@ typedef struct s_paramsServer
 		params["keepalive_timeout"].push_back("65;");
 		params["worker_connexion"].push_back("1024;");
 	}
-}	t_paramsServer;
+
+}	t_paramsCluster;
 
 class Cluster
 {
@@ -60,23 +61,26 @@ class Cluster
 		*
 	*/
 		const std::string			& getFileConfig()	const;
-		const t_paramsServer		& getParams()		const;
+		const t_paramsCluster		& getParams()		const;
 		const std::vector<Server>	& getAllServer()	const;
+		const std::set<int>			& getSockFds()		const;
 
+	protected:
+		void	addSocket();
 	private:
 	/*	* PRIVATE CONSTRUCTORS
 		*
 	*/
 	Cluster(const Cluster &);
-	Cluster &	operator=(const Cluster &);
-
+	Cluster	& operator=(const Cluster &);
 
 	/*	* PRIVATE MEMBERS
 		*
 	*/
 		std::string			_configPath;	// chemin vers fichier de config
-		t_paramsServer		_params;		// config par defaut
+		t_paramsCluster		_params;		// config par defaut
 		std::vector<Server>	_servers;		// ensemble des servers present dans le cluster
+		std::set<int>		_sockFds;
 
 	/*	* SETTERS
 		*
@@ -100,5 +104,10 @@ class Cluster
 	*/
 
 };
+/*	* OSTREAM OPERATOR
+	* 
+*/
+std::ostream	& operator<<(std::ostream &, Cluster &);
+std::ostream	& operator<<(std::ostream &, const t_paramsCluster &);
 
 #endif
