@@ -72,7 +72,8 @@
     "mutex": "cpp",
     "stop_token": "cpp",
     "thread": "cpp",
-    "semaphore": "cpp"
+    "semaphore": "cpp",
+    "cerrno": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
