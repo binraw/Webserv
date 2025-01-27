@@ -23,19 +23,10 @@ typedef struct s_DefaultParamsServer
         params["client_max_body_size"].push_back("200M;");
         params["upload_path"].push_back("./upload;");
     }
+    void addValuesParamsServerDefault(std::map<std::string, std::vector<std::string> > mapRecover);
+    void printStructMapDefault();
 }   t_DefaultParamsServer;
 
-// typedef struct s_location
-// {
-//     std::map<std::string, std::vector<std::string> > params;
-//     s_DefaultParamsServer() 
-//     {
-//         params["path"].push_back("/");
-//         params["root"].push_back("8080;");
-//         params["index"].push_back("200M;");
-//         params["methods_accept"].push_back("./upload;");
-//     }
-// }   s_location;
 
 
 
@@ -47,7 +38,7 @@ class Server
         std::map<int, std::vector<std::string> > _vectRoads; // map avec les different localisation du server
         std::map<std::string, std::string> _mapConfDefault; // map ranger des valeurs default key + value
         std::map<int, std::map<std::string, std::vector<std::string> > > _allMapRoads; // map avec toutes les info location avec un index
-        
+        int _numberRoads; // commence bien a 0
 
     public:
         void initDefaultConfServ(); // ou tout ce lance + seraparation default et diffente road

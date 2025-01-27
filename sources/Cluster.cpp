@@ -38,7 +38,7 @@ Cluster::Cluster(const std::string &filename)
     cleanClusterConfDefault();
     createMapDefaultConf();
     defaultParams.addValuesParams(_mapDefaultParamsCluster);
-    defaultParams.printStructMapDefault();
+    // defaultParams.printStructMapDefault();
     // printMapDefaultParamsCluster();
     initAllServer();
     inputFile.close();

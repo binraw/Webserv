@@ -16,16 +16,16 @@ void Server::initDefaultConfServ()
 {
     std::vector<std::string>::iterator it;
     int i = 0;
-    int number_road = 0;
+    _numberRoads = 0;
     for(it = _basicData.begin(); it != _basicData.end(); it++)
     {
         if (*it == std::string("{") || *it == std::string("location"))
             i++;
-        if (*it == std::string("location")) // ici changer pour les localisation j'imagine
+        if (*it == std::string("location"))
         {
-            std::pair<int, std::vector<std::string> > serverPair(number_road, addValuesRoads(it));
+            std::pair<int, std::vector<std::string> > serverPair(_numberRoads, addValuesRoads(it));
             _vectRoads.insert(serverPair);
-            number_road++;
+            _numberRoads++;
         }
         if (*it == std::string("}"))
             i = i - 2;
@@ -34,8 +34,10 @@ void Server::initDefaultConfServ()
     }
     _defaultConfServer = UtilParsing::cleanVector(_defaultConfServer);
     createMapDefaultConf();
-    for (int y = 0; y < number_road; y++)
+    for (int y = 0; y < _numberRoads; y++)
         createMapRoads(y);
+    
+    UtilParsing::manageControlMapLocation(_allMapRoads);
     // UtilParsing::printMapVector(_allMapRoads);
     // std::cout << "VALUES  DEFAULT SERVER :" <<  std::endl;
     //   for (size_t y = 0; y < _defaultConfServer.size(); y++) {
@@ -47,12 +49,12 @@ std::vector<std::string> Server::addValuesRoads(std::vector<std::string>::iterat
 {
     std::vector<std::string> road;
 
-    // std::cout << "WESH" << std::endl;
-    for( ;cursor != _basicData.end(); cursor++)
+    for( ;cursor != _basicData.end(); ++cursor)
     {
         if (*cursor == std::string("}"))
             break;
-        road.push_back(*cursor); 
+        road.push_back(*cursor);
+        // std::cout << *cursor << std::endl;
     }
     road = UtilParsing::cleanVector(road);
     // std::cout << "Value de la localisation :" << std::endl;
@@ -85,12 +87,6 @@ void Server::createMapDefaultConf() // mettre une erreur si different de 9 en si
 }
 
 
-// reflexion sur comment faire pour faire la meme fonction que pour cluster mais pour la localisation 
-// des roads car les pattern ne sont pas les memes car les deux premier du vector sont forcement ensemble 
-// mais jai limpression que dans le vector ca peut etre pas forcement dans le bon ordre donc piste a verifier
-
-
-
 
 void Server::createMapRoads(int nb)
 {
@@ -102,7 +98,7 @@ void Server::createMapRoads(int nb)
     std::string valuestr;
     std::vector<std::string> params;
   
-    for (std::vector<std::string>::iterator it = _vectRoads[nb].begin(); it != _vectRoads[nb].end(); ++it)
+    for (std::vector<std::string>::iterator it = _vectRoads[nb].begin(); it != _vectRoads[nb].end(); it++)
     {
         valuestr = *it;
         if (it != _vectRoads[nb].begin())
@@ -136,8 +132,43 @@ void Server::createMapRoads(int nb)
             else
                 break;
         }
+        // std::cout << key << std::endl;
             std::pair<std::string, std::vector<std::string> > serverPair(key, params);
             _allMapRoads[nb].insert(serverPair);
             params.clear();
+    }
+}
+void s_DefaultParamsServer::addValuesParamsServerDefault(std::map<std::string, std::vector<std::string> > mapRecover)
+{
+    for (std::map<std::string, std::vector<std::string> >::iterator it = mapRecover.begin(); it != mapRecover.end(); it++)
+    {
+        const std::string &key = it->first;
+        const std::vector<std::string> &value = it->second;
+        if (params.find(key) != params.end())
+            params[key].insert(params[key].end(), value.begin(), value.end()); // rajout des values a la suite
+        else
+            params[key] = value; // la en gros si la key n'existe pas de base dans la map default on la rajoute
+    }
+}
+
+void s_DefaultParamsServer::printStructMapDefault()
+{
+    for (std::map<std::string, std::vector<std::string> >::const_iterator it = params.begin(); 
+         it != params.end(); 
+         ++it)
+    {
+        const std::string& key = it->first;
+        const std::vector<std::string>& value = it->second;
+
+        std::cout << "Key: " << key << "\nParams: ";
+
+        for (std::vector<std::string>::const_iterator paramIt = value.begin(); 
+             paramIt != value.end(); 
+             ++paramIt)
+        {
+            std::cout << *paramIt << " ";
+        }
+
+        std::cout << std::endl;
     }
 }

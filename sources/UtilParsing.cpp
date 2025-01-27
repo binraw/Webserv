@@ -112,3 +112,30 @@ void UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::
         }
     }
 }
+void UtilParsing::controlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads, std::string keyValue)
+{
+    for (std::map<int, std::map<std::string, std::vector<std::string> > >::const_iterator outerIt = allMapRoads.begin(); 
+         outerIt != allMapRoads.end(); 
+         ++outerIt)
+    {
+        std::map<std::string, std::vector<std::string> > innerMap = outerIt->second;
+        std::map<std::string, std::vector<std::string> >::const_iterator innerIt = innerMap.find(keyValue);
+        
+        if (innerIt != innerMap.end()) // value trouver
+        {
+            std::cout << "Find !" << std::endl;
+        }
+        else 
+        {
+            std::cout << "Probleme aucune key : " << keyValue << " dans index : " <<  std::endl;
+        }
+    }
+}
+
+void UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads)
+{
+    // UtilParsing::controlMapLocation(allMapRoads, "location");
+    UtilParsing::controlMapLocation(allMapRoads, "root");
+    // UtilParsing::controlMapLocation(allMapRoads, "index");
+    // UtilParsing::controlMapLocation(allMapRoads, "methods_accept");
+}
