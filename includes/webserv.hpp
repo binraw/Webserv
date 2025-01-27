@@ -4,9 +4,9 @@
 
 #include "colors"
 
-# ifdef TEST
-#  define TEST
-# endif 
+// # ifdef TEST
+// #  define TEST
+// # endif 
 
 /* -------------------------------------- */
 /* --- DEFINE GENERIC ERROR MESSAGES  --- */

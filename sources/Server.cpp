@@ -17,7 +17,7 @@ Server::Server(/* const std::vector<std::string> & data */)
 }
 /*----------------------------------------------------------------------------*/
 
-Server::Server(const std::vector<std::string> & data)
+Server::Server(const std::vector<std::string> &)
   : _backLog(1024)
 {	}
 /*----------------------------------------------------------------------------*/
@@ -39,7 +39,7 @@ Server::~Server()
                     /*### OVERLOAD OPERATOR ###*/
 /*============================================================================*/
 
-Server  & Server::operator=(const Server & ref)
+Server  & Server::operator=(const Server &)
 { return *this; }
 /*----------------------------------------------------------------------------*/
 
