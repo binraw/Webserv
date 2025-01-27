@@ -16,6 +16,8 @@ typedef struct s_DefaultParams
         params["keepalive_timeout"].push_back("65;");
         params["worker_connexion"].push_back("1024;");
     }
+    void addValuesParams(std::map<std::string, std::vector<std::string> > mapRecover);
+    void printStructMapDefault();
 }t_DefaultParams;
 
 
@@ -28,7 +30,7 @@ private:
     std::map<int, std::vector<std::string> > _vectServers; // utilitaire sous forme de map pour activer les servers
     std::vector<Server> _servers; // ensemble des servers present dans le cluster
     t_DefaultParams defaultParams; // default conf (createur)
-    std::map<std::string, std::vector<std::string> > _mapDefaultParamsCluster; // futur map default conf
+    std::map<std::string, std::vector<std::string> > _mapDefaultParamsCluster; //  map default conf
 
 
 public:
@@ -41,9 +43,9 @@ public:
     void createMapDefaultConf(); // ici la fonction que jessaye de faire pour la map avec key + value de la defaultconf
     void initAllServer(); // init tout les serveurs et les crees 
     static std::map<std::string, std::string *> _defaultTab;
-    void printMapDefaultParamsCluster() const;
-    void controlParseFileConf() throw(ErrorNumberOfBracket, ErrorBracketStick);
-    void controlLineOfFile() throw(ErrorEndOfLine, ErrorOpenFile);
+    void printMapDefaultParamsCluster() const; // 
+    void controlParseFileConf() throw(ErrorNumberOfBracket, ErrorBracketStick); // controle { } dans fichier conf
+    void controlLineOfFile() throw(ErrorEndOfLine, ErrorOpenFile); // controle fin de lign du fichier conf
 
     
     class ErrorNumberOfBracket : public std::exception

@@ -37,6 +37,8 @@ Cluster::Cluster(const std::string &filename)
     } 
     cleanClusterConfDefault();
     createMapDefaultConf();
+    defaultParams.addValuesParams(_mapDefaultParamsCluster);
+    defaultParams.printStructMapDefault();
     // printMapDefaultParamsCluster();
     initAllServer();
     inputFile.close();
@@ -265,4 +267,39 @@ const char* Cluster::ErrorEndOfLine::what() const throw()
 const char* Cluster::ErrorOpenFile::what() const throw()
 {
     return "Error: File can't open.";
+}
+
+void s_DefaultParams::addValuesParams(std::map<std::string, std::vector<std::string> > mapRecover)
+{
+    for (std::map<std::string, std::vector<std::string> >::iterator it = mapRecover.begin(); it != mapRecover.end(); it++)
+    {
+        const std::string &key = it->first;
+        const std::vector<std::string> &value = it->second;
+        if (params.find(key) != params.end())
+            params[key].insert(params[key].end(), value.begin(), value.end()); // rajout des values a la suite
+        else
+            params[key] = value; // la en gros si la key n'existe pas de base dans la map default on la rajoute
+    }
+}
+
+void s_DefaultParams::printStructMapDefault()
+{
+    for (std::map<std::string, std::vector<std::string> >::const_iterator it = params.begin(); 
+         it != params.end(); 
+         ++it)
+    {
+        const std::string& key = it->first;
+        const std::vector<std::string>& value = it->second;
+
+        std::cout << "Key: " << key << "\nParams: ";
+
+        for (std::vector<std::string>::const_iterator paramIt = value.begin(); 
+             paramIt != value.end(); 
+             ++paramIt)
+        {
+            std::cout << *paramIt << " ";
+        }
+
+        std::cout << std::endl;
+    }
 }
