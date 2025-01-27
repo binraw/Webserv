@@ -11,17 +11,17 @@
                     /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
 
-Server::Server(/* const std::vector<std::string> & data */)
-throw(InitException) : _backLog(1024)
-{
-	setSocket();
-	runServer();
-}
-/*----------------------------------------------------------------------------*/
-
 Server::Server(const std::vector<std::string> &)
-  : _backLog(1024)
-{	}
+throw(std::exception) : _backLog(1024)
+{
+	try {
+		setSocket();
+	}
+	catch(const InitException& e) {
+		closeFdSet();
+		throw;
+	}
+}
 /*----------------------------------------------------------------------------*/
 
 Server::Server(const Server & ref)
@@ -93,6 +93,10 @@ t_paramServer	& Server::getParams() const
 
 std::set<int>	& Server::getFdSet() const
 { return const_cast<std::set<int>&>(_fdSet); }
+/*----------------------------------------------------------------------------*/
+
+int	Server::getBacklog() const
+{ return _backLog; }
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
@@ -175,7 +179,7 @@ const throw(InitException)
 	if (fd < 0) {		
 		throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL);
 	}
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0)
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0) // VOIR + DE DOC
 		std::cerr << "FCNLT\n";
 
 	int opt = 1;
@@ -202,13 +206,6 @@ const throw(InitException)
 	if (listen(sockFd, DFLT_BACKLOG ) != 0) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> listen()", currPort);
 	}
-}
-/*----------------------------------------------------------------------------*/
-
-void	Server::runServer()
-{
-	
-
 }
 /*----------------------------------------------------------------------------*/
 
