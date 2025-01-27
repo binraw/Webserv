@@ -1,16 +1,23 @@
+#include "Cluster.hpp"
+
 
 
 
 /*============================================================================*/
                         /*### HEADER FILES ###*/
 /*============================================================================*/
-#include "Cluster.hpp"
+
+/*============================================================================*/
+                    /*### INITIALISATION STATIC FIELD ###*/
+/*============================================================================*/
+
+/*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
                     /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
 
-Cluster::Cluster(const std::string &filename) throw (std::exception)
+Cluster::Cluster(const std::string &filename)
 {
     _configPath = filename;
     std::ifstream inputFile(filename.c_str());
@@ -27,7 +34,7 @@ Cluster::Cluster(const std::string &filename) throw (std::exception)
     }
     inputFile.close();
     initDefaultConf();
-	initAllServer();
+    initAllServer();
 }
 /*----------------------------------------------------------------------------*/
 
@@ -46,17 +53,13 @@ Cluster::~Cluster()
                     /*### OVERLOAD OPERATOR ###*/
 /*============================================================================*/
 Cluster &	Cluster::operator=(const Cluster & )
-{ return *this; }
+{
+    return *this;
+}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                        	/*### GETTER ###*/
-/*============================================================================*/
-
-/*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-                        	/*### SETTERS ###*/
+                        /*### GETTER - SETTER ###*/
 /*============================================================================*/
 
 /*----------------------------------------------------------------------------*/
@@ -70,13 +73,6 @@ Cluster &	Cluster::operator=(const Cluster & )
 /*============================================================================*/
                         /*### PUBLIC METHODS ###*/
 /*============================================================================*/
-
-void	Cluster::setParams()
-{
-	/*  METTRE A JOUR PARAMS DANS CETTE FONCTION  */
-}
-/*----------------------------------------------------------------------------*/
-
 // Ici je recolte les servers que je mets dans une map 
 void Cluster::initDefaultConf()
 {
@@ -175,7 +171,24 @@ void Cluster::cleanClusterConfDefault()
 }
 /*----------------------------------------------------------------------------*/
 
+// reussir a faire une map organiser des valeurs default de cluster 
+// la trouver un algo pour check quand il y a un ; et si celui d'avant et encore avant en a 
+// genre si jai pas jai pas et apres jai alors donner la key au premier 
+// et creer une string composer des autres 
+// doit etre modulable si y a 5 argument avec les methodes par exemple par la suite
 
+// void Cluster::createMapDefaultConf()
+// {
+//     // std::string key;
+//     // std::string params;
+//     // size_t i = 0;
+//     // for (std::vector<std::string>::iterator it = _defaultConf; it != _defaultConf.end(); )
+//     // {
+//     //     if (i == 0 && !(*it.find(";"))) // pour la premiere key
+
+
+//     // }
+// }
 
 /*============================================================================*/
                             /*### EXCEPTIONS ###*/

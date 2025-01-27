@@ -1,11 +1,15 @@
 #ifndef CLUSTER_HPP
 # define CLUSTER_HPP
 
-# include "UtilParsing.hpp"
-# include "Server.hpp"
+#include "UtilParsing.hpp"
+#include "Server.hpp"
+#include <vector>
 
-# include <sstream>
-# include <fstream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <cstring>
+
 
 typedef struct s_DefaultParams
 {
@@ -13,7 +17,6 @@ typedef struct s_DefaultParams
 		mimes;
 	std::map<std::string, std::vector<std::string> >
 		params;
-
 	s_DefaultParams() 
 	{
 		mimes[".bin"].assign("application/octet-stream");
@@ -43,38 +46,43 @@ typedef struct s_DefaultParams
 class Cluster
 {
 	public:
-		Cluster(const std::string & filename) throw (std::exception);
+		Cluster(const std::string &filename);	// constructor
 		Cluster(const Cluster &);				// copy
 		~Cluster();
 		Cluster &	operator=(const Cluster &);
 
-		void	initDefaultConf();			// init la default conf et separe les serveurs
-		void	cleanClusterConfDefault();	// clean le vector default conf
-		void	createMapDefaultConf();		// ici la fonction que jessaye de faire pour la map avec key + value de la defaultconf
-		void	initAllServer();			// init tout les serveurs et les crees 
-		std::vector<std::string>	addValuesServers(std::vector<std::string>::iterator &cursor);
+		void
+			initDefaultConf(); // init la default conf et separe les serveurs
+		std::vector<std::string>
+			addValuesServers(std::vector<std::string>::iterator &cursor);
+		void
+			cleanClusterConfDefault(); // clean le vector default conf
+		void
+			createMapDefaultConf(); // ici la fonction que jessaye de faire pour la map avec key + value de la defaultconf
+		void
+			initAllServer(); // init tout les serveurs et les crees 
 	
+	protected:
+		
+
 	private:
-	/* Setters
-		* 
-	*/
-		void				setParams();
-		t_DefaultParams		_defaultParams;	// default conf (createur)
-		std::vector<Server>	_servers;		// ensemble des servers present dans le cluster
-	
-	/* Privates members for parsing
-		*
-		* 
-	*/
-		std::string					_configPath;		// chemin du fichier de conf
-		std::vector<std::string>	_allConf;			// tout le fichier
-		std::vector<std::string>	_defaultConf;		// partie default du cluster clean
-		std::map<int, std::vector<std::string> >	_vectServers; 				// utilitaire sous forme de map pour activer les servers
-		std::map<std::string, std::string>			_mapDefaultParamsCluster;	// futur map default conf
-	
-	/* I
-		*
-	*/
+		std::string
+				_configPath;		// chemin du fichier de conf
+		std::vector<std::string>
+				_allConf;			// tout le fichier
+		std::vector<std::string>
+				_defaultConf;		// partie default du cluster clean
+		
+		std::map<int, std::vector<std::string> >
+				_vectServers; 				// utilitaire sous forme de map pour activer les servers
+		std::map<std::string, std::string>
+				_mapDefaultParamsCluster;	// futur map default conf
+		
+		t_DefaultParams
+				defaultParams;				// default conf (createur)
+
+		std::vector<Server>
+				_servers;					// ensemble des servers present dans le cluster
 };
 
 #endif

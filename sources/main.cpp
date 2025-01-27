@@ -157,7 +157,9 @@
 int main(void)
 {
     try {
-        Cluster one("./config/default.conf");
+        // Cluster one("./config/default.conf");
+        Server server;
+        server.closeFdSet();
     } catch(const std::exception& e) {
         std::cerr   << YELLOW << e.what()
                     << RESET << std::endl;
