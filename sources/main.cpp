@@ -158,9 +158,9 @@ int main(void)
 {
     try {
         Cluster one("./config/exemple.conf");
-        for (std::vector<Server>::const_iterator it = one.getAllServer().begin(); \
-            it != one.getAllServer().end(); it++)
-            std::cout << *it << std::endl;
+        // for (std::vector<Server>::const_iterator it = one.getAllServer().begin(); \
+        //     it != one.getAllServer().end(); it++)
+        //     std::cout << *it << std::endl;
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what()

@@ -6,13 +6,12 @@
 #include <sstream>
 #include <fstream>
 
+# include <fcntl.h>
 
 typedef struct s_paramsServer
 {
 	std::map<std::string, std::string>
 		mimes;
-	std::map<std::string, std::vector<std::string> >
-		params;
 	s_paramsServer() 
 	{
 		mimes[".bin"].assign("application/octet-stream");
@@ -32,73 +31,57 @@ typedef struct s_paramsServer
 		mimes[".css"].assign("text/css");
 		mimes[".csv"].assign("text/csv");
 
-		params["includes"].push_back("./error_pages");
-		params["default_type"].push_back("application/octet-stream;");
-		params["keepalive_timeout"].push_back("65;");
-		params["worker_connexion"].push_back("1024;");
 	}
 }	t_paramsServer;
 
 class Cluster
 {
 	public:
-	/*	* CANONICAL FORM
-		*
-	*/
 		Cluster(const std::string &filename) throw(std::exception);
+		Cluster(const Cluster &);
 		~Cluster();
+		Cluster &	operator=(const Cluster &);
 
-	/*	* PUBLIC METHODS
-		*
-	*/
-		void	initDefaultConf();			// init la default conf et separe les serveurs
-		void	cleanClusterConfDefault();	// clean le vector default conf
-		std::vector<std::string>
-				addValuesServers(std::vector<std::string>::iterator &cursor);
-
-	/*	* GETTERS
-		*
-	*/
 		const std::string			& getFileConfig()	const;
-		const t_paramsServer		& getParams()		const;
 		const std::vector<Server>	& getAllServer()	const;
+		const std::set<std::string>	& getListenList()	const;
 
 	private:
-	/*	* PRIVATE CONSTRUCTORS
-		*
-	*/
-	Cluster(const Cluster &);
-	Cluster &	operator=(const Cluster &);
+		std::set<std::string>	_listenList;		// liste de tous les ports
+		std::set<std::string>	_incudeList;		// ??
+		std::vector<Server>		_servers;			// ensemble des servers present dans le cluster
+		std::set<int>			_sockFds;			// ensemble des fd socket serveur, destine a poll
+		std::string				_configPath;		// chemin vers fichier de config
+		std::string				_defaultType;		// pour default entete http
+		int						_workerConnexion;	// nb total de connexion supportes par le cluster
+		int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
+		
+		void	setParams();		// init les parametres (provisoir en attendant parsing)
+
+		void	closeFdSet();
+		void	setAllSocket();
+		void	safeSetSocket(const struct addrinfo *, int &) const throw(InitException);
+		void	safeLinkSocket(const int, const struct addrinfo *, const char *) const throw(InitException);
+		void	safeGetAddr(const char *, const struct addrinfo &, struct addrinfo **) const throw(InitException); 
 
 
-	/*	* PRIVATE MEMBERS
-		*
-	*/
-		std::string			_configPath;	// chemin vers fichier de config
-		t_paramsServer		_params;		// config par defaut
-		std::vector<Server>	_servers;		// ensemble des servers present dans le cluster
+		class   InitException : virtual public std::exception
+		{
+			public:
+				InitException(const char *file, int line, const char *msg, const char *serviceName, const int ret)
+				  : _file(file), _line(line), _ret(ret), _msg(msg), _serviceName(serviceName)
+				{	}
+				const char *	what()			const throw();
+				void			setSockExcept() const throw();
+				void			getAddrExcept() const throw();
 
-	/*	* SETTERS
-		*
-	*/
-		void	setParams();	// init le membre prive _params
-		void	setAllServer();	// init le membre prive _servers 
-	
-	/*	* PRIVATE METHODS
-		* 1er bloc parsing
-		* 2em bloc Init
-	*/
-		std::vector<std::string>	_allConf;		// tout le fichier
-		std::vector<std::string>	_defaultConf;	// partie default du cluster clean
-		std::map<int, std::vector<std::string> >
-				_vectServers;					 	// utilitaire sous forme de map pour activer les servers
-		std::map<std::string, std::string>
-				_mapDefaultParamsCluster;			// futur map default conf
-
-	/*	* EXCEPTION
-		*
-	*/
-
+			private:
+				const char *	_file;
+				const int 		_line;
+				const int 		_ret;
+				const char *	_msg;
+				const char *	_serviceName;	
+		};
 };
 
 #endif
