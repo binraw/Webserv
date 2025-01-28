@@ -1,12 +1,27 @@
 #ifndef HTTPCONFIG_HPP
 # define HTTPCONFIG_HPP
 
-#include "ConfigParser.hpp"
+
 #include "ServerConfig.hpp"
 
-class HttpConfig {
+class HttpConfig 
+{
 public:
-    std::vector<ServerConfig> servers;
+    std::vector<std::string> _include;
+    std::string _default_type;
+    std::string _keepalive_timeout;
+    std::string _worker_connexion;
+    std::vector<ServerConfig> _servers;
+
+
+    std::vector<std::string> getIncludes();
+    std::string getDefaultType();
+    std::string getKeepalive();
+    std::string getWorkerConnexion();
+    void displayDefaultHttp();
+    void displayServers();
+
+
 };
 
 #endif

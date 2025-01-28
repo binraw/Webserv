@@ -34,8 +34,8 @@ int main(void)
     {
         ConfigParser parser;
         HttpConfig config = parser.parse("./config/default.conf");
-        // Cluster one("./config/default.conf");
-        /* code */
+        config.displayDefaultHttp();
+        // config.displayServers();
     }
     catch(const std::exception& e)
     {

@@ -27,14 +27,24 @@ std::vector<std::string> UtilParsing::split(const std::string & line, const std:
             result.pop_back();
         end != std::string::npos ? i = end + 1 : i = end;
     }
+    return result; 
+}
 
+std::vector<std::string> UtilParsing::splitSpecialDeleteKey(const std::string & line, const std::string & set)
+ {
+    static std::vector<std::string> result;
 
-    // for (size_t i = 0; i < result.size(); i++) {
-    //     std::cout << result[i] << std::endl;
-    // }
-
-
-    return result; // Now returning by value
+    for (size_t i = 0; i != std::string::npos;) 
+    {
+        size_t end = line.find_first_of(set, i);
+        result.push_back(line.substr(i, end - i));
+        if (result.back().empty() || UtilParsing::isOnlySpace(result.back()))
+            result.pop_back();
+        end != std::string::npos ? i = end + 1 : i = end;
+    }
+    if (!result.empty())
+        result.erase(result.begin());
+    return result; 
 }
 
 std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec) {
@@ -42,7 +52,8 @@ std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec) 
         if (*it == "{" || *it == "}") 
         { 
             it = vec.erase(it);
-        } else 
+        } 
+        else 
             ++it;
     }
     return vec;
@@ -60,29 +71,6 @@ std::vector<std::string> UtilParsing::cleanVectorClose(std::vector<std::string> 
     }
     return vec;
 }
-
-// void UtilParsing::printMapVector(std::map<std::string, std::vector<std::string> > vec)
-// {
-//     for (std::map<std::string, std::vector<std::string> >::iterator it = vec.begin(); 
-//          it != vec.end(); 
-//          ++it)
-//     {
-//         const std::string& key = it->first;
-//         const std::vector<std::string>& params = it->second;
-
-//         std::cout << "Key: " << key << "\nParams: ";
-
-//         for (std::vector<std::string>::const_iterator paramIt = params.begin(); 
-//              paramIt != params.end(); 
-//              ++paramIt)
-//         {
-//             std::cout << *paramIt << " ";
-//         }
-
-//         std::cout << std::endl;
-//     }
-// }
-
 
 void UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::vector<std::string> > >& allMapRoads)
 {
@@ -141,6 +129,37 @@ void UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, s
     UtilParsing::controlMapLocation(allMapRoads, "root");
     UtilParsing::controlMapLocation(allMapRoads, "index");
     UtilParsing::controlMapLocation(allMapRoads, "methods_accept");
-    UtilParsing::controlMapLocation(allMapRoads, "bob");
 }
 // je pense rajouter la possibilite de supprimer la location si il manque un des 4 pre-requis
+
+std::string UtilParsing::trim(const std::string& str) 
+{
+    std::size_t first = str.find_first_not_of(' ');
+    std::size_t last = str.find_last_not_of(' ');
+
+    if (first == std::string::npos) 
+    {
+        return "";
+    }
+
+    return str.substr(first, last - first + 1);
+}
+
+std::string UtilParsing::recoverValue(std::string line, std::string key)
+{
+    if (line.find(key) != std::string::npos) 
+    {
+    std::size_t pos = line.find(key.c_str());
+    if (pos != std::string::npos) 
+    {
+        std::size_t startPos = line.find_first_not_of(' ', pos + std::strlen(key.c_str()));
+        std::size_t endPos = line.find(';', startPos);
+        if (startPos != std::string::npos) 
+        {
+            std::string value = line.substr(startPos, endPos - startPos);
+            return UtilParsing::trim(value);
+        }
+    }
+    }
+    return "";
+}

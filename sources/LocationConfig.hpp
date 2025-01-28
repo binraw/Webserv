@@ -1,19 +1,28 @@
 #ifndef LOCATIONCONFIG_HPP
 # define LOCATIONCONFIG_HPP
 
-#include "ConfigParser.hpp"
+#include <vector>
+#include "UtilParsing.hpp"
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <cstring>
+#include <map>
+#include <vector>
+#include <unistd.h>
 
 class LocationConfig 
 {
 public:
-    std::string path;
-    std::string root;
-    std::string index;
-    std::vector<std::string> methods;
+    std::string _path;
+    std::string _root;
+    std::string _index;
+    std::vector<std::string> _methods;
 
     void addMethod(const std::string& method) 
     {
-        methods.push_back(method);
+        _methods.push_back(method);
     }
 };
 

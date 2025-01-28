@@ -30,25 +30,25 @@ void ConfigParser::parseHttpBlock(std::ifstream& file, HttpConfig& httpConfig)
     {
         if (line.find("include") != std::string::npos)
         {
-            _include.push_back(line.substr(line.find(' ') + 1));
+            httpConfig._include = (UtilParsing::splitSpecialDeleteKey(line, std::string(" ")));
         }
         if (line.find("default_type") != std::string::npos)
         {
-            _default_type = line.substr(line.find(' ') + 1);
+            httpConfig._default_type = UtilParsing::recoverValue(line, "default_type");
         }
         if (line.find("keepalive_timeout") != std::string::npos)
         {
-            _keepalive_timeout = line.substr(line.find(' ') + 1);
+            httpConfig._keepalive_timeout = UtilParsing::recoverValue(line, "keepalive_timeout");
         }
         if (line.find("worker_connexion") != std::string::npos)
         {
-            _worker_connexion = line.substr(line.find(' ') + 1);
+            httpConfig._worker_connexion = UtilParsing::recoverValue(line, "worker_connexion");
         }
-        if (line == "server {") 
+        if (line.find("server") != std::string::npos) 
         {
             ServerConfig serverConfig;
             parseServerBlock(file, serverConfig);
-            httpConfig.servers.push_back(serverConfig);
+            httpConfig._servers.push_back(serverConfig);
         } 
         else if (line == "}") 
         {
@@ -64,26 +64,26 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
     {
         if (line.find("server_name") != std::string::npos) 
         {
-            serverConfig.serverName.push_back(line.substr(line.find(' ') + 1));
+            serverConfig._serverName = (UtilParsing::split(UtilParsing::trim(line), std::string(" ")));
         } 
         else if (line.find("listen") != std::string::npos) 
         {
-            serverConfig.listenPort.push_back(line.substr(line.find(' ') + 1));
+            serverConfig._listenPort = (UtilParsing::split(UtilParsing::trim(line), std::string(" ")));
         } 
         else if (line.find("client_max_body_size") != std::string::npos) 
         {
-            serverConfig.clientMaxBodySize = line.substr(line.find(' ') + 1);
+            serverConfig._clientMaxBodySize = UtilParsing::recoverValue(line, "client_max_body_size");
         } 
         else if (line.find("upload_path") != std::string::npos) 
         {
-            serverConfig.uploadPath = line.substr(line.find(' ') + 1);
+            serverConfig._uploadPath = UtilParsing::recoverValue(line, "upload_path");
         } 
         else if (line.find("location") != std::string::npos) 
         {
             LocationConfig locationConfig;
-            locationConfig.path = line.substr(line.find(' ') + 1);
+            locationConfig._path = line.substr(line.find(' ') + 1);
             parseLocationBlock(file, locationConfig);
-            serverConfig.locations.push_back(locationConfig);
+            serverConfig._locations.push_back(locationConfig);
         } 
         else if (line == "}") 
         {
@@ -99,11 +99,11 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
     {
         if (line.find("root") != std::string::npos) 
         {
-            locationConfig.root = line.substr(line.find(' ') + 1);
+            locationConfig._root = UtilParsing::recoverValue(line, "root");
         } 
         else if (line.find("index") != std::string::npos) 
         {
-            locationConfig.index = line.substr(line.find(' ') + 1);
+            locationConfig._index = UtilParsing::recoverValue(line, "index");
         } 
         else if (line.find("methods_accept") != std::string::npos) 
         {
@@ -120,3 +120,6 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
         }
     }
 }
+
+
+
