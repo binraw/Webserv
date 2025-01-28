@@ -26,12 +26,15 @@
 
 #include "Server.hpp"
 #include "Cluster.hpp"
+#include "ConfigParser.hpp"
 
 int main(void)
 {
     try
     {
-        Cluster one("./config/default.conf");
+        ConfigParser parser;
+        HttpConfig config = parser.parse("./config/default.conf");
+        // Cluster one("./config/default.conf");
         /* code */
     }
     catch(const std::exception& e)

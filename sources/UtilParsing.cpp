@@ -129,6 +129,7 @@ void UtilParsing::controlMapLocation(std::map<int, std::map<std::string, std::ve
         else 
         {
             std::cout << "Probleme aucune key : " << keyValue << " dans index : " << index <<  std::endl;
+            // outerIt = allMapRoads.erase(outerIt);
         }
         index++;
     }
@@ -140,5 +141,6 @@ void UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, s
     UtilParsing::controlMapLocation(allMapRoads, "root");
     UtilParsing::controlMapLocation(allMapRoads, "index");
     UtilParsing::controlMapLocation(allMapRoads, "methods_accept");
+    UtilParsing::controlMapLocation(allMapRoads, "bob");
 }
 // je pense rajouter la possibilite de supprimer la location si il manque un des 4 pre-requis

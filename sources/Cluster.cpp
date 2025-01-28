@@ -15,11 +15,7 @@ Cluster::Cluster(const std::string &filename)
     std::ifstream inputFile(filename.c_str());
     std::string line;
     controlLineOfFile();
-    // if (!inputFile.is_open()) 
-    // {
-    //     std::cerr << "Could not open conf file" << std::endl;
-    //     return;
-    // }
+
     while (std::getline(inputFile, line))
     {
         if (line.empty() || line[0] == '#') continue;

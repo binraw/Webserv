@@ -6,7 +6,7 @@
 #    By: rtruvelo <rtruvelo@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/01/20 11:23:59 by rtruvelo         ###   ########.fr        #
+#    Updated: 2025/01/28 11:13:51 by rtruvelo         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -50,7 +50,7 @@ endif
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp Server.cpp Socket.cpp Cluster.cpp UtilParsing.cpp
+SRC	= main.cpp Server.cpp Socket.cpp Cluster.cpp UtilParsing.cpp ConfigParser.cpp HttpConfig.cpp LocationConfig.cpp ServerConfig.cpp
 # HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
