@@ -38,10 +38,6 @@ class Server
 		void	setParams(std::vector<std::string> &);
 
 };
-
-/*	* OVERLOAD OUTSTREAM
-	*
-*/
 std::ostream	& operator<<(std::ostream &, const Server &);
 
 #endif

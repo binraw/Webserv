@@ -8,31 +8,32 @@
 
 # include <fcntl.h>
 
-typedef struct s_paramsServer
-{
-	std::map<std::string, std::string>
-		mimes;
-	s_paramsServer() 
-	{
-		mimes[".bin"].assign("application/octet-stream");
-		mimes[".js"].assign("application/javascript");
-		mimes[".doc"].assign("application/msword");
-		mimes[".csh"].assign("application/x-csh");
-		mimes[".json"].assign("application/json");
-		mimes[".pdf"].assign("application/pdf");
-		mimes[".sh"].assign("application/x-sh");
-		mimes[".jpeg"].assign("image/jpeg");
-		mimes[".jpg"].assign("image/jpeg");
-		mimes[".bmp"].assign("image/bmp");
-		mimes[".gif"].assign("image/gif");
-		mimes[".png"].assign("image/png");
-		mimes[".html"].assign("text/html");
-		mimes[".htm"].assign("text/html");
-		mimes[".css"].assign("text/css");
-		mimes[".csv"].assign("text/csv");
+// typedef struct s_paramsServer
+// {
+// 	std::map<std::string, std::string>
+// 		mimes;
+// 	s_paramsServer() 
+// 	{
+// 		mimes[".bin"].assign("application/octet-stream");
+// 		mimes[".js"].assign("application/javascript");
+// 		mimes[".doc"].assign("application/msword");
+// 		mimes[".csh"].assign("application/x-csh");
+// 		mimes[".json"].assign("application/json");
+// 		mimes[".pdf"].assign("application/pdf");
+// 		mimes[".sh"].assign("application/x-sh");
+// 		mimes[".jpeg"].assign("image/jpeg");
+// 		mimes[".jpg"].assign("image/jpeg");
+// 		mimes[".bmp"].assign("image/bmp");
+// 		mimes[".gif"].assign("image/gif");
+// 		mimes[".png"].assign("image/png");
+// 		mimes[".html"].assign("text/html");
+// 		mimes[".htm"].assign("text/html");
+// 		mimes[".css"].assign("text/css");
+// 		mimes[".csv"].assign("text/csv");
 
-	}
-}	t_paramsServer;
+// 	}
+
+// }	t_paramsCluster;
 
 class Cluster
 {
@@ -46,6 +47,8 @@ class Cluster
 		const std::vector<Server>	& getAllServer()	const;
 		const std::set<std::string>	& getListenList()	const;
 
+	protected:
+		void	addSocket();
 	private:
 		std::set<std::string>	_listenList;		// liste de tous les ports
 		std::set<std::string>	_incudeList;		// ??
@@ -83,5 +86,7 @@ class Cluster
 				const char *	_serviceName;	
 		};
 };
+
+std::ostream	& operator<<(std::ostream &, const Cluster &);
 
 #endif
