@@ -19,8 +19,8 @@ throw(std::exception) : _configPath(filename)
 	// sockaddr_storage est une structure qui n'est pas associé à
     // une famille particulière. Cela nous permet de récupérer
     // une adresse IPv4 ou IPv6
-    struct sockaddr_storage	client_addr;
-    socklen_t				addr_size;
+    // struct sockaddr_storage	client_addr;
+    // socklen_t				addr_size;
 }
 /*----------------------------------------------------------------------------*/
 
