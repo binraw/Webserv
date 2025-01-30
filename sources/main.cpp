@@ -1,29 +1,3 @@
-// #include <iostream>
-// #include <sstream>
-// #include <string>
-// #include <cstring>
-
-// #include <unistd.h>
-// #include <stdlib.h>
-// #include <sys/types.h>
-// #include <sys/socket.h>
-// #include <netdb.h>
-// #include <arpa/inet.h>
-
-// #define SERVICE "8080"
-// #define BACKLOG 10
-// #define BUFFER_SIZE 1024
-
-/*
-    * define a port to listen
-    * add the local ip address 
-    * 
-*/
-
-
-
-
-
 #include "Server.hpp"
 #include "Cluster.hpp"
 #include "ConfigParser.hpp"
@@ -35,7 +9,7 @@ int main(void)
         ConfigParser parser;
         HttpConfig config = parser.parse("./config/default.conf");
         config.displayDefaultHttp();
-        // config.displayServers();
+        config.displayServers();
     }
     catch(const std::exception& e)
     {
@@ -44,7 +18,5 @@ int main(void)
     }
     
 
-    // one.initAllServer();
-    // one.displayServersConfig();
     return 0;
 }

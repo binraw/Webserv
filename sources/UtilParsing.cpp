@@ -18,7 +18,7 @@ bool    UtilParsing::isOnlySpace(const std::string & str)
 
 std::vector<std::string> UtilParsing::split(const std::string & line, const std::string & set)
  {
-    static std::vector<std::string> result;
+    std::vector<std::string> result;
 
     for (size_t i = 0; i != std::string::npos;) {
         size_t end = line.find_first_of(set, i);
@@ -32,7 +32,7 @@ std::vector<std::string> UtilParsing::split(const std::string & line, const std:
 
 std::vector<std::string> UtilParsing::splitSpecialDeleteKey(const std::string & line, const std::string & set)
  {
-    static std::vector<std::string> result;
+    std::vector<std::string> result;
 
     for (size_t i = 0; i != std::string::npos;) 
     {

@@ -64,11 +64,11 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
     {
         if (line.find("server_name") != std::string::npos) 
         {
-            serverConfig._serverName = (UtilParsing::split(UtilParsing::trim(line), std::string(" ")));
+            serverConfig._serverName = (UtilParsing::splitSpecialDeleteKey(line, std::string(" ")));
         } 
         else if (line.find("listen") != std::string::npos) 
         {
-            serverConfig._listenPort = (UtilParsing::split(UtilParsing::trim(line), std::string(" ")));
+            serverConfig._listenPort = (UtilParsing::splitSpecialDeleteKey(UtilParsing::trim(line), std::string(" ")));
         } 
         else if (line.find("client_max_body_size") != std::string::npos) 
         {
