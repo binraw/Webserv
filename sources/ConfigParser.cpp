@@ -50,10 +50,10 @@ void ConfigParser::parseHttpBlock(std::ifstream& file, HttpConfig& httpConfig)
             parseServerBlock(file, serverConfig);
             httpConfig._servers.push_back(serverConfig);
         } 
-        else if (line == "}") 
-        {
-            break;
-        }
+        // else if (line == "}") 
+        // {
+        //     break;
+        // }
     }
 }
 
@@ -85,7 +85,7 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
             parseLocationBlock(file, locationConfig);
             serverConfig._locations.push_back(locationConfig);
         } 
-        else if (line == "}") 
+        else if (line.find("}")) 
         {
             break;
         }
@@ -114,7 +114,7 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
                 locationConfig.addMethod(method);
             }
         } 
-        else if (line == "}") 
+        else if (line.find("}")) 
         {
             break;
         }

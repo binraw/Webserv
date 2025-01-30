@@ -16,7 +16,6 @@ public:
 
     void displayValueServer();
     void displayVector(std::vector<std::string> vec);
-    void cleanVector();
 };
 
 #endif
