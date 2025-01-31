@@ -119,7 +119,7 @@ void	Cluster::setAllSocket()
 			safeGetAddr(it->c_str(), hints, &res);
 		}
 		catch(const InitException &e) {
-			e.getAddrExcept();
+			e.setSockExcept();
 			goto jump0;
 		}
 		for (struct addrinfo *nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
@@ -215,21 +215,14 @@ void	Cluster::closeFdSet()
 /*============================================================================*/
 
 void	Cluster::InitException::setSockExcept() const throw() {
-	std::cerr	<< RED << strerror(errno)
-				<< std::endl
-				<< YELLOW "at file [" << _file << "] line [" << _line << "]";
-	if (_serviceName != NULL) {
-		std::cerr	<< " ( port [" << _serviceName << "] )";
-	}
-	std::cerr	<< RESET << std::endl;
-}
-/*----------------------------------------------------------------------------*/
-
-void	Cluster::InitException::getAddrExcept() const throw() {
-	std::cerr	<< RED << gai_strerror(_ret) << std::endl
-				<< YELLOW "function getaddrinfo() " __FILE__ " at line [" << __LINE__ - 3 << "] : "
-				<< "The service [" << _serviceName << "] could not be launched."
-				<< RESET << std::endl;
+	if (errno != 0)
+		std::cerr << RED << strerror(errno) << ": ";
+	if (_ret != 0)
+		std::cerr << RED << gai_strerror(_ret) << ": ";
+	std::cerr << YELLOW "at file [" << _file << "] line [" << _line << "]";
+	if (_serviceName != 0)
+		std::cerr << " ( service [" << _serviceName << "] )";
+	std::cerr << RESET << std::endl << std::endl;
 }
 /*----------------------------------------------------------------------------*/
 
