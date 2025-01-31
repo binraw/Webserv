@@ -13,6 +13,9 @@
 
 #include <csignal>
 
+#define MAXEVENT 10
+
+
 /*============================================================================*/
 					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
@@ -36,8 +39,8 @@ int	communicateWithClient(const int clientFd)
 		std::cerr << "Erreur lors de la réception des données" << std::endl;
 		return (5);
 	}
-	std::cout	<< "RECEIVED FROM CLIENT:\n"
-				<< buffer << std::endl;
+	// std::cout	<< "RECEIVED FROM CLIENT:\n"
+	// 			<< buffer << std::endl;
 	const char *http_response =
 	"HTTP/1.1 200 OK\r\n"
 	"Content-Type: text/html\r\n"
@@ -56,7 +59,6 @@ int	communicateWithClient(const int clientFd)
 	return (0);
 }
 
-#define MAXEVENT 3
 
 Cluster::Cluster(const std::string &filename)
 throw(std::exception) : _configPath(filename)
@@ -355,35 +357,48 @@ void	Cluster::runCluster()
 	g_runserv = 1;
 	while (g_runserv)
 	{
-		int nfds = epoll_wait(_epollFd, events, MAXEVENT, 1000);
-		if (nfds == -1) {
+		int clientSocket = -1;
+		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
+		if (nbEvents == -1) {
 			perror("epoll_wait");
-			break;
+			goto close;
 		}
-		else if (nfds > 0) {
-			std::cout << "\ncurrent fd: " << events[0].data.fd << std::endl;
-			int clientSocket = accept(events[0].data.fd, addr, &addr_size);
-			if (clientSocket == -1) {
-				perror("accept()");
-				goto close;
+		if (nbEvents == 0)
+			goto flush;
+		
+		
+		for (std::set<int>::iterator it = _sockFds.begin(); it != _sockFds.end(); it++) {
+			for (int i = 0; i < nbEvents; i++) {
+				if (events[i].data.fd == *it) {
+					clientSocket = accept(events[i].data.fd, addr, &addr_size);
+					goto next;
+				}
 			}
-			ev.events = EPOLLIN | EPOLLET;
-			ev.data.fd = clientSocket;
-			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
-				perror("epoll_ctl: clientSocket");
-				close(clientSocket);
-				goto close;
-			} else {
-				std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
-				communicateWithClient(clientSocket);
-				epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
-				close(clientSocket);
-			}
+			if (it == _sockFds.end())
+				goto flush;
 		}
-		else {
+		next:
+		if (clientSocket < 0) {
+			perror("accept()");
+			goto close;
+		}
+
+
+		ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+		ev.data.fd = clientSocket;
+		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
+			perror("epoll_ctl: clientSocket");
+			close(clientSocket);
+			goto close;
+		} else {
+			// std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
+			communicateWithClient(clientSocket);
+			epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
+			close(clientSocket);
+		}
+		flush:
 			std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
 						<< std::flush;
-		}
 	}
 	close:
 	close(_epollFd);
