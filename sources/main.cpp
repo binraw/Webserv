@@ -116,9 +116,20 @@
 
 #include "Server.hpp"
 #include "Cluster.hpp"
+#include <csignal>
+
+
+void hand(int, siginfo_t *, void *);
+
+
 
 int main(void)
 {
+    struct sigaction act;
+    act.sa_handler = NULL;
+    act.sa_sigaction = hand;
+    act.sa_flags = SA_SIGINFO;
+    sigaction(SIGINT, &act, NULL);
     try {
         Cluster one("./config/exemple.conf");
         /*

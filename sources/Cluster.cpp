@@ -10,9 +10,20 @@
 
 #include <sys/epoll.h>
 #include <sys/types.h>
+
+#include <csignal>
+
 /*============================================================================*/
 					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
+
+int g_runserv = 0;
+
+void hand(int, siginfo_t *, void *)
+{
+    g_runserv = 0;
+}
+
 
 int	communicateWithClient(const int clientFd)
 {
@@ -51,7 +62,9 @@ throw(std::exception) : _configPath(filename)
 
 
 	setAllSocket();
+
 	setEpollFd();
+	
 	std::cout << "\n\n\n\n";
 
 	{
@@ -61,8 +74,8 @@ throw(std::exception) : _configPath(filename)
 		struct epoll_event	events[MAXEVENT], ev;
 		struct sockaddr		*addr = NULL;
 		socklen_t			addr_size;
-		
-		while (1)
+		g_runserv = 1;
+		while (g_runserv)
 		{
 			int nfds = epoll_wait(_epollFd, events, MAXEVENT, 1000);
 			if (nfds == -1) {
@@ -85,6 +98,7 @@ throw(std::exception) : _configPath(filename)
 				} else {
 					std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
 					communicateWithClient(clientSocket);
+					epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
 					close(clientSocket);
 				}
 			}
@@ -208,9 +222,9 @@ const std::set<std::string>	& Cluster::getListenList() const {
 void	Cluster::setParams()
 {
 	_listenList.insert("8000");
-	// _listenList.insert("8001");
-	// _listenList.insert("8002");
-	// _listenList.insert("8002");
+	_listenList.insert("8001");
+	_listenList.insert("8002");
+	_listenList.insert("8002");
 	_listenList.insert("http");
 	// _listenList.insert("8002");
 	// _listenList.insert("8002 ");
@@ -239,14 +253,15 @@ void	Cluster::setAllSocket()
 	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
 												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
 	
-	for (std::set<std::string>::iterator it = _listenList.begin(); it != _listenList.end(); it++)
+	for (std::set<std::string>::iterator it = _listenList.begin(); \
+										it != _listenList.end(); it++)
 	{
 		try {
 			safeGetAddr(it->c_str(), hints, &res);
 		}
 		catch(const InitException &e) {
 			e.setSockExcept();
-			goto jump0;
+			goto jump;
 		}
 		for (struct addrinfo *nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
 		{
@@ -263,23 +278,27 @@ void	Cluster::setAllSocket()
 			}
 		}
 		freeaddrinfo(res);
-		jump0:
+		jump:
 			continue;
 	}
 # ifdef TEST
 	std::cout	<< *this << std::endl;
 # endif
+	if (_sockFds.empty() == true)
+		throw InitException(NULL, 0, "\033[31mnone of the requested services are available\n", \
+							NULL, 0);
 }
 /*----------------------------------------------------------------------------*/
 
 void	Cluster::setEpollFd()
 {
 	struct epoll_event ev;
-	_epollFd = epoll_create1(EPOLL_CLOEXEC);
 
+	_epollFd = epoll_create(1);
 	if (_epollFd < 0) {
-		std::cerr	<< "error creation epoll()" << std::endl;
-		return;
+		std::cerr	<< "" << std::endl;
+		perror("error creation epoll()");
+		throw std::exception();
 	}
 	for (std::set<int>::iterator it = _sockFds.begin(); \
 								it != _sockFds.end(); it++)
@@ -288,21 +307,21 @@ void	Cluster::setEpollFd()
 		ev.data.fd = *it;
 		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, *it, &ev) == -1) {
 			perror("epoll_ctl: listen_sock");
-			return;
+			close(_epollFd);
+			throw std::exception();
 		}
 		else
 			std::cout << "fd [" << *it << "] added in epollFd" << std::endl;
 	}
-
 }
 /*----------------------------------------------------------------------------*/
 
-void	Cluster::safeGetAddr(const char *name, const struct addrinfo &hints, struct addrinfo **res) const
+void	Cluster::safeGetAddr(const char *serviceName, const struct addrinfo &hints, struct addrinfo **res) const
 throw(InitException)
 {
-	int ret = getaddrinfo(NULL, name, &hints, res);
+	int ret = getaddrinfo(NULL, serviceName, &hints, res);
 	if (ret != 0)
-		throw InitException(__FILE__, __LINE__ - 2, "Error -> setsockopt()", name, ret);
+		throw InitException(__FILE__, __LINE__ - 2, "Error -> setsockopt()", serviceName, ret);
 }
 /*----------------------------------------------------------------------------*/
 
@@ -313,16 +332,13 @@ throw(InitException)
 	if (fd < 0) {		
 		throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL, 0);
 	}
-	if (fcntl(fd, F_SETFL, /* O_NONBLOCK |  */FD_CLOEXEC) != 0) // R T MANUAL
+	if (fcntl(fd, F_SETFL, O_NONBLOCK | FD_CLOEXEC) != 0) // R T MANUAL
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> fcntl()", NULL, 0);
 
 	int opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
 	}
-	// if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
-	// 	throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
-	// }
 	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
 	}

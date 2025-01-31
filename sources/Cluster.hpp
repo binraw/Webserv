@@ -39,6 +39,7 @@
 // 	}
 
 // }	t_paramsCluster;
+
 class Cluster
 {
 	class   InitException : virtual public std::exception
@@ -78,7 +79,6 @@ class Cluster
 		int						_workerConnexion;	// nb total de connexion supportes par le cluster
 		int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
 		int						_epollFd;			// fd vers structure epoll
-
 		void	setParams();		// init les parametres (provisoir en attendant parsing)
 
 		void	setAllSocket();

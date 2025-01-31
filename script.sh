@@ -3,7 +3,7 @@
 SERVER="localhost:8000"
 SERVER2="localhost:8001"
 SERVER3="localhost:8002"
-NUM_CLIENTS=1000  # Nombre de clients à simuler
+NUM_CLIENTS=500  # Nombre de clients à simuler
 
 # Liste des User-Agents pour simuler différents navigateurs
 USER_AGENTS=(
@@ -26,7 +26,7 @@ echo "📡 Envoi de $NUM_CLIENTS requêtes à $SERVER..."
 
 # Boucle pour lancer plusieurs requêtes en parallèle
 for ((i=0; i<NUM_CLIENTS; i++)); do
-    send_request "${USER_AGENTS[$i]}"
+    send_request 
 done
 
 # Attendre la fin de toutes les requêtes
