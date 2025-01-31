@@ -69,6 +69,8 @@ class Cluster
 		const std::vector<Server>	& getAllServer()	const;
 		const std::set<std::string>	& getListenList()	const;
 
+		void	runCluster();
+
 	private:
 		std::set<std::string>	_listenList;		// liste de tous les ports
 		std::set<std::string>	_incudeList;		// ??

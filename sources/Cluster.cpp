@@ -41,9 +41,12 @@ int	communicateWithClient(const int clientFd)
 	const char *http_response =
 	"HTTP/1.1 200 OK\r\n"
 	"Content-Type: text/html\r\n"
-	"Content-Length: 13\r\n"
+	"Content-Length: 38\r\n"
 	"\r\n"
-	"Hello, World!";
+	"<http>"
+	"<h1>TITLE<h1>"
+	"Hello, World!"
+	"<http>";
 
 	if (send(clientFd, http_response, strlen(http_response), 0) < 0) 
 	{
@@ -53,63 +56,27 @@ int	communicateWithClient(const int clientFd)
 	return (0);
 }
 
-#define MAXEVENT 10
+#define MAXEVENT 3
 
 Cluster::Cluster(const std::string &filename)
 throw(std::exception) : _configPath(filename)
 {
 	setParams();
 
-
 	setAllSocket();
 
-	setEpollFd();
-	
-	std::cout << "\n\n\n\n";
-
-	{
-		std::string	dot[3] = {".  ", ".. ", "..."};
-		int 		n = 0;
-		
-		struct epoll_event	events[MAXEVENT], ev;
-		struct sockaddr		*addr = NULL;
-		socklen_t			addr_size;
-		g_runserv = 1;
-		while (g_runserv)
-		{
-			int nfds = epoll_wait(_epollFd, events, MAXEVENT, 1000);
-			if (nfds == -1) {
-				perror("epoll_wait");
-				break;
-			}
-			else if (nfds > 0) {
-				std::cout << "\ncurrent fd: " << events[0].data.fd << std::endl;
-				int clientSocket = accept(events[0].data.fd, addr, &addr_size);
-				if (clientSocket == -1) {
-					perror("accept()");
-					goto close;
-				}
-				ev.events = EPOLLIN | EPOLLET;
-				ev.data.fd = clientSocket;
-				if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
-					perror("epoll_ctl: clientSocket");
-					close(clientSocket);
-					goto close;
-				} else {
-					std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
-					communicateWithClient(clientSocket);
-					epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
-					close(clientSocket);
-				}
-			}
-			else {
-				std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
-							<< std::flush;
-			}
-		}
+	try {
+		setEpollFd();
 	}
-	close:
-	close(_epollFd);
+	catch(const InitException& e) {
+		e.setSockExcept();
+		closeFdSet();
+		throw;
+	}
+	
+	
+	std::cout << "\nINIT TERMINATED\n" << std::endl;
+
 
 	{
 
@@ -241,7 +208,7 @@ void	Cluster::setParams()
 void	Cluster::setAllSocket()
 {
 # ifdef TEST
-	std::cout	<< BOLD BLUE << "Function -> setSocket()"
+	std::cout	<< BOLD BLUE << "Function -> setSocket() {"
 				<< RESET << std::endl;
 # endif
 	struct addrinfo	hints, *res = NULL;
@@ -282,7 +249,9 @@ void	Cluster::setAllSocket()
 			continue;
 	}
 # ifdef TEST
-	std::cout	<< *this << std::endl;
+	std::cout	<< *this << std::endl
+				<< BOLD BLUE "}\n" RESET
+				<< std::endl;
 # endif
 	if (_sockFds.empty() == true)
 		throw InitException(NULL, 0, "\033[31mnone of the requested services are available\n", \
@@ -294,25 +263,30 @@ void	Cluster::setEpollFd()
 {
 	struct epoll_event ev;
 
+#ifdef TEST
+	std::cout	<< BOLD BLUE << "Function -> setEpollFd() {"
+				<< RESET << std::endl;
+#endif
 	_epollFd = epoll_create(1);
-	if (_epollFd < 0) {
-		std::cerr	<< "" << std::endl;
-		perror("error creation epoll()");
-		throw std::exception();
-	}
+	if (_epollFd < 0)
+		throw InitException(__FILE__, __LINE__, "error creation epoll()", NULL, 0);
 	for (std::set<int>::iterator it = _sockFds.begin(); \
 								it != _sockFds.end(); it++)
 	{
 		ev.events = EPOLLIN;
 		ev.data.fd = *it;
 		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, *it, &ev) == -1) {
-			perror("epoll_ctl: listen_sock");
 			close(_epollFd);
-			throw std::exception();
+			throw InitException(__FILE__, __LINE__, "epoll_ctl: EPOLL_CTL_ADD", NULL, 0);
 		}
-		else
-			std::cout << "fd [" << *it << "] added in epollFd" << std::endl;
 	}
+#ifdef TEST
+	for (std::set<int>::iterator it = _sockFds.begin(); \
+								it != _sockFds.end(); it++)
+		std::cout << "fd [" << *it << "] added in epollFd" << std::endl;
+	std::cout	<< BOLD BLUE "}\n" RESET
+				<< std::endl;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 
@@ -370,6 +344,51 @@ void	Cluster::closeFdSet()
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
+void	Cluster::runCluster()
+{
+	std::string	dot[3] = {".  ", ".. ", "..."};
+	int 		n = 0;
+	
+	struct epoll_event	events[MAXEVENT], ev; // voir la doc
+	struct sockaddr		*addr = NULL;
+	socklen_t			addr_size;
+	g_runserv = 1;
+	while (g_runserv)
+	{
+		int nfds = epoll_wait(_epollFd, events, MAXEVENT, 1000);
+		if (nfds == -1) {
+			perror("epoll_wait");
+			break;
+		}
+		else if (nfds > 0) {
+			std::cout << "\ncurrent fd: " << events[0].data.fd << std::endl;
+			int clientSocket = accept(events[0].data.fd, addr, &addr_size);
+			if (clientSocket == -1) {
+				perror("accept()");
+				goto close;
+			}
+			ev.events = EPOLLIN | EPOLLET;
+			ev.data.fd = clientSocket;
+			if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
+				perror("epoll_ctl: clientSocket");
+				close(clientSocket);
+				goto close;
+			} else {
+				std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
+				communicateWithClient(clientSocket);
+				epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
+				close(clientSocket);
+			}
+		}
+		else {
+			std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
+						<< std::flush;
+		}
+	}
+	close:
+	close(_epollFd);
+
+}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/

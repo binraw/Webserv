@@ -126,12 +126,15 @@ void hand(int, siginfo_t *, void *);
 int main(void)
 {
     struct sigaction act;
+    memset(&act, 0, sizeof(act));
     act.sa_handler = NULL;
     act.sa_sigaction = hand;
     act.sa_flags = SA_SIGINFO;
     sigaction(SIGINT, &act, NULL);
+    
     try {
-        Cluster one("./config/exemple.conf");
+        Cluster cluster("./config/exemple.conf");
+        cluster.runCluster();
         /*
             for (std::vector<Server>::const_iterator it = one.getAllServer().begin(); \
                 it != one.getAllServer().end(); it++)
@@ -139,7 +142,8 @@ int main(void)
         */
     }
     catch(const std::exception& e) {
-        std::cerr	<< YELLOW << e.what()
+        std::cerr	<< YELLOW << e.what() << std::endl
+                    << "webserv : EXIT_FAILURE\n"
 					<< RESET << std::endl;
         return 1;
     }
