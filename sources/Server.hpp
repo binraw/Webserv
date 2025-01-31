@@ -1,22 +1,8 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include "UtilParsing.hpp"
 # include "../includes/webserv.hpp"
 
-# include <stdexcept>
-# include <iostream>
-# include <cstring>
-# include <cerrno>
-# include <string>
-# include <vector>
-# include <set>
-# include <map>
-
-# include <sys/socket.h>
-# include <sys/types.h>
-# include <unistd.h>
-# include <netdb.h>
 
 class Cluster;
 

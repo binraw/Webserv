@@ -7,20 +7,146 @@
 /*============================================================================*/
 #include "Cluster.hpp"
 
+
+#include <sys/epoll.h>
+#include <sys/types.h>
 /*============================================================================*/
 					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*============================================================================*/
+
+int	communicateWithClient(const int clientFd)
+{
+	char buffer[2048];
+	memset(buffer, '\0', sizeof(buffer));
+	int bytes_received = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+	
+	if (bytes_received < 0) 
+	{
+		std::cerr << "Erreur lors de la réception des données" << std::endl;
+		return (5);
+	}
+	std::cout	<< "RECEIVED FROM CLIENT:\n"
+				<< buffer << std::endl;
+	const char *http_response =
+	"HTTP/1.1 200 OK\r\n"
+	"Content-Type: text/html\r\n"
+	"Content-Length: 13\r\n"
+	"\r\n"
+	"Hello, World!";
+
+	if (send(clientFd, http_response, strlen(http_response), 0) < 0) 
+	{
+		std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
+		return (6);
+	}
+	return (0);
+}
+
+#define MAXEVENT 10
 
 Cluster::Cluster(const std::string &filename)
 throw(std::exception) : _configPath(filename)
 {
 	setParams();
+
+
 	setAllSocket();
-	// sockaddr_storage est une structure qui n'est pas associé à
-    // une famille particulière. Cela nous permet de récupérer
-    // une adresse IPv4 ou IPv6
-    // struct sockaddr_storage	client_addr;
-    // socklen_t				addr_size;
+	setEpollFd();
+	std::cout << "\n\n\n\n";
+
+	{
+		std::string	dot[3] = {".  ", ".. ", "..."};
+		int 		n = 0;
+		
+		struct epoll_event	events[MAXEVENT], ev;
+		struct sockaddr		*addr = NULL;
+		socklen_t			addr_size;
+		
+		while (1)
+		{
+			int nfds = epoll_wait(_epollFd, events, MAXEVENT, 1000);
+			if (nfds == -1) {
+				perror("epoll_wait");
+				break;
+			}
+			else if (nfds > 0) {
+				std::cout << "\ncurrent fd: " << events[0].data.fd << std::endl;
+				int clientSocket = accept(events[0].data.fd, addr, &addr_size);
+				if (clientSocket == -1) {
+					perror("accept()");
+					goto close;
+				}
+				ev.events = EPOLLIN | EPOLLET;
+				ev.data.fd = clientSocket;
+				if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
+					perror("epoll_ctl: clientSocket");
+					close(clientSocket);
+					goto close;
+				} else {
+					std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
+					communicateWithClient(clientSocket);
+					close(clientSocket);
+				}
+			}
+			else {
+				std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
+							<< std::flush;
+			}
+		}
+	}
+	close:
+	close(_epollFd);
+
+	{
+
+		// sockaddr_storage est une structure qui n'est pas associé à
+		// une famille particulière. Cela nous permet de récupérer
+		// une adresse IPv4 ou IPv6
+		// struct sockaddr_storage	client_addr;
+		// socklen_t				addr_size;
+
+		// addr_size = sizeof(client_addr);
+
+		// epoll()
+
+		// fd_client = accept(fd_sock_server, (struct sockaddr *) &client_addr, &client_addr_size); // accepte la connexion et creer un nouveau socket
+		// if (fd_client < 0) {
+		//     std::cerr << "Error accept client" << std::endl;
+		//     freeaddrinfo(res);
+		// }
+
+		// memset(buffer, '\0', sizeof(buffer));
+		// bytes_received = recv(fd_client, buffer, sizeof(buffer) - 1, 0);
+		
+		// if (bytes_received < 0) 
+		// {
+		// 	std::cerr << "Erreur lors de la réception des données" << std::endl;
+		// 	close(fd_client);
+		// 	freeaddrinfo(res);
+		// 	return (5);
+		// }
+		// const char *http_response =
+		// "HTTP/1.1 200 OK\r\n"
+		// "Content-Type: text/html\r\n"
+		// "Content-Length: 13\r\n"
+		// "\r\n"
+		// "Hello, World!";
+
+		// if (send(fd_client, http_response, strlen(http_response), 0) < 0) 
+		// {
+		// 	std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
+		// 	close(fd_client);
+		// 	freeaddrinfo(res);
+		// 	return (6);
+		// }
+
+		// std::cout << http_response << std::endl;
+
+		// close(fd_client);
+		// std::cout << "New client : " << client_addr.ss_family << std::endl;
+		// close(fd_sock_server);
+	}
+
 }
 /*----------------------------------------------------------------------------*/
 
@@ -82,13 +208,13 @@ const std::set<std::string>	& Cluster::getListenList() const {
 void	Cluster::setParams()
 {
 	_listenList.insert("8000");
-	_listenList.insert("8001");
-	_listenList.insert("8002");
-	_listenList.insert("8002");
+	// _listenList.insert("8001");
+	// _listenList.insert("8002");
+	// _listenList.insert("8002");
 	_listenList.insert("http");
-	_listenList.insert("8002");
-	_listenList.insert("8002 ");
-	_listenList.insert("8002");
+	// _listenList.insert("8002");
+	// _listenList.insert("8002 ");
+	// _listenList.insert("8002");
 	_workerConnexion = 1024;
 	_keepAliveTime = 65;
 }
@@ -128,16 +254,13 @@ void	Cluster::setAllSocket()
 			try {
 				safeSetSocket(nextNode, fd);
 				safeLinkSocket(fd, nextNode, it->c_str());
+				_sockFds.insert(fd);
 			}
 			catch(const InitException &e) {
 				fd > 0 ? close(fd) : fd;
 				e.setSockExcept();
 				e.what();
-				goto jump1;
 			}
-			_sockFds.insert(fd);
-			jump1:
-				continue;
 		}
 		freeaddrinfo(res);
 		jump0:
@@ -146,6 +269,31 @@ void	Cluster::setAllSocket()
 # ifdef TEST
 	std::cout	<< *this << std::endl;
 # endif
+}
+/*----------------------------------------------------------------------------*/
+
+void	Cluster::setEpollFd()
+{
+	struct epoll_event ev;
+	_epollFd = epoll_create1(EPOLL_CLOEXEC);
+
+	if (_epollFd < 0) {
+		std::cerr	<< "error creation epoll()" << std::endl;
+		return;
+	}
+	for (std::set<int>::iterator it = _sockFds.begin(); \
+								it != _sockFds.end(); it++)
+	{
+		ev.events = EPOLLIN;
+		ev.data.fd = *it;
+		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, *it, &ev) == -1) {
+			perror("epoll_ctl: listen_sock");
+			return;
+		}
+		else
+			std::cout << "fd [" << *it << "] added in epollFd" << std::endl;
+	}
+
 }
 /*----------------------------------------------------------------------------*/
 
@@ -165,16 +313,16 @@ throw(InitException)
 	if (fd < 0) {		
 		throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL, 0);
 	}
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0) // R T MANUAL
+	if (fcntl(fd, F_SETFL, /* O_NONBLOCK |  */FD_CLOEXEC) != 0) // R T MANUAL
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> fcntl()", NULL, 0);
 
 	int opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
 	}
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
-		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
-	}
+	// if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
+	// 	throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
+	// }
 	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
 	}
@@ -187,9 +335,7 @@ throw(Cluster::InitException)
 	if (bind(sockFd, currNode->ai_addr, currNode->ai_addrlen) != 0) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> bind()", currPort, 0);
 	}
-	// socket en mode écoute pour les connexions entrantes,
-	// spécifiant le nombre maximum de connexions en attente BACKLOG.
-	if (listen(sockFd, DFLT_BACKLOG ) != 0) {
+	if (listen(sockFd, SOMAXCONN ) != 0) {
 		throw InitException(__FILE__, __LINE__ - 1, "Error -> listen()", currPort, 0);
 	}
 }
@@ -221,7 +367,7 @@ void	Cluster::InitException::setSockExcept() const throw() {
 		std::cerr << RED << gai_strerror(_ret) << ": ";
 	std::cerr << YELLOW "at file [" << _file << "] line [" << _line << "]";
 	if (_serviceName != 0)
-		std::cerr << " ( service [" << _serviceName << "] )";
+		std::cerr << " (serviceName [" << _serviceName << "])";
 	std::cerr << RESET << std::endl << std::endl;
 }
 /*----------------------------------------------------------------------------*/

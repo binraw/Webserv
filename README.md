@@ -49,7 +49,7 @@ Les fonctions de sélection et de polling sont utilisées pour gérer l'entrée/
 Elles permettent de surveiller plusieurs descripteurs de fichiers (comme les sockets) pour déterminer lesquels sont prêts pour une opération d'E/S.
 
 
-## Fonctions de Kqueue:
+## Fonctions de Kqueue: BSD / DARWIN SYSTEMS
 
 kqueue : Crée une nouvelle file d'attente d'événements pour surveiller des événements sur des descripteurs de fichiers ou d'autres événements du système.
 kevent : Modifie et récupère des événements de la file d'attente d'événements créée par kqueue, permettant de gérer des événements tels que des connexions ou des lectures/écritures disponibles.
@@ -150,7 +150,7 @@ Le premier chiffre du code d’état définit la classe de réponse. Les deux de
 		. une limite du body du client
 		-> ce fichier sera automatiquement charge a chaque demarrage du serveur
 
-MIME :
+## MIME :
 	permet de formater les entete d'apres l'extension du fichier demande pour que le client sache comment interpreter les donnes a la reception (ex: .html -> text/html
 														.jpg -> image/jpeg
 														.css -> text/css

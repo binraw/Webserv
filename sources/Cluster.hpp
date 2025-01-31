@@ -5,8 +5,13 @@
 
 #include <sstream>
 #include <fstream>
+#include <cstring>
+#include <cerrno>
 
+# include <unistd.h>
 # include <fcntl.h>
+# include <netdb.h>
+
 
 // typedef struct s_paramsServer
 // {
@@ -44,7 +49,6 @@ class Cluster
 			{	}
 			const char *	what()			const throw();
 			void			setSockExcept() const throw();
-			void			getAddrExcept() const throw();
 
 		private:
 			const char *	_file;
@@ -73,11 +77,13 @@ class Cluster
 		std::string				_defaultType;		// pour default entete http
 		int						_workerConnexion;	// nb total de connexion supportes par le cluster
 		int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
-		
+		int						_epollFd;			// fd vers structure epoll
+
 		void	setParams();		// init les parametres (provisoir en attendant parsing)
 
-		void	closeFdSet();
 		void	setAllSocket();
+		void	setEpollFd();
+		void	closeFdSet();
 		void	safeSetSocket(const struct addrinfo *, int &) const throw(InitException);
 		void	safeLinkSocket(const int, const struct addrinfo *, const char *) const throw(InitException);
 		void	safeGetAddr(const char *, const struct addrinfo &, struct addrinfo **) const throw(InitException); 
