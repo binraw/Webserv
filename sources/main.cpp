@@ -5,20 +5,6 @@
 
 
 
-// INCLUDES UNIQUEMENT POUR LE DEVELOPPEMENT
-#define PORT1   8080
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <unistd.h>
-#include <string.h>
-
-#include <iostream>
-#include <string>
-#include <vector>
-
-#include "UtilParsing.hpp"
 
 /*
     includes du fichier
@@ -114,14 +100,11 @@
 // }
 
 
-#include "Server.hpp"
 #include "Cluster.hpp"
+#include <cstring>
 #include <csignal>
 
-
 void hand(int, siginfo_t *, void *);
-
-
 
 int main(void)
 {
@@ -131,19 +114,14 @@ int main(void)
     act.sa_sigaction = hand;
     act.sa_flags = SA_SIGINFO;
     sigaction(SIGINT, &act, NULL);
-    
+
     try {
         Cluster cluster("./config/exemple.conf");
         cluster.runCluster();
-        /*
-            for (std::vector<Server>::const_iterator it = one.getAllServer().begin(); \
-                it != one.getAllServer().end(); it++)
-                std::cout << *it << std::endl;
-        */
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what() << std::endl
-                    << "webserv : EXIT_FAILURE\n"
+                    << RED "webserv : EXIT_FAILURE PUSH AGAIN !!"
 					<< RESET << std::endl;
         return 1;
     }

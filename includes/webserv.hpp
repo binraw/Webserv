@@ -4,16 +4,18 @@
 
 # include "colors"
 
+
 # include <iostream>
 # include <string>
 # include <vector>
+# include <cstdio>
 # include <set>
 # include <map>
 
 /* -------------------------------------- */
 /* --- DEFINE GENERIC ERROR MESSAGES  --- */
 /* -------------------------------------- */
-# define ERROR	   "Error\n"
+# define ENOSERVICE	   "\033[31mnone of the requested services are available\n"
 # define PRINTUSAGE  std::cout   << YELLOW "USAGE :" << std::endl \
 						<< "	-> a path to a file config (.conf)" << std::endl \
 						<< "	-> no argument and default server is launch" \

@@ -7,18 +7,20 @@
 /*============================================================================*/
 #include "Cluster.hpp"
 
+#include <cstring>
+#include <cerrno>
 
 #include <sys/epoll.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <netdb.h>
 
+/*
+	ressources provisoirs
+*/
 #include <csignal>
-
 #define MAXEVENT 10
-
-
-/*============================================================================*/
-					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
-/*============================================================================*/
 
 int g_runserv = 0;
 
@@ -26,7 +28,6 @@ void hand(int, siginfo_t *, void *)
 {
     g_runserv = 0;
 }
-
 
 int	communicateWithClient(const int clientFd)
 {
@@ -58,15 +59,26 @@ int	communicateWithClient(const int clientFd)
 	}
 	return (0);
 }
+/*----------------------------------------------------------------------------*/
 
-
+/*============================================================================*/
+					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
+/*============================================================================*/
 Cluster::Cluster(const std::string &filename)
-throw(std::exception) : _configPath(filename)
+throw(InitException) : _configPath(filename)
 {
 	setParams();
 
-	setAllSocket();
-
+	try {
+		setServerSockets();
+	}
+	catch(const std::exception& e) {
+		closeFdSet();
+		throw;
+	}
+	if (_serverSockets.empty() == true) {
+		throw InitException(NULL, 0, ENOSERVICE, NULL, 0);
+	}
 	try {
 		setEpollFd();
 	}
@@ -75,61 +87,9 @@ throw(std::exception) : _configPath(filename)
 		closeFdSet();
 		throw;
 	}
-	
-	
-	std::cout << "\nINIT TERMINATED\n" << std::endl;
-
-
-	{
-
-		// sockaddr_storage est une structure qui n'est pas associé à
-		// une famille particulière. Cela nous permet de récupérer
-		// une adresse IPv4 ou IPv6
-		// struct sockaddr_storage	client_addr;
-		// socklen_t				addr_size;
-
-		// addr_size = sizeof(client_addr);
-
-		// epoll()
-
-		// fd_client = accept(fd_sock_server, (struct sockaddr *) &client_addr, &client_addr_size); // accepte la connexion et creer un nouveau socket
-		// if (fd_client < 0) {
-		//     std::cerr << "Error accept client" << std::endl;
-		//     freeaddrinfo(res);
-		// }
-
-		// memset(buffer, '\0', sizeof(buffer));
-		// bytes_received = recv(fd_client, buffer, sizeof(buffer) - 1, 0);
-		
-		// if (bytes_received < 0) 
-		// {
-		// 	std::cerr << "Erreur lors de la réception des données" << std::endl;
-		// 	close(fd_client);
-		// 	freeaddrinfo(res);
-		// 	return (5);
-		// }
-		// const char *http_response =
-		// "HTTP/1.1 200 OK\r\n"
-		// "Content-Type: text/html\r\n"
-		// "Content-Length: 13\r\n"
-		// "\r\n"
-		// "Hello, World!";
-
-		// if (send(fd_client, http_response, strlen(http_response), 0) < 0) 
-		// {
-		// 	std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
-		// 	close(fd_client);
-		// 	freeaddrinfo(res);
-		// 	return (6);
-		// }
-
-		// std::cout << http_response << std::endl;
-
-		// close(fd_client);
-		// std::cout << "New client : " << client_addr.ss_family << std::endl;
-		// close(fd_sock_server);
-	}
-
+#ifdef TEST
+	std::cout << BOLD BLUE "\nINIT TERMINATED\n" RESET << std::endl;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 
@@ -140,8 +100,8 @@ Cluster::Cluster(const Cluster & )
 /*============================================================================*/
 						/*### DESTRUCTORS ###*/
 /*============================================================================*/
-
 Cluster::~Cluster() {
+	close(_epollFd);
 	closeFdSet();
 }
 /*----------------------------------------------------------------------------*/
@@ -187,7 +147,6 @@ const std::set<std::string>	& Cluster::getListenList() const {
 /*============================================================================*/
                         	/*### SETTERS ###*/
 /*============================================================================*/
-
 void	Cluster::setParams()
 {
 	_listenList.insert("8000");
@@ -203,51 +162,42 @@ void	Cluster::setParams()
 }
 /*----------------------------------------------------------------------------*/
 
-/*============================================================================*/
-						/*### PRIVATE METHODS ###*/
-/*============================================================================*/
-
-void	Cluster::setAllSocket()
+void	Cluster::setServerSockets()
+throw(InitException)
 {
 # ifdef TEST
 	std::cout	<< BOLD BLUE << "Function -> setSocket() {"
 				<< RESET << std::endl;
 # endif
-	struct addrinfo	hints, *res = NULL;
-	
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET6;					// Spécifie qu'on utilise des adresses IPv6. Avec AI_V4MAPPED, cela permettra aussi de supporter IPv4.
-	hints.ai_socktype = SOCK_STREAM;			// Indique un socket pour une communication par flux de données (orienté connexion, comme TCP).
-	hints.ai_protocol = IPPROTO_TCP;			// Définit le protocole de transport comme étant TCP (Transmission Control Protocol).
-	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
-												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
+	struct addrinfo	*res = NULL;
 	
 	for (std::set<std::string>::iterator it = _listenList.begin(); \
 										it != _listenList.end(); it++)
 	{
+		int	sockFd = 0;
 		try {
-			safeGetAddr(it->c_str(), hints, &res);
+			safeGetAddr(it->c_str(), &res);
+			createAndLinkSocketServer(*res, *it, &sockFd);
 		}
 		catch(const InitException &e) {
-			e.setSockExcept();
-			goto jump;
-		}
-		for (struct addrinfo *nextNode = res; nextNode != NULL; nextNode = nextNode->ai_next)
-		{
-			int fd = -1;
-			try {
-				safeSetSocket(nextNode, fd);
-				safeLinkSocket(fd, nextNode, it->c_str());
-				_sockFds.insert(fd);
-			}
-			catch(const InitException &e) {
-				fd > 0 ? close(fd) : fd;
-				e.setSockExcept();
-				e.what();
+			switch (sockFd) {
+				case -1:
+					e.setSockExcept();
+					throw;
+				case 0:
+					e.setSockExcept();	e.what();
+					goto skipFreeAddrInfo;
+				default:
+					if (close(sockFd) != 0) {
+						freeaddrinfo(res);
+						throw InitException(__FILE__, __LINE__ - 2, "Error -> close()", NULL, 0);
+					}
+					e.setSockExcept(); e.what();
+					break;
 			}
 		}
 		freeaddrinfo(res);
-		jump:
+		skipFreeAddrInfo:
 			continue;
 	}
 # ifdef TEST
@@ -255,25 +205,78 @@ void	Cluster::setAllSocket()
 				<< BOLD BLUE "}\n" RESET
 				<< std::endl;
 # endif
-	if (_sockFds.empty() == true)
-		throw InitException(NULL, 0, "\033[31mnone of the requested services are available\n", \
-							NULL, 0);
 }
 /*----------------------------------------------------------------------------*/
 
-void	Cluster::setEpollFd()
+/*============================================================================*/
+						/*### PRIVATE METHODS ###*/
+/*============================================================================*/
+/*	* get an availble address on an avaible service (port)
+*/
+void	Cluster::safeGetAddr(const char *serviceName, struct addrinfo **res) const
+throw(InitException)
 {
-	struct epoll_event ev;
+	struct addrinfo	hints;
 
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;					// Spécifie qu'on utilise des adresses IPv6. Avec AI_V4MAPPED, cela permettra aussi de supporter IPv4.
+	hints.ai_socktype = SOCK_STREAM;			// Indique un socket pour une communication par flux de données (orienté connexion, comme TCP).
+	hints.ai_protocol = IPPROTO_TCP;			// Définit le protocole de transport comme étant TCP (Transmission Control Protocol).
+	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
+												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
+	int ret = getaddrinfo(NULL, serviceName, &hints, res);
+	if (ret != 0)
+		throw InitException(__FILE__, __LINE__ - 2, "Error -> setsockopt()", serviceName, ret);
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* opening + settings options + link SOCKET SERVER
+	* non-blocking
+	* SO_REUSEADDR allows reusing the port immediately after server shutdown,
+	* avoiding "Address already in use" errors
+*/
+void	Cluster::createAndLinkSocketServer(const struct addrinfo &res, const std::string & serviceName, int *sockfd)
+throw(InitException)
+{
+	for (const struct addrinfo *currNode = &res; currNode != NULL; currNode = currNode->ai_next)
+	{
+		*sockfd = socket(currNode->ai_family, currNode->ai_socktype | SOCK_NONBLOCK, currNode->ai_protocol);
+		if (*sockfd < 0) {		
+			throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL, 0);
+		}
+		int opt = 1;
+		if (setsockopt(*sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+			throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
+		}
+		if (bind(*sockfd, currNode->ai_addr, currNode->ai_addrlen) != 0) {
+			throw InitException(__FILE__, __LINE__ - 1, "Error -> bind()", serviceName.c_str(), 0);
+		}
+		if (listen(*sockfd, SOMAXCONN ) != 0) {
+			throw InitException(__FILE__, __LINE__ - 1, "Error -> listen()", serviceName.c_str(), 0);
+		}
+		_serverSockets.insert(*sockfd);
+	}
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* open epoll & add the server sockets to the set
+	* new fd added in the set epoll setting details :
+		-> EPOLLIN: only for input data
+		-> Levels triggered (by default) will automaticly empty the communication buffer
+*/
+void	Cluster::setEpollFd()
+throw(InitException)
+{
 #ifdef TEST
 	std::cout	<< BOLD BLUE << "Function -> setEpollFd() {"
 				<< RESET << std::endl;
 #endif
+	struct epoll_event ev;
+
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
 		throw InitException(__FILE__, __LINE__, "error creation epoll()", NULL, 0);
-	for (std::set<int>::iterator it = _sockFds.begin(); \
-								it != _sockFds.end(); it++)
+	for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++)
 	{
 		ev.events = EPOLLIN;
 		ev.data.fd = *it;
@@ -283,8 +286,8 @@ void	Cluster::setEpollFd()
 		}
 	}
 #ifdef TEST
-	for (std::set<int>::iterator it = _sockFds.begin(); \
-								it != _sockFds.end(); it++)
+	for (std::set<int>::iterator it = _serverSockets.begin(); \
+								it != _serverSockets.end(); it++)
 		std::cout << "fd [" << *it << "] added in epollFd" << std::endl;
 	std::cout	<< BOLD BLUE "}\n" RESET
 				<< std::endl;
@@ -292,50 +295,9 @@ void	Cluster::setEpollFd()
 }
 /*----------------------------------------------------------------------------*/
 
-void	Cluster::safeGetAddr(const char *serviceName, const struct addrinfo &hints, struct addrinfo **res) const
-throw(InitException)
-{
-	int ret = getaddrinfo(NULL, serviceName, &hints, res);
-	if (ret != 0)
-		throw InitException(__FILE__, __LINE__ - 2, "Error -> setsockopt()", serviceName, ret);
-}
-/*----------------------------------------------------------------------------*/
-
-void	Cluster::safeSetSocket(const struct addrinfo *currNode, int &fd) const
-throw(InitException)
-{
-	fd = socket(currNode->ai_family, currNode->ai_socktype | SOCK_NONBLOCK, currNode->ai_protocol);
-	if (fd < 0) {		
-		throw InitException(__FILE__, __LINE__ - 2, "Error -> socket()", NULL, 0);
-	}
-	if (fcntl(fd, F_SETFL, O_NONBLOCK | FD_CLOEXEC) != 0) // R T MANUAL
-		throw InitException(__FILE__, __LINE__ - 1, "Error -> fcntl()", NULL, 0);
-
-	int opt = 1;
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
-	}
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1) {
-		throw InitException(__FILE__, __LINE__ - 1, "Error -> setsockopt()", NULL, 0);
-	}
-}
-/*----------------------------------------------------------------------------*/
-
-void	Cluster::safeLinkSocket(const int sockFd, const struct addrinfo * currNode, const char *currPort) const
-throw(Cluster::InitException)
-{
-	if (bind(sockFd, currNode->ai_addr, currNode->ai_addrlen) != 0) {
-		throw InitException(__FILE__, __LINE__ - 1, "Error -> bind()", currPort, 0);
-	}
-	if (listen(sockFd, SOMAXCONN ) != 0) {
-		throw InitException(__FILE__, __LINE__ - 1, "Error -> listen()", currPort, 0);
-	}
-}
-/*----------------------------------------------------------------------------*/
-
 void	Cluster::closeFdSet()
 {
-	for (std::set<int>::iterator it = _sockFds.begin(); it != _sockFds.end(); it++)
+	for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++)
 		if (*it > 0 && close(*it) != 0)
 			std::cerr	<< RED "Error when closing fd " << *it
 						<< RESET << std::endl;
@@ -345,7 +307,6 @@ void	Cluster::closeFdSet()
 /*============================================================================*/
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
-
 void	Cluster::runCluster()
 {
 	std::string	dot[3] = {".  ", ".. ", "..."};
@@ -355,32 +316,35 @@ void	Cluster::runCluster()
 	struct sockaddr		*addr = NULL;
 	socklen_t			addr_size;
 	g_runserv = 1;
+	
 	while (g_runserv)
 	{
 		int clientSocket = -1;
 		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
+
 		if (nbEvents == -1) {
 			perror("epoll_wait");
-			goto close;
+			break;
 		}
 		if (nbEvents == 0)
 			goto flush;
-		
-		
-		for (std::set<int>::iterator it = _sockFds.begin(); it != _sockFds.end(); it++) {
+
+		for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++) {
 			for (int i = 0; i < nbEvents; i++) {
 				if (events[i].data.fd == *it) {
 					clientSocket = accept(events[i].data.fd, addr, &addr_size);
 					goto next;
 				}
 			}
-			if (it == _sockFds.end())
+			if (it == _serverSockets.end()) {
 				goto flush;
+			}
 		}
+
 		next:
 		if (clientSocket < 0) {
 			perror("accept()");
-			goto close;
+			break;
 		}
 
 
@@ -389,7 +353,7 @@ void	Cluster::runCluster()
 		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
 			perror("epoll_ctl: clientSocket");
 			close(clientSocket);
-			goto close;
+			break;
 		} else {
 			// std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
 			communicateWithClient(clientSocket);
@@ -400,21 +364,17 @@ void	Cluster::runCluster()
 			std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
 						<< std::flush;
 	}
-	close:
-	close(_epollFd);
-
 }
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
 							/*### EXCEPTIONS ###*/
 /*============================================================================*/
-
 void	Cluster::InitException::setSockExcept() const throw() {
 	if (errno != 0)
 		std::cerr << RED << strerror(errno) << ": ";
-	if (_ret != 0)
-		std::cerr << RED << gai_strerror(_ret) << ": ";
+	if (retAddr != 0)
+		std::cerr << RED << gai_strerror(retAddr) << ": ";
 	std::cerr << YELLOW "at file [" << _file << "] line [" << _line << "]";
 	if (_serviceName != 0)
 		std::cerr << " (serviceName [" << _serviceName << "])";
