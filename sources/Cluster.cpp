@@ -40,8 +40,8 @@ int	communicateWithClient(const int clientFd)
 		std::cerr << "Erreur lors de la réception des données" << std::endl;
 		return (5);
 	}
-	// std::cout	<< "RECEIVED FROM CLIENT:\n"
-	// 			<< buffer << std::endl;
+	std::cout	<< "RECEIVED FROM CLIENT:\n"
+				<< buffer << std::endl;
 	const char *http_response =
 	"HTTP/1.1 200 OK\r\n"
 	"Content-Type: text/html\r\n"
@@ -299,8 +299,7 @@ void	Cluster::closeFdSet()
 {
 	for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++)
 		if (*it > 0 && close(*it) != 0)
-			std::cerr	<< RED "Error when closing fd " << *it
-						<< RESET << std::endl;
+			perror("close()");
 }
 /*----------------------------------------------------------------------------*/
 
@@ -310,9 +309,9 @@ void	Cluster::closeFdSet()
 
 void	Cluster::handleConnexion(const struct epoll_event & event)
 {
-	int	clientSocket = -1;
-	socklen_t	addrSize;
-	struct sockaddr	*addr = NULL;
+	int					clientSocket = -1;
+	socklen_t			addrSize;
+	struct sockaddr		*addr = NULL;
 	struct epoll_event	ev;
 
 	clientSocket = accept(event.data.fd, addr, &addrSize);
@@ -320,6 +319,7 @@ void	Cluster::handleConnexion(const struct epoll_event & event)
 		perror("accept()");
 		return;
 	}
+	std::cout << "EVENT : " << event.events << " ";
 
 	ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
 	ev.data.fd = clientSocket;
@@ -356,28 +356,35 @@ void	Cluster::runCluster()
 	std::string	dot[3] = {".  ", ".. ", "..."};
 	int 		n = 0;
 	
+	/*	* MAXEVENT
+		* nb max d'evenement I/O qui peuvent etre rapportes simultanement
+		* un evenement signifie qu'un fd surveille par epoll est pret pour une operation d'I/O
+		* cela signifie que le fd : 
+			-> a des données disponibles en lecture
+			-> peut ecrire / envoyer des donnees sans bloquer
+			-> recoit une connexion sur un socket serveur (nouveau client donc ouverture socket client)
+			-> Déconnexion d'un client (fermeture d'un socket client)
+	*/
 	struct epoll_event	events[MAXEVENT];
 	g_runserv = 1;
-	
 	while (g_runserv)
 	{
 		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
-
 		if (nbEvents == -1) {
 			perror("epoll_wait");
 			break;
 		}
 		if (nbEvents > 0) {
-			std::cout<< "\nevents treated nb events : " << nbEvents << std::endl;
+			// std::cout<< "\nevents treated nb events : " << nbEvents << std::endl;
 			for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++) {
 				for (int i = 0; i < nbEvents; i++) {
 					if (events[i].data.fd == *it) {
 						handleConnexion(events[i]);
-						std::cout << "count : ";
+						// std::cout << "count : ";
 					}
 				}
 			}
-			std::cout << std::endl;
+			// std::cout << std::endl;
 		}
 		std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
 					<< std::flush;

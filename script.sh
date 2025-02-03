@@ -3,7 +3,7 @@
 SERVER="localhost:8000"
 SERVER2="localhost:8001"
 SERVER3="localhost:8002"
-NUM_CLIENTS=10  # Nombre de clients à simuler
+NUM_CLIENTS=5  # Nombre de clients à simuler
 
 # Liste des User-Agents pour simuler différents navigateurs
 USER_AGENTS=(
