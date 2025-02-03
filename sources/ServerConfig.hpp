@@ -3,6 +3,7 @@
 
 
 #include "LocationConfig.hpp"
+#include "UtilParsing.hpp"
 
 
 class ServerConfig 
@@ -15,7 +16,7 @@ public:
     std::vector<LocationConfig> _locations;
 
     void displayValueServer();
-    void displayVector(std::vector<std::string> vec);
+    void displayAllLocations();
 };
 
 #endif

@@ -4,14 +4,18 @@ void ServerConfig::displayValueServer()
 {
     std::cout <<  _clientMaxBodySize << std::endl;
     std::cout <<  _uploadPath << std::endl;
-    displayVector(_serverName);
-    displayVector(_listenPort);
+    UtilParsing::displayVector(_serverName);
+    UtilParsing::displayVector(_listenPort);
+    displayAllLocations();
 }
 
-void ServerConfig::displayVector(std::vector<std::string> vec)
+
+
+
+void ServerConfig::displayAllLocations()
 {
-    for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
-        std::cout << "Value vector : " << *it << std::endl;
+    for(std::vector<LocationConfig>::iterator it = _locations.begin(); it != _locations.end(); it++)
+    {
+        it->displayLocation();
+    }
 }
-
-

@@ -24,6 +24,7 @@ public:
     {
         _methods.push_back(method);
     }
+    void displayLocation();
 };
 
 #endif

@@ -81,11 +81,11 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
         else if (line.find("location") != std::string::npos) 
         {
             LocationConfig locationConfig;
-            locationConfig._path = line.substr(line.find(' ') + 1);
+            locationConfig._path = UtilParsing::recoverValue(line, "location");
             parseLocationBlock(file, locationConfig);
             serverConfig._locations.push_back(locationConfig);
         } 
-        else if (line.find("}")) 
+        else if (line.find("}") != std::string::npos) 
         {
             break;
         }
@@ -107,14 +107,16 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
         } 
         else if (line.find("methods_accept") != std::string::npos) 
         {
-            std::istringstream iss(line.substr(line.find(' ') + 1));
-            std::string method;
-            while (iss >> method) 
-            {
-                locationConfig.addMethod(method);
-            }
-        } 
-        else if (line.find("}")) 
+            locationConfig._methods = UtilParsing::splitSpecialDeleteKey(line, std::string(" "));
+            // std::istringstream iss(line.substr(line.find(' ') + 1));
+            // std::string method;
+            // while (iss >> method) 
+            // {
+            //     std::cout << "Adding method :" << method << std::endl;
+            //     locationConfig.addMethod(method);
+            // }
+        }
+        else if (line.find("}") != std::string::npos) 
         {
             break;
         }

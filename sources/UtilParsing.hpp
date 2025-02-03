@@ -34,6 +34,7 @@ class UtilParsing
         static void printMapVector(const std::map<int, std::map<std::string, std::vector<std::string> > >& allMapRoads);
         static void controlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads, std::string keyValue);
         static void manageControlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads);
+        static void displayVector(std::vector<std::string> vec);
     private:
         UtilParsing() {};
 };
