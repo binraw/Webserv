@@ -152,7 +152,7 @@ void	Cluster::setParams()
 	_listenList.insert("8000");
 	_listenList.insert("8001");
 	_listenList.insert("8002");
-	_listenList.insert("8002");
+	// _listenList.insert("100000");
 	_listenList.insert("http");
 	// _listenList.insert("8002");
 	// _listenList.insert("8002 ");
@@ -251,7 +251,7 @@ throw(InitException)
 		if (bind(*sockfd, currNode->ai_addr, currNode->ai_addrlen) != 0) {
 			throw InitException(__FILE__, __LINE__ - 1, "Error -> bind()", serviceName.c_str(), 0);
 		}
-		if (listen(*sockfd, SOMAXCONN ) != 0) {
+		if (listen(*sockfd, SOMAXCONN) != 0) {
 			throw InitException(__FILE__, __LINE__ - 1, "Error -> listen()", serviceName.c_str(), 0);
 		}
 		_serverSockets.insert(*sockfd);
@@ -307,62 +307,80 @@ void	Cluster::closeFdSet()
 /*============================================================================*/
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
+
+void	Cluster::handleConnexion(const struct epoll_event & event)
+{
+	int	clientSocket = -1;
+	socklen_t	addrSize;
+	struct sockaddr	*addr = NULL;
+	struct epoll_event	ev;
+
+	clientSocket = accept(event.data.fd, addr, &addrSize);
+	if (clientSocket < 0) {
+		perror("accept()");
+		return;
+	}
+
+	ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+	ev.data.fd = clientSocket;
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
+		perror("epoll_ctl: clientSocket");
+		close(clientSocket);
+		return;
+	}
+	else {
+		communicateWithClient(clientSocket);
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
+		close(clientSocket);
+	}
+}
+
+/*
+	Dans le contexte d'epoll, un événement représente une activité
+	sur un descripteur de fichier surveillé.
+
+	Plus précisément :
+	Ce n'est pas le nombre max de clients, mais le nombre max d'événements
+	d'I/O qui peuvent être rapportés simultanément
+	Un événement signifie qu'un descripteur de fichier (socket) est prêt
+	pour une opération d'I/O
+
+	Cela peut indiquer :
+	Des données disponibles en lecture
+	Possibilité d'écriture sans bloquer
+	Connexion entrante sur un socket serveur
+	Déconnexion d'un client
+*/
 void	Cluster::runCluster()
 {
 	std::string	dot[3] = {".  ", ".. ", "..."};
 	int 		n = 0;
 	
-	struct epoll_event	events[MAXEVENT], ev; // voir la doc
-	struct sockaddr		*addr = NULL;
-	socklen_t			addr_size;
+	struct epoll_event	events[MAXEVENT];
 	g_runserv = 1;
 	
 	while (g_runserv)
 	{
-		int clientSocket = -1;
 		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
 
 		if (nbEvents == -1) {
 			perror("epoll_wait");
 			break;
 		}
-		if (nbEvents == 0)
-			goto flush;
-
-		for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++) {
-			for (int i = 0; i < nbEvents; i++) {
-				if (events[i].data.fd == *it) {
-					clientSocket = accept(events[i].data.fd, addr, &addr_size);
-					goto next;
+		if (nbEvents > 0) {
+			std::cout<< "\nevents treated nb events : " << nbEvents << std::endl;
+			for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++) {
+				for (int i = 0; i < nbEvents; i++) {
+					if (events[i].data.fd == *it) {
+						handleConnexion(events[i]);
+						std::cout << "count : ";
+					}
 				}
 			}
-			if (it == _serverSockets.end()) {
-				goto flush;
-			}
+			std::cout << std::endl;
 		}
-
-		next:
-		if (clientSocket < 0) {
-			perror("accept()");
-			break;
-		}
-
-
-		ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
-		ev.data.fd = clientSocket;
-		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
-			perror("epoll_ctl: clientSocket");
-			close(clientSocket);
-			break;
-		} else {
-			// std::cout << "\nAdded fd [" << clientSocket << "]" << std::endl;
-			communicateWithClient(clientSocket);
-			epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
-			close(clientSocket);
-		}
-		flush:
-			std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
-						<< std::flush;
+		std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
+					<< std::flush;
 	}
 }
 /*----------------------------------------------------------------------------*/
