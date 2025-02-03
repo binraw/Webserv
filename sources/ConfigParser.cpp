@@ -4,14 +4,16 @@ HttpConfig ConfigParser::parse(const std::string& filepath)
 {
     HttpConfig httpConfig;
     std::ifstream file(filepath.c_str());
+    std::ifstream filetest(filepath.c_str());
     if (!file.is_open()) 
         throw std::runtime_error("Could not open config file");
+    controlStructFile(filetest);
     std::string line;
     while (std::getline(file, line)) 
     {
         if (line.empty() || line[0] == '#') continue;
 
-        if (line == "http {") 
+        if (line.find("http") != std::string::npos) 
             parseHttpBlock(file, httpConfig);
     }
     
@@ -81,5 +83,23 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
     }
 }
 
-
-
+void ConfigParser::controlStructFile(std::ifstream& file)
+{
+    std::string line;
+    size_t nb_part = 0;
+    size_t nb_bracket = 0;
+    while (std::getline(file, line))  
+    {
+        if (line.find("http") != std::string::npos || (line.find("server") != std::string::npos && line.find("server_name") == std::string::npos)
+                || line.find("location") != std::string::npos)
+            nb_part++;
+        if (line.find("{") != std::string::npos || line.find("}") != std::string::npos)
+            nb_bracket++;
+    }
+    if (nb_bracket != (nb_part * 2))
+    {
+        std::cout << nb_bracket << std::endl;
+        std::cout << nb_part << std::endl;
+        throw std::invalid_argument("Whether it is 'http', 'server' or 'location' each part must be enclosed by brackets.");
+    }
+}

@@ -9,9 +9,6 @@ void ServerConfig::displayValueServer()
     displayAllLocations();
 }
 
-
-
-
 void ServerConfig::displayAllLocations()
 {
     for(std::vector<LocationConfig>::iterator it = _locations.begin(); it != _locations.end(); it++)

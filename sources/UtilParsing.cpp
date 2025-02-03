@@ -142,6 +142,19 @@ std::string UtilParsing::trim(const std::string& str)
     return str.substr(first, last - first + 1);
 }
 
+std::string UtilParsing::trimSemicolon(const std::string& str) 
+{
+    std::size_t first = str.find_first_not_of(';');
+    std::size_t last = str.find_last_not_of(';');
+
+    if (first == std::string::npos) 
+    {
+        return "";
+    }
+
+    return str.substr(first, last - first + 1);
+}
+
 std::string UtilParsing::recoverValue(std::string line, std::string key)
 {
     if (line.find(key) != std::string::npos) 
