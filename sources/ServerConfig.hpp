@@ -17,6 +17,7 @@ public:
 
     void displayValueServer();
     void displayAllLocations();
+    void controlDefaultServerConf();
 };
 
 #endif

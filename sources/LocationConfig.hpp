@@ -20,11 +20,9 @@ public:
     std::string _index;
     std::vector<std::string> _methods;
 
-    void addMethod(const std::string& method) 
-    {
-        _methods.push_back(method);
-    }
+
     void displayLocation();
+    void controlDefaultLocationConf();
 };
 
 #endif

@@ -20,6 +20,7 @@ public:
     std::string getWorkerConnexion();
     void displayDefaultHttp();
     void displayServers();
+    void controlDefaultHttpConf();
 
 
 };

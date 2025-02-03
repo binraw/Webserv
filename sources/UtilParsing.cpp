@@ -1,6 +1,3 @@
-
-
-
 #include "UtilParsing.hpp"
 
 bool    UtilParsing::isOnlySpace(const std::string & str)
