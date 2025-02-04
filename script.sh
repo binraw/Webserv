@@ -17,16 +17,16 @@ USER_AGENTS=(
 # Fonction pour envoyer une requête HTTP
 send_request() {
     local user_agent="$1"
-    curl -s -A "$user_agent" "$SERVER" &
+    curl -s -A "$user_agent" "$SERVER"  &
 	curl -s -A "$user_agent" "$SERVER2" &
-	curl -s -A "$user_agent" "$SERVER3" &
+	curl -s -A "$user_agent" "$SERVER3"
 }
 
 echo "📡 Envoi de $NUM_CLIENTS requêtes à $SERVER..."
 
 # Boucle pour lancer plusieurs requêtes en parallèle
 for ((i=0; i<NUM_CLIENTS; i++)); do
-    send_request 
+    send_request ;
 done
 
 # Attendre la fin de toutes les requêtes

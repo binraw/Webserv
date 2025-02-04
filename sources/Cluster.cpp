@@ -28,37 +28,6 @@ void hand(int, siginfo_t *, void *)
 {
     g_runserv = 0;
 }
-
-int	communicateWithClient(const int clientFd)
-{
-	char buffer[2048];
-	memset(buffer, '\0', sizeof(buffer));
-	int bytes_received = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-	
-	if (bytes_received < 0) 
-	{
-		std::cerr << "Erreur lors de la réception des données" << std::endl;
-		return (5);
-	}
-	std::cout	<< "RECEIVED FROM CLIENT:\n"
-				<< buffer << std::endl;
-	const char *http_response =
-	"HTTP/1.1 200 OK\r\n"
-	"Content-Type: text/html\r\n"
-	"Content-Length: 38\r\n"
-	"\r\n"
-	"<http>"
-	"<h1>TITLE<h1>"
-	"Hello, World!"
-	"<http>";
-
-	if (send(clientFd, http_response, strlen(http_response), 0) < 0) 
-	{
-		std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
-		return (6);
-	}
-	return (0);
-}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
@@ -307,49 +276,83 @@ void	Cluster::closeFdSet()
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
-void	Cluster::handleConnexion(const struct epoll_event & event)
+void	Cluster::readData(const struct epoll_event &event)
 {
-	int					clientSocket = -1;
-	socklen_t			addrSize;
-	struct sockaddr		*addr = NULL;
-	struct epoll_event	ev;
+	char buffer[2048] = {'\0'};
+	// memset(buffer, '\0', sizeof(buffer));
+	int bytes_received = -1;
+	do {
+		bytes_received = recv(event.data.fd, buffer, sizeof(buffer) - 1, 0);
+		if (bytes_received < 0) {
+			perror("recv");
+			return;
+		}
+		if (bytes_received < static_cast<int>(sizeof(buffer)))
+			break;
+		std::cout	<< "RECEIVED FROM CLIENT:\n"
+					<< buffer << std::endl;
+	} while (bytes_received > 0);
+	/*	* apres cette boucle
+		* une fonction pour analyser la requete et envoyer la reponse appropriee
+	*/
+	writeData(event);
+}
 
-	clientSocket = accept(event.data.fd, addr, &addrSize);
+void	Cluster::writeData(const struct epoll_event &event)
+{
+	const char *http_response =
+	"HTTP/1.1 200 OK\r\n"
+	"Content-Type: text/html\r\n"
+	"Content-Length: 38\r\n"
+	"\r\n"
+	"<http>"
+	"<h1>TITLE<h1>"
+	"Hello, World!"
+	"<http>";
+	if (send(event.data.fd, http_response, strlen(http_response), 0) <= 0) 
+	{
+		std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
+		return;
+	}
+	epoll_ctl(_epollFd, EPOLL_CTL_DEL, event.data.fd, NULL);
+	close(event.data.fd);
+}
+
+void	Cluster::acceptConnexion(const struct epoll_event &event)
+{
+	socklen_t		addrSize;
+	struct sockaddr *addr = NULL;
+	const int		clientSocket = accept(event.data.fd, addr, &addrSize);
+
 	if (clientSocket < 0) {
 		perror("accept()");
 		return;
 	}
-	std::cout << "EVENT : " << event.events << " ";
+	
+	int flags = fcntl(clientSocket, F_GETFL, 0);
+	if (flags == -1) {
+		std::cerr << RED << __LINE__ << " " RESET << std::endl;
+		perror("fcntl");
+	}
+   	flags = flags | O_NONBLOCK;
+   	if (fcntl(clientSocket, F_SETFL, flags)) {
+		std::cerr << RED << __LINE__ << " " RESET << std::endl;
+		perror("fcntl");
+	}
 
-	ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+	struct epoll_event	ev;
+
+	ev.events = EPOLLIN | EPOLLOUT;
 	ev.data.fd = clientSocket;
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
 		perror("epoll_ctl: clientSocket");
 		close(clientSocket);
 		return;
 	}
-	else {
-		communicateWithClient(clientSocket);
-		epoll_ctl(_epollFd, EPOLL_CTL_DEL, clientSocket, &ev);
-		close(clientSocket);
-	}
 }
 
-/*
-	Dans le contexte d'epoll, un événement représente une activité
-	sur un descripteur de fichier surveillé.
-
-	Plus précisément :
-	Ce n'est pas le nombre max de clients, mais le nombre max d'événements
-	d'I/O qui peuvent être rapportés simultanément
-	Un événement signifie qu'un descripteur de fichier (socket) est prêt
-	pour une opération d'I/O
-
-	Cela peut indiquer :
-	Des données disponibles en lecture
-	Possibilité d'écriture sans bloquer
-	Connexion entrante sur un socket serveur
-	Déconnexion d'un client
+/*	* epoll()
+	*
 */
 void	Cluster::runCluster()
 {
@@ -373,21 +376,26 @@ void	Cluster::runCluster()
 		if (nbEvents == -1) {
 			perror("epoll_wait");
 			break;
-		}
-		if (nbEvents > 0) {
-			// std::cout<< "\nevents treated nb events : " << nbEvents << std::endl;
-			for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++) {
-				for (int i = 0; i < nbEvents; i++) {
-					if (events[i].data.fd == *it) {
-						handleConnexion(events[i]);
-						// std::cout << "count : ";
+		} else if (nbEvents > 0) {
+			for (int i = 0; i < nbEvents; i++) {
+				if (_serverSockets.count(events[i].data.fd) > 0)
+					acceptConnexion(events[i]);
+				else
+				{
+					if (events[i].events & EPOLLIN) {
+						std::cout << BRIGHT_RED "READ" RESET << std::endl;
+						readData(events[i]);
+					}
+					else if (events[i].events & EPOLLOUT) {
+						std::cout << BRIGHT_GREEN "WRITE" RESET << std::endl;
+						writeData(events[i]);
 					}
 				}
 			}
-			// std::cout << std::endl;
+		} else {
+			std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
+						<< std::flush;
 		}
-		std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
-					<< std::flush;
 	}
 }
 /*----------------------------------------------------------------------------*/

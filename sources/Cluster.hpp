@@ -85,7 +85,9 @@ class Cluster
 		void	safeGetAddr(const char *, struct addrinfo **) const throw(InitException); 
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *) throw(InitException);
 
-		void	handleConnexion(const struct epoll_event &event);
+		void	acceptConnexion(const struct epoll_event &);
+		void	readData(const struct epoll_event &);
+		void	writeData(const struct epoll_event &);
 
 		void	closeFdSet();
 };
