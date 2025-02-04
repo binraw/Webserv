@@ -8,6 +8,7 @@ int main(void)
         ConfigParser parser;
         HttpConfig config = parser.parse("./config/default.conf");
         config.controlDefaultHttpConf();
+        config.checkSemiColonAllValues();
         config.displayDefaultHttp();
         config.displayServers();
     }

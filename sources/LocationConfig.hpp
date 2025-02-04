@@ -23,6 +23,7 @@ public:
 
     void displayLocation();
     void controlDefaultLocationConf();
+    void checkSemiColonLocation();
 };
 
 #endif

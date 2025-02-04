@@ -24,7 +24,7 @@ class UtilParsing
         static void controlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads, std::string keyValue);
         static void manageControlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads);
         static void displayVector(std::vector<std::string> vec);
-        std::string trimSemicolon(const std::string& str);
+        static std::string trimSemicolon(const std::string& str);
     private:
         UtilParsing() {};
 };

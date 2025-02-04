@@ -21,6 +21,7 @@ public:
     void displayDefaultHttp();
     void displayServers();
     void controlDefaultHttpConf();
+    void checkSemiColonAllValues();
 
 
 };

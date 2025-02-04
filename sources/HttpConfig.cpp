@@ -26,7 +26,6 @@ void HttpConfig::displayDefaultHttp()
     std::cout << getWorkerConnexion() << std::endl; 
 }
 
-
 void HttpConfig::displayServers()
 {
     for(std::vector<ServerConfig>::iterator it = _servers.begin(); it != _servers.end(); it++)
@@ -51,5 +50,26 @@ void HttpConfig::controlDefaultHttpConf()
         _servers[i].controlDefaultServerConf();
         for (std::vector<LocationConfig>::iterator it = _servers[i]._locations.begin(); it != _servers[i]._locations.end(); it++)
             it->controlDefaultLocationConf();
+    }
+}
+
+void HttpConfig::checkSemiColonAllValues()
+{
+    if (_default_type.find(";") != std::string::npos)
+        _default_type = UtilParsing::trimSemicolon(_default_type);
+    if (_keepalive_timeout.find(";") != std::string::npos)
+        _keepalive_timeout = UtilParsing::trimSemicolon(_keepalive_timeout);
+    if (_worker_connexion.find(";") != std::string::npos)
+        _worker_connexion = UtilParsing::trimSemicolon(_worker_connexion);
+    for (std::vector<std::string>::iterator it = _include.begin(); it != _include.end(); it++)
+    {
+        if (it->find(";") != std::string::npos)
+            *it = UtilParsing::trimSemicolon(*it);
+    }
+    for (size_t i = 0; i <= _servers.size() - 1; i++)
+    {
+        _servers[i].checkSemiColonServer();
+        for (std::vector<LocationConfig>::iterator y = _servers[i]._locations.begin(); y != _servers[i]._locations.end(); y++)
+            y->checkSemiColonLocation();
     }
 }

@@ -31,3 +31,20 @@ void ServerConfig::controlDefaultServerConf()
         throw std::invalid_argument("'location' must not be empty. Put the keyword (in quotes) followed by its value(s) separated by a space.");
 
 }
+void ServerConfig::checkSemiColonServer()
+{
+    if (_clientMaxBodySize.find(";") != std::string::npos)
+        _clientMaxBodySize = UtilParsing::trimSemicolon(_clientMaxBodySize);
+    if (_uploadPath.find(";") != std::string::npos)
+        _uploadPath =  UtilParsing::trimSemicolon(_uploadPath);
+    for (std::vector<std::string>::iterator it = _listenPort.begin(); it != _listenPort.end(); it++)
+    {
+        if (it->find(";") != std::string::npos)
+            *it = UtilParsing::trimSemicolon(*it);
+    }
+    for (std::vector<std::string>::iterator i = _serverName.begin(); i != _serverName.end(); i++)
+    {
+        if (i->find(";") != std::string::npos)
+            *i = UtilParsing::trimSemicolon(*i);
+    }
+}

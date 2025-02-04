@@ -18,6 +18,7 @@ public:
     void displayValueServer();
     void displayAllLocations();
     void controlDefaultServerConf();
+    void checkSemiColonServer();
 };
 
 #endif
