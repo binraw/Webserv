@@ -3,9 +3,9 @@
 #ifndef CLUSTER_HPP
 # define CLUSTER_HPP
 
-# include "../includes/webserv.hpp"
+#include "../includes/webserv.hpp"
 
-# include "Server.hpp"
+#include "Server.hpp"
 
 /*	* MIME LIST
 	// typedef struct s_paramsServer

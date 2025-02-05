@@ -1,11 +1,4 @@
 
-
-
- 
-
-
-
-
 /*
     includes du fichier
     ne pas supprimer
@@ -99,6 +92,7 @@
 //     return (0);
 // }
 
+#include "ConfigParser.hpp"
 
 #include "Cluster.hpp"
 #include <cstring>
@@ -116,6 +110,13 @@ int main(void)
     sigaction(SIGINT, &act, NULL);
 
     try {
+        // ConfigParser parser;
+        // HttpConfig config = parser.parse("./config/default.conf");
+        // config.controlDefaultHttpConf();
+        // config.checkSemiColonAllValues();
+        // config.displayDefaultHttp();
+        // config.displayServers();
+
         Cluster cluster("./config/exemple.conf");
         cluster.runCluster();
     }

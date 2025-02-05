@@ -22,12 +22,11 @@ CXX			= c++
 #---------------------------# ==== SHELL CMDS ==== #---------------------------#
 RM          = rm -rf
 MKD			= mkdir -p
-VALGRIND	= valgrind --track-fds=yes --leak-check=full
+VALGRIND	= valgrind --leak-check=full 
 
 #-----------------------# ==== SOURCE CODE DIRECTORIES ==== #------------------#
 HDR_PATH	= ./headers
 SRC_PATH	= ./sources
-INC_PATH	= ./include
 
 #---------------------# ==== TEMPORARY FILES DIRECTORIES ==== #----------------#
 TEMP_PATH	= .temp
@@ -38,7 +37,7 @@ DEP_PATH	= $(TEMP_PATH)/dep
 MODE		?= release
 
 ifeq ($(MODE), debug)
-	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98 -DTEST
+	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98 -D=TEST
 else
 	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
 endif
@@ -46,7 +45,9 @@ endif
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp Server.cpp Cluster.cpp 
+SRC	=	main.cpp  \
+		UtilParsing.cpp ConfigParser.cpp HttpConfig.cpp LocationConfig.cpp ServerConfig.cpp \
+		Cluster.cpp Server.cpp
 # HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
@@ -82,7 +83,7 @@ $(NAME)	: $(OBJ)
 $(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile 
 	@$(MKD) $(dir $@) $(DEP_PATH)
 	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
-	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH) -I$(INC_PATH)
+	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)
 
 -include $(DEP)
 
