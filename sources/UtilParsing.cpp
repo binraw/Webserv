@@ -127,7 +127,7 @@ void UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, s
     UtilParsing::controlMapLocation(allMapRoads, "index");
     UtilParsing::controlMapLocation(allMapRoads, "methods_accept");
 }
-// je pense rajouter la possibilite de supprimer la location si il manque un des 4 pre-requis
+
 
 std::string UtilParsing::trim(const std::string& str) 
 {
