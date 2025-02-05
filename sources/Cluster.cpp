@@ -1,10 +1,10 @@
 
 
 
-
 /*============================================================================*/
 						/*### HEADER FILES ###*/
 /*============================================================================*/
+// #define _GNU_SOURCE
 #include "Cluster.hpp"
 
 #include <cstring>
@@ -279,8 +279,8 @@ void	Cluster::closeFdSet()
 
 void	Cluster::parseHeader(const std::string &response)
 {
-	std::cout	<< "RECEIVED FROM CLIENT:\n"
-				<< response << std::endl;
+	// std::cout	<< "RECEIVED FROM CLIENT:\n"
+	// 			<< response << std::endl;
 
 
 
@@ -289,7 +289,7 @@ void	Cluster::parseHeader(const std::string &response)
 void	Cluster::readData(const struct epoll_event &event)
 {
 	int 		bytes_received = -1;
-	char		buffer[2048] = {'\0'};
+	char		buffer[5] = {'\0'};
 	std::string	response;
 
 	do {
@@ -299,17 +299,26 @@ void	Cluster::readData(const struct epoll_event &event)
 			return;
 		}
 		response += buffer;
-		if (bytes_received < static_cast<int>(sizeof(buffer))) {
-			std::cout << "HERE : bytes_received = " << bytes_received << " sizeof(buffer) = " << sizeof(buffer) << std::endl;
-			break;
+		// if (event.events & EPOLLRDHUP) {
+		// 	std::cout << "HERE : bytes_received = " << bytes_received << " sizeof(buffer) = " << sizeof(buffer) << std::endl;
+		// 	break;
 
-		}
-	} while (bytes_received > 0);
+		// }
+	} while (bytes_received > 0 || !(event.events & EPOLLRDHUP));
 	/*	* apres cette boucle
 		* une fonction pour analyser la requete et envoyer la reponse appropriee
 	*/
 	// writeData(event);
 	parseHeader(response);
+	// struct epoll_event	ev;
+
+	// ev.events = EPOLLOUT /* | EPOLLERR | EPOLLRDHUP */ | EPOLLET;
+	// ev.data.fd = event.data.fd;
+	// if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, event.data.fd, &ev) == -1) {
+	// 	if (close(event.data.fd) == -1)
+	// 		; // crash serveur ?
+	// 	throw RunException(__FILE__, __LINE__, "Error epoll_ctl():");
+	// }
 }
 
 void	Cluster::writeData(const struct epoll_event &event)
@@ -329,8 +338,15 @@ void	Cluster::writeData(const struct epoll_event &event)
 		std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
 		return;
 	}
-	epoll_ctl(_epollFd, EPOLL_CTL_DEL, event.data.fd, NULL);
-	close(event.data.fd);
+	// struct epoll_event	ev;
+
+	// ev.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLET;
+	// ev.data.fd = event.data.fd;
+	// if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, event.data.fd, &ev) == -1) {
+	// 	if (close(event.data.fd) == -1)
+	// 		; // crash serveur ?
+	// 	throw RunException(__FILE__, __LINE__, "Error epoll_ctl():");
+	// }
 }
 
 void	Cluster::acceptConnexion(const struct epoll_event &event)
@@ -338,16 +354,16 @@ void	Cluster::acceptConnexion(const struct epoll_event &event)
 	socklen_t		addrSize;
 	struct sockaddr *addr = NULL;
 	const int		clientSocket = accept(event.data.fd, addr, &addrSize);
-#ifdef TEST
-	static int i = 0;
-	if (i++ % 8 == 0) {
-		close(clientSocket);
-		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
-	}
-#else
+// #ifdef TEST
+// 	static int i = 0;
+// 	if (i++ % 8 == 0) {
+// 		close(clientSocket);
+// 		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
+// 	}
+// #else
 	if (clientSocket < 0)
 		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
-#endif
+// #endif
 	
 	int flags = fcntl(clientSocket, F_GETFL, 0);
 	if (flags == -1) {
@@ -355,7 +371,7 @@ void	Cluster::acceptConnexion(const struct epoll_event &event)
 			; // crash serveur ?
 		throw RunException(__FILE__, __LINE__, "Error fcntl():");
 	}
-   	flags = flags | O_NONBLOCK | O_CLOEXEC;
+   	flags = flags | O_NONBLOCK;
    	if (fcntl(clientSocket, F_SETFL, flags) == -1) {
 		if (close(clientSocket) == -1)
 			; // crash serveur ?
@@ -364,7 +380,7 @@ void	Cluster::acceptConnexion(const struct epoll_event &event)
 
 	struct epoll_event	ev;
 
-	ev.events = EPOLLIN | EPOLLOUT;
+	ev.events = EPOLLIN | EPOLLOUT /* | EPOLLERR | EPOLLRDHUP  */| EPOLLET;
 	ev.data.fd = clientSocket;
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
 		if (close(clientSocket) == -1)
@@ -413,6 +429,12 @@ throw()
 						else if (events[i].events & EPOLLOUT) {
 							std::cout << BRIGHT_GREEN "WRITE" RESET << std::endl;
 							writeData(events[i]);
+						}
+						else if (events[i].events & EPOLLERR || events[i].events & EPOLLRDHUP) {
+							std::cout << BG_BLUE "CLOSE CLIENT" RESET << std::endl;
+							epoll_ctl(_epollFd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
+							close(events[i].data.fd);
+
 						}
 					}
 				}
