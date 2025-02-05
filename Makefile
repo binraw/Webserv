@@ -1,14 +1,9 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: rtruvelo <rtruvelo@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/04/11 09:47:22 by fberthou          #+#    #+#              #
-#    Updated: 2025/02/05 11:21:38 by rtruvelo         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+
+
+
+
+
+
 
 #==============================================================================#
 #                              SETTING VARIABLES                               #
@@ -42,7 +37,7 @@ DEP_PATH	= $(TEMP_PATH)/dep
 MODE		?= release
 
 ifeq ($(MODE), debug)
-	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98
+	COMPFLAGS = -g3 -Wall -Wextra -Wshadow -Wpedantic -std=c++98 -D=TEST
 else
 	COMPFLAGS = -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++98
 endif
@@ -50,7 +45,9 @@ endif
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp  UtilParsing.cpp ConfigParser.cpp HttpConfig.cpp LocationConfig.cpp ServerConfig.cpp
+SRC	=	main.cpp  \
+		UtilParsing.cpp ConfigParser.cpp HttpConfig.cpp LocationConfig.cpp ServerConfig.cpp \
+		Cluster.cpp Server.cpp
 # HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
@@ -74,9 +71,8 @@ debug:
 	@echo
 
 test:
-	clear
-	$(MAKE) re MODE=debug
-	$(VALGRIND) ./$(NAME)
+	$(MAKE) MODE=debug
+	$(VALGRIND) ./$(NAME) 
 #-------------------# ==== LINKING & BUILDING PROGRAM ==== #-------------------#
 $(NAME)	: $(OBJ)
 	@echo "$(GREEN)-- compilation completed --$(RESET)"
