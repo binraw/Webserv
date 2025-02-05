@@ -46,7 +46,7 @@ endif
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	= main.cpp Server.cpp Cluster.cpp UtilParsing.cpp
+SRC	= main.cpp Server.cpp Cluster.cpp 
 # HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#

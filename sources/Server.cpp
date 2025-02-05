@@ -5,7 +5,7 @@
                         /*### HEADER FILES ###*/
 /*============================================================================*/
 #include "../includes/webserv.hpp"
-#include "Cluster.hpp" // include aussi Server.hpp
+#include "Cluster.hpp"
 
 /*============================================================================*/
                     /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
