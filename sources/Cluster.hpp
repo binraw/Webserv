@@ -84,7 +84,7 @@ class Cluster
 		const std::vector<Server>	& getAllServer()	const;
 		const std::set<std::string>	& getListenList()	const;
 
-		void	runCluster() throw();
+		void	runCluster();
 
 	private:
 		std::set<std::string>	_listenList;		// liste de tous les ports
@@ -105,13 +105,15 @@ class Cluster
 		void	safeGetAddr(const char *, struct addrinfo **) const throw(InitException); 
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *) throw(InitException);
 
+		
 		void	acceptConnexion(const struct epoll_event &);
+		void	closeConnexion(const struct epoll_event &event) const;
+		
 		void	addFdInEpoll(const bool, const int) const throw(RunException);
 		void	changeEventMod(const bool, const int) const throw(RunException);
 		
 		void	writeData(const struct epoll_event &);
 		void	readData(const struct epoll_event &);
-		void	closeConnexion(const struct epoll_event &event);
 
 		void	closeFdSet();
 };

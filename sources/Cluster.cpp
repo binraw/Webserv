@@ -20,8 +20,17 @@
 	ressources provisoirs
 */
 #include <csignal>
-#define MAXEVENT 10
-#define BUFFERSIZE 2048
+#define MAXEVENT	10
+#define BUFFERSIZE	2048
+#define HTTPTEST	"HTTP/1.1 200 OK\r\n" \
+					"Content-Type: text/html\r\n" \
+					"Content-Length: 38\r\n" \
+					"\r\n" \
+					"<http>" \
+					"<h1>TITLE<h1>" \
+					"Hello, World!" \
+					"<http>"
+
 
 int g_runserv = 0;
 
@@ -117,6 +126,9 @@ const std::set<std::string>	& Cluster::getListenList() const {
 /*============================================================================*/
                         	/*### SETTERS ###*/
 /*============================================================================*/
+
+/*	* temporary functions
+*/
 void	Cluster::setParams()
 {
 	_listenList.insert("8000");
@@ -130,8 +142,16 @@ void	Cluster::setParams()
 	_workerConnexion = 1024;
 	_keepAliveTime = 65;
 }
+
+void	displayClient(const struct epoll_event & ev)
+{
+	std::cout	<< "EVENT NUMBER [" << ev.events << "]\n"
+				<< "FD CLIENT [" << ev.data.fd << "]\n";
+}
 /*----------------------------------------------------------------------------*/
 
+/*	* open sockets server and bind them
+*/
 void	Cluster::setServerSockets()
 throw(InitException)
 {
@@ -175,6 +195,33 @@ throw(InitException)
 				<< BOLD BLUE "}\n" RESET
 				<< std::endl;
 # endif
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* open epoll & add the server sockets to the set 
+*/
+void	Cluster::setEpollFd()
+throw(InitException)
+{
+#ifdef TEST
+	std::cout	<< BOLD BLUE << "Function -> setEpollFd() {"
+				<< RESET << std::endl;
+#endif
+
+	_epollFd = epoll_create(1);
+	if (_epollFd < 0)
+		throw InitException(__FILE__, __LINE__ - 2, "error creation epoll()", NULL, 0);
+
+	for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++)
+		addFdInEpoll(true, *it);
+
+#ifdef TEST
+	for (std::set<int>::iterator it = _serverSockets.begin(); \
+								it != _serverSockets.end(); it++)
+		std::cout << "fd [" << *it << "] added in epollFd" << std::endl;
+	std::cout	<< BOLD BLUE "}\n" RESET
+				<< std::endl;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 
@@ -230,33 +277,98 @@ throw(InitException)
 }
 /*----------------------------------------------------------------------------*/
 
-/*	* open epoll & add the server sockets to the set 
-	* new fd added in the set epoll setting details :
-		-> EPOLLIN: only for input data
-		-> Levels triggered (by default) will automaticly empty the communication buffer
+/*	* accept a new client connexion, set the socket and add the fd in the epoll set
 */
-void	Cluster::setEpollFd()
-throw(InitException)
+void	Cluster::acceptConnexion(const struct epoll_event &event)
 {
-#ifdef TEST
-	std::cout	<< BOLD BLUE << "Function -> setEpollFd() {"
-				<< RESET << std::endl;
-#endif
+	struct sockaddr addr;
+	socklen_t		addrSize = sizeof(addr);
+	const int		clientSocket = accept(event.data.fd, &addr, &addrSize);
 
-	_epollFd = epoll_create(1);
-	if (_epollFd < 0)
-		throw InitException(__FILE__, __LINE__ - 2, "error creation epoll()", NULL, 0);
-
-	for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++)
-		addFdInEpoll(true, *it);
+	if (clientSocket < 0)
+		throw RunException(__FILE__, __LINE__ - 3, "Error accept():");
 
 #ifdef TEST
-	for (std::set<int>::iterator it = _serverSockets.begin(); \
-								it != _serverSockets.end(); it++)
-		std::cout << "fd [" << *it << "] added in epollFd" << std::endl;
-	std::cout	<< BOLD BLUE "}\n" RESET
+	std::cout	<< BRIGHT_PURPLE "\nacceptConnexion()\n"
+				<< "ClientSocket [" << clientSocket << "]" RESET
 				<< std::endl;
 #endif
+
+	int flags = fcntl(clientSocket, F_GETFL);
+	if (flags == -1)
+	{
+		if (close(clientSocket) == -1)
+			perror("close() in acceptConnexion()");
+		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
+	}
+	flags |= O_NONBLOCK | O_CLOEXEC;
+   	if (fcntl(clientSocket, F_SETFL, flags) == -1)
+	{
+		if (close(clientSocket) == -1)
+			perror("close() in acceptConnexion()");
+		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
+	}
+
+	try {
+		addFdInEpoll(false, clientSocket);
+	}
+	catch(const RunException& e) {
+		e.runExcept();
+		closeConnexion(event);
+		throw;
+	}
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* close a client connexion
+*/
+void	Cluster::closeConnexion(const struct epoll_event &event) const
+{
+#ifdef TEST
+	std::cout	<< BRIGHT_PURPLE "\ncloseConnexion()\n" RESET
+				<< std::endl;
+#endif
+	
+	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, event.data.fd, NULL) == -1)
+		perror("epoll_ctl() in closeConnexion()");
+
+	if (close(event.data.fd) == -1)
+		perror("close() in closeConnexion()");
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* init epoll events for servers & new client socket and add the fd in epoll set
+*/
+void	Cluster::addFdInEpoll(const bool isServerSocket, const int fd) const
+throw(RunException)
+{
+	struct epoll_event	ev;
+	memset(&ev, 0, sizeof(ev));
+
+	ev.data.fd = fd;
+	ev.events = EPOLLIN | EPOLLHUP | EPOLLRDHUP;
+	
+	if (isServerSocket == false)
+		ev.events |= EPOLLET;
+	
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
+		throw RunException(__FILE__, __LINE__ - 1, "Error epoll_ctl() in addFdInEpoll() :");
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* switch events mode between EPOLLOUT and EPOLLIN
+*/
+void	Cluster::changeEventMod(const bool changeForRead, const int fd) const
+throw(RunException)
+{
+	struct epoll_event	ev;
+	memset(&ev, 0, sizeof(ev));
+	
+	ev.data.fd = fd;
+	ev.events |= EPOLLET | EPOLLHUP | EPOLLRDHUP | (changeForRead ? EPOLLIN : EPOLLOUT);
+	
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) == -1)
+		throw RunException(__FILE__, __LINE__ - 1, "Error epoll_ctl() in changeEventMod():");
 }
 /*----------------------------------------------------------------------------*/
 
@@ -272,77 +384,57 @@ void	Cluster::closeFdSet()
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
-void	Cluster::addFdInEpoll(const bool isServerSocket, const int fd) const
-throw(RunException)
-{
-	struct epoll_event	ev;
-
-	ev.data.fd = fd;
-	isServerSocket ? ev.events = EPOLLIN : ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
-		throw RunException(__FILE__, __LINE__ - 1, "Error epoll_ctl() in addFdInEpoll() :");
-}
-
-void	Cluster::changeEventMod(const bool changeForRead, const int fd) const
-throw(RunException)
-{
-	struct epoll_event	ev;
-	
-	ev.data.fd = fd;
-	changeForRead ? ev.events = EPOLLIN : ev.events = EPOLLOUT;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
-		throw RunException(__FILE__, __LINE__ - 1, "Error epoll_ctl():");
-	}
-}
-
 void	Cluster::readData(const struct epoll_event &event)
 {
-	// std::cout << "\nREAD : " << event.events << " fd : " << event.data.fd << std::endl;
-	int 		bytes_received = -1;
+#ifdef TEST
+	std::cout	<< BRIGHT_PURPLE "\nreadData()" RESET
+				<< std::endl;
+#endif
+	int 		bytes_received = BUFFERSIZE;
 	char		buffer[BUFFERSIZE] = {'\0'};
 	std::string	response;
-
-	do {
+	
+	while (bytes_received == BUFFERSIZE)
+	{
 		bytes_received = recv(event.data.fd, buffer, BUFFERSIZE, MSG_DONTWAIT);
 		if (bytes_received < 0) {
 			perror("recv");
 			break; // handle error
 		}
 		response += buffer;
-	} while (errno != EAGAIN);
-	
+	}
+#ifdef TEST
+	std::cout	<< "FROM CLIENT:\n"
+				<< response << "\nMSGEND"
+				<< std::endl;
+#endif
+	/*	* apres cette boucle
+		* creer une instance de serveur ou appeler un serveur d'un client deja existant
+		* donner en parametre constructeur std::string response
+		* les les client doivent avoir leur instance dediee
+	*/
 	try {
 		changeEventMod(false, event.data.fd);
 	}
 	catch(const RunException& e) {
 		e.runExcept();
-		if (close(event.data.fd))
-			perror("close() in readData()");
+		closeConnexion(event);
 		throw;
 	}
 
-	/*	* apres cette boucle
-		* une fonction pour analyser la requete et envoyer la reponse appropriee
-	*/
 }
 
 void	Cluster::writeData(const struct epoll_event &event)
 {
-	std::cout << "\nWRITE : " << event.events << " fd : " << event.data.fd << std::endl;
+#ifdef TEST
+	std::cout	<< BRIGHT_PURPLE "\nwriteData()" RESET
+				<< std::endl;
+#endif
+	const char *http_response = HTTPTEST;
+	ssize_t		bytes_sended = 0;
+	int			httpSize = strlen(http_response);
 
-	const char *http_response =
-	"HTTP/1.1 200 OK\r\n"
-	"Content-Type: text/html\r\n"
-	"Content-Length: 38\r\n"
-	"\r\n"
-	"<http>"
-	"<h1>TITLE<h1>"
-	"Hello, World!"
-	"<http>";
-
-	int		httpSize = strlen(http_response);
-	ssize_t	bytes_sended = 0;
-	while (bytes_sended != httpSize && !(event.events & EPOLLRDHUP))
+	while (bytes_sended != httpSize)
 	{
 		ssize_t ret = send(event.data.fd, http_response, strlen(http_response), 0);
 		if (ret < 0) {
@@ -357,92 +449,51 @@ void	Cluster::writeData(const struct epoll_event &event)
 	}
 	catch(const RunException& e) {
 		e.runExcept();
-		if (close(event.data.fd))
-			perror("close() in readData()");
+		closeConnexion(event);
 		throw;
 	}
-	// closeConnexion(event);
 }
 
-void	Cluster::closeConnexion(const struct epoll_event &event)
-{
-	epoll_ctl(_epollFd, EPOLL_CTL_DEL, event.data.fd, NULL);
-	close(event.data.fd);
-}
-
-void	Cluster::acceptConnexion(const struct epoll_event &event)
-{
-	struct sockaddr addr;
-	socklen_t		addrSize = sizeof(addr);
-	std::cout << "\nCONNEX : " << event.events << " fd : " << event.data.fd << std::endl;
-	const int		clientSocket = accept(event.data.fd, &addr, &addrSize);
-	std::cout << "CLIENT SOCK : " << clientSocket << std::endl;
-
-	if (clientSocket < 0)
-		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
-	
-	int flags = fcntl(clientSocket, F_GETFL);	// recupere les attributs actuel associes au descripteur actuel
-	if (flags == -1) {
-		if (close(clientSocket) == -1)
-			perror("close() in acceptConnexion()");
-		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
-	}
-   	flags |= O_NONBLOCK | O_CLOEXEC;	// set les nouveaux attributs necessaires au fd
-   	if (fcntl(clientSocket, F_SETFL, flags) == -1) {
-		close(clientSocket);
-		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
-	}
-	addFdInEpoll(false, clientSocket);
-}
-
-/*	* epoll()
-	*
-*/
-void	Cluster::runCluster()
-throw()
-{
-	std::string	dot[3] = {".  ", ".. ", "..."};
-	int 		n = 0;
-	
-	/*	* MAXEVENT
-		* nb max d'evenement I/O qui peuvent etre rapportes simultanement
-		* un evenement signifie qu'un fd surveille par epoll est pret pour une operation d'I/O
-		* cela signifie que le fd : 
+/*	* server main loop
+	* MAXEVENT
+		. nb max d'evenement I/O qui peuvent etre rapportes simultanement
+		. un evenement signifie qu'un fd surveille par epoll est pret pour une operation d'I/O
+		. cela signifie que le fd : 
 			-> a des données disponibles en lecture
 			-> peut ecrire / envoyer des donnees sans bloquer
 			-> recoit une connexion sur un socket serveur (nouveau client donc ouverture socket client)
 			-> Déconnexion d'un client (fermeture d'un socket client)
-	*/
+*/
+void	Cluster::runCluster()
+{
+	std::string	dot[3] = {".  ", ".. ", "..."};
+	int 		n = 0;
+	
 	struct epoll_event	events[MAXEVENT];
 	g_runserv = 1;
 	while (g_runserv)
 	{
 		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
-		if (nbEvents == -1) {
+		if (nbEvents == -1)
 			perror("epoll_wait");
-			break;
-		} else if (nbEvents > 0) {
+		else if (nbEvents > 0) {
 			for (int i = 0; i < nbEvents; i++) {
 				try {
 					if (_serverSockets.count(events[i].data.fd) > 0)
 						acceptConnexion(events[i]);
 					else
 					{
-						if (events[i].events & EPOLLIN) {
-							std::cout << BRIGHT_RED "READ" RESET << std::endl;
-							readData(events[i]);
-						}
-						else if (events[i].events & EPOLLOUT) {
-							std::cout << BRIGHT_GREEN "WRITE" RESET << std::endl;
-							writeData(events[i]);
-						}
-						else if (events[i].events & EPOLLRDHUP) {
-							std::cout << BRIGHT_YELLOW "CLOSE_CONNEX" RESET << std::endl;
+						if (events[i].events & (EPOLLHUP | EPOLLRDHUP))
 							closeConnexion(events[i]);
-						}
+						else if (events[i].events & EPOLLIN)
+							readData(events[i]);
+						else if (events[i].events & EPOLLOUT)
+							writeData(events[i]);
+						else
+							; // print EPOLLERR
 					}
 				}
-				catch(const RunException& e) {
+				catch(const std::exception& e) {
 					std::cerr << e.what() << std::endl;
 				}
 			}
