@@ -78,7 +78,7 @@ class Cluster
 		Cluster(const std::string &filename) throw(InitException);
 		Cluster(const Cluster &);
 		~Cluster();
-		Cluster &	operator=(const Cluster &);
+		Cluster & operator=(const Cluster &);
 
 		const std::string			& getFileConfig()	const;
 		const std::vector<Server>	& getAllServer()	const;
@@ -106,11 +106,12 @@ class Cluster
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *) throw(InitException);
 
 		void	acceptConnexion(const struct epoll_event &);
+		void	addFdInEpoll(const bool, const int) const throw(RunException);
+		void	changeEventMod(const bool, const int) const throw(RunException);
 		
 		void	writeData(const struct epoll_event &);
 		void	readData(const struct epoll_event &);
-		void	parseHeader(const std::string &response);
-
+		void	closeConnexion(const struct epoll_event &event);
 
 		void	closeFdSet();
 };
