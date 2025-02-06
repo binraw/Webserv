@@ -112,15 +112,15 @@ int main(void)
     sigaction(SIGINT, &act, NULL);
 
     try {
-        ConfigParser parser;
-        HttpConfig config = parser.parse("./config/default.conf");
-        config.controlDefaultHttpConf();
-        config.checkSemiColonAllValues();
-        config.displayDefaultHttp();
-        config.displayServers();
+        // ConfigParser parser;
+        // HttpConfig config = parser.parse("./config/default.conf");
+        // config.controlDefaultHttpConf();
+        // config.checkSemiColonAllValues();
+        // config.displayDefaultHttp();
+        // config.displayServers();
 
-        // Cluster cluster("./config/exemple.conf");
-        // cluster.runCluster();
+        Cluster cluster("./config/exemple.conf");
+        cluster.runCluster();
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what() << std::endl

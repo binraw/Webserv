@@ -303,12 +303,19 @@ void	Cluster::writeData(const struct epoll_event &event)
 	const char *http_response =
 	"HTTP/1.1 200 OK\r\n"
 	"Content-Type: text/html\r\n"
-	"Content-Length: 38\r\n"
+	"Content-Length: 157\r\n"  
 	"\r\n"
-	"<http>"
-	"<h1>TITLE<h1>"
-	"Hello, World!"
-	"<http>";
+	"<html>"
+	"<head><title>Form Example</title></head>"
+	"<body>"
+	"<h1>TITLE</h1>"
+	"<form action=\"/cgi-bin/script.pl\" method=\"post\">"
+	"  <label for=\"name\">Name:</label><br>"
+	"  <input type=\"text\" id=\"name\" name=\"name\"><br>"
+	"  <input type=\"submit\" value=\"Submit\">"
+	"</form>"
+	"</body>"
+	"</html>";
 	if (send(event.data.fd, http_response, strlen(http_response), 0) <= 0) 
 	{
 		std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;

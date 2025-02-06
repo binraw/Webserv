@@ -4,3 +4,8 @@ void PHPScript::execute()
 {
     
 }
+
+void PerlScript::execute()
+{
+
+}
