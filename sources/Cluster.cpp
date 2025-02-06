@@ -21,6 +21,7 @@
 */
 #include <csignal>
 #define MAXEVENT 10
+#define BUFFERSIZE 2048
 
 int g_runserv = 0;
 
@@ -119,10 +120,10 @@ const std::set<std::string>	& Cluster::getListenList() const {
 void	Cluster::setParams()
 {
 	_listenList.insert("8000");
-	_listenList.insert("8001");
+	// _listenList.insert("8001");
 	_listenList.insert("8002");
 	// _listenList.insert("100000");
-	_listenList.insert("http");
+	// _listenList.insert("http");
 	// _listenList.insert("8002");
 	// _listenList.insert("8002 ");
 	// _listenList.insert("8002");
@@ -180,6 +181,7 @@ throw(InitException)
 /*============================================================================*/
 						/*### PRIVATE METHODS ###*/
 /*============================================================================*/
+
 /*	* get an availble address on an avaible service (port)
 */
 void	Cluster::safeGetAddr(const char *serviceName, struct addrinfo **res) const
@@ -240,20 +242,14 @@ throw(InitException)
 	std::cout	<< BOLD BLUE << "Function -> setEpollFd() {"
 				<< RESET << std::endl;
 #endif
-	struct epoll_event ev;
 
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
 		throw InitException(__FILE__, __LINE__ - 2, "error creation epoll()", NULL, 0);
+
 	for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++)
-	{
-		ev.events = EPOLLIN;
-		ev.data.fd = *it;
-		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, *it, &ev) == -1) {
-			close(_epollFd);
-			throw InitException(__FILE__, __LINE__ - 2, "epoll_ctl: EPOLL_CTL_ADD", NULL, 0);
-		}
-	}
+		addFdInEpoll(true, *it);
+
 #ifdef TEST
 	for (std::set<int>::iterator it = _serverSockets.begin(); \
 								it != _serverSockets.end(); it++)
@@ -276,44 +272,64 @@ void	Cluster::closeFdSet()
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
-
-void	Cluster::parseHeader(const std::string &response)
+void	Cluster::addFdInEpoll(const bool isServerSocket, const int fd) const
+throw(RunException)
 {
-	std::cout	<< "RECEIVED FROM CLIENT:\n"
-				<< response << std::endl;
+	struct epoll_event	ev;
 
+	ev.data.fd = fd;
+	isServerSocket ? ev.events = EPOLLIN : ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) == -1)
+		throw RunException(__FILE__, __LINE__ - 1, "Error epoll_ctl() in addFdInEpoll() :");
+}
 
-
+void	Cluster::changeEventMod(const bool changeForRead, const int fd) const
+throw(RunException)
+{
+	struct epoll_event	ev;
+	
+	ev.data.fd = fd;
+	changeForRead ? ev.events = EPOLLIN : ev.events = EPOLLOUT;
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
+		throw RunException(__FILE__, __LINE__ - 1, "Error epoll_ctl():");
+	}
 }
 
 void	Cluster::readData(const struct epoll_event &event)
 {
+	// std::cout << "\nREAD : " << event.events << " fd : " << event.data.fd << std::endl;
 	int 		bytes_received = -1;
-	char		buffer[2048] = {'\0'};
+	char		buffer[BUFFERSIZE] = {'\0'};
 	std::string	response;
 
 	do {
-		bytes_received = recv(event.data.fd, buffer, sizeof(buffer), 0);
+		bytes_received = recv(event.data.fd, buffer, BUFFERSIZE, MSG_DONTWAIT);
 		if (bytes_received < 0) {
 			perror("recv");
-			return;
+			break; // handle error
 		}
 		response += buffer;
-		if (bytes_received < static_cast<int>(sizeof(buffer))) {
-			std::cout << "HERE : bytes_received = " << bytes_received << " sizeof(buffer) = " << sizeof(buffer) << std::endl;
-			break;
+	} while (errno != EAGAIN);
+	
+	try {
+		changeEventMod(false, event.data.fd);
+	}
+	catch(const RunException& e) {
+		e.runExcept();
+		if (close(event.data.fd))
+			perror("close() in readData()");
+		throw;
+	}
 
-		}
-	} while (bytes_received > 0);
 	/*	* apres cette boucle
 		* une fonction pour analyser la requete et envoyer la reponse appropriee
 	*/
-	// writeData(event);
-	parseHeader(response);
 }
 
 void	Cluster::writeData(const struct epoll_event &event)
 {
+	std::cout << "\nWRITE : " << event.events << " fd : " << event.data.fd << std::endl;
+
 	const char *http_response =
 	"HTTP/1.1 200 OK\r\n"
 	"Content-Type: text/html\r\n"
@@ -324,53 +340,59 @@ void	Cluster::writeData(const struct epoll_event &event)
 	"Hello, World!"
 	"<http>";
 
-	if (send(event.data.fd, http_response, strlen(http_response), 0) <= 0) 
+	int		httpSize = strlen(http_response);
+	ssize_t	bytes_sended = 0;
+	while (bytes_sended != httpSize && !(event.events & EPOLLRDHUP))
 	{
-		std::cerr << "Erreur lors de l'envoi de la réponse" << std::endl;
-		return;
+		ssize_t ret = send(event.data.fd, http_response, strlen(http_response), 0);
+		if (ret < 0) {
+			perror("send()");
+			break;
+		}
+		bytes_sended += ret;
+	} 
+	
+	try {
+		changeEventMod(true, event.data.fd);
 	}
+	catch(const RunException& e) {
+		e.runExcept();
+		if (close(event.data.fd))
+			perror("close() in readData()");
+		throw;
+	}
+	// closeConnexion(event);
+}
+
+void	Cluster::closeConnexion(const struct epoll_event &event)
+{
 	epoll_ctl(_epollFd, EPOLL_CTL_DEL, event.data.fd, NULL);
 	close(event.data.fd);
 }
 
 void	Cluster::acceptConnexion(const struct epoll_event &event)
 {
-	socklen_t		addrSize;
-	struct sockaddr *addr = NULL;
-	const int		clientSocket = accept(event.data.fd, addr, &addrSize);
-#ifdef TEST
-	static int i = 0;
-	if (i++ % 8 == 0) {
-		close(clientSocket);
-		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
-	}
-#else
+	struct sockaddr addr;
+	socklen_t		addrSize = sizeof(addr);
+	std::cout << "\nCONNEX : " << event.events << " fd : " << event.data.fd << std::endl;
+	const int		clientSocket = accept(event.data.fd, &addr, &addrSize);
+	std::cout << "CLIENT SOCK : " << clientSocket << std::endl;
+
 	if (clientSocket < 0)
 		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
-#endif
 	
-	int flags = fcntl(clientSocket, F_GETFL, 0);
+	int flags = fcntl(clientSocket, F_GETFL);	// recupere les attributs actuel associes au descripteur actuel
 	if (flags == -1) {
 		if (close(clientSocket) == -1)
-			; // crash serveur ?
-		throw RunException(__FILE__, __LINE__, "Error fcntl():");
+			perror("close() in acceptConnexion()");
+		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
 	}
-   	flags = flags | O_NONBLOCK | O_CLOEXEC;
+   	flags |= O_NONBLOCK | O_CLOEXEC;	// set les nouveaux attributs necessaires au fd
    	if (fcntl(clientSocket, F_SETFL, flags) == -1) {
-		if (close(clientSocket) == -1)
-			; // crash serveur ?
-		throw RunException(__FILE__, __LINE__, "Error fcntl():");
+		close(clientSocket);
+		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
 	}
-
-	struct epoll_event	ev;
-
-	ev.events = EPOLLIN | EPOLLOUT;
-	ev.data.fd = clientSocket;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
-		if (close(clientSocket) == -1)
-			; // crash serveur ?
-		throw RunException(__FILE__, __LINE__, "Error epoll_ctl():");
-	}
+	addFdInEpoll(false, clientSocket);
 }
 
 /*	* epoll()
@@ -414,10 +436,14 @@ throw()
 							std::cout << BRIGHT_GREEN "WRITE" RESET << std::endl;
 							writeData(events[i]);
 						}
+						else if (events[i].events & EPOLLRDHUP) {
+							std::cout << BRIGHT_YELLOW "CLOSE_CONNEX" RESET << std::endl;
+							closeConnexion(events[i]);
+						}
 					}
 				}
 				catch(const RunException& e) {
-					e.runExcept();
+					std::cerr << e.what() << std::endl;
 				}
 			}
 		} else {
@@ -439,14 +465,15 @@ void	Cluster::InitException::setSockExcept() const throw() {
 	std::cerr << YELLOW "at file [" << _file << "] line [" << _line << "]";
 	if (_serviceName != 0)
 		std::cerr << " (serviceName [" << _serviceName << "])";
-	std::cerr << RESET << std::endl << std::endl;
+	std::cerr << RESET << std::endl;
 }
 /*----------------------------------------------------------------------------*/
 
 void	Cluster::RunException::runExcept() const throw() {
+	std::cerr << RED "Error" << std::endl;
 	if (errno != 0)
-		std::cerr << RED << strerror(errno) << ": ";
+		std::cerr << strerror(errno) << ": ";
 	std::cerr	<< YELLOW "at file [" << _file << "] line [" << _line << "]"
-				<< RESET << std::endl << std::endl;
+				<< RESET << std::endl;
 }
 /*----------------------------------------------------------------------------*/
