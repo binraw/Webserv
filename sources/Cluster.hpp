@@ -80,11 +80,14 @@ class Cluster
 		~Cluster();
 		Cluster & operator=(const Cluster &);
 
-		const std::string			& getFileConfig()	const;
-		const std::vector<Server>	& getAllServer()	const;
-		const std::set<std::string>	& getListenList()	const;
+		const std::string			&getFileConfig()	const;
+		const std::vector<Server>	&getAllServer()	const;
+		const std::set<std::string>	&getListenList()	const;
 
 		void	runCluster();
+
+		void	writeData(const struct epoll_event &);
+		void	readData(const struct epoll_event &);
 
 	private:
 		std::set<std::string>	_listenList;		// liste de tous les ports
@@ -99,23 +102,16 @@ class Cluster
 		int						_epollFd;			// fd vers structure epoll
 
 		void	setParams();		// init les parametres (provisoir en attendant parsing)
-
 		void	setEpollFd() throw(InitException);
 		void	setServerSockets() throw(InitException);
-		void	safeGetAddr(const char *, struct addrinfo **) const throw(InitException); 
+		void	safeGetAddr(const char *, struct addrinfo **) const throw(InitException);
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *) throw(InitException);
+		void	closeFdSet() const;
 
-		
-		void	acceptConnexion(const struct epoll_event &);
+		void	acceptConnexion(const struct epoll_event &) const;
 		void	closeConnexion(const struct epoll_event &event) const;
-		
-		void	addFdInEpoll(const bool, const int) const throw(RunException);
+		void	addFdInEpoll(const bool, const int)	const throw(RunException);
 		void	changeEventMod(const bool, const int) const throw(RunException);
-		
-		void	writeData(const struct epoll_event &);
-		void	readData(const struct epoll_event &);
-
-		void	closeFdSet();
 };
 
 std::ostream	& operator<<(std::ostream &, const Cluster &);
