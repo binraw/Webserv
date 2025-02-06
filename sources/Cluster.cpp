@@ -70,7 +70,7 @@ Cluster::Cluster(const Cluster & )
 						/*### DESTRUCTORS ###*/
 /*============================================================================*/
 Cluster::~Cluster() {
-	close(_epollFd);
+	_epollFd > 0 ? close(_epollFd) : _epollFd;
 	closeFdSet();
 }
 /*----------------------------------------------------------------------------*/
@@ -228,7 +228,7 @@ throw(InitException)
 }
 /*----------------------------------------------------------------------------*/
 
-/*	* open epoll & add the server sockets to the set
+/*	* open epoll & add the server sockets to the set 
 	* new fd added in the set epoll setting details :
 		-> EPOLLIN: only for input data
 		-> Levels triggered (by default) will automaticly empty the communication buffer
@@ -244,14 +244,14 @@ throw(InitException)
 
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
-		throw InitException(__FILE__, __LINE__, "error creation epoll()", NULL, 0);
+		throw InitException(__FILE__, __LINE__ - 2, "error creation epoll()", NULL, 0);
 	for (std::set<int>::iterator it = _serverSockets.begin(); it != _serverSockets.end(); it++)
 	{
 		ev.events = EPOLLIN;
 		ev.data.fd = *it;
 		if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, *it, &ev) == -1) {
 			close(_epollFd);
-			throw InitException(__FILE__, __LINE__, "epoll_ctl: EPOLL_CTL_ADD", NULL, 0);
+			throw InitException(__FILE__, __LINE__ - 2, "epoll_ctl: EPOLL_CTL_ADD", NULL, 0);
 		}
 	}
 #ifdef TEST
@@ -276,26 +276,40 @@ void	Cluster::closeFdSet()
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
+
+void	Cluster::parseHeader(const std::string &response)
+{
+	std::cout	<< "RECEIVED FROM CLIENT:\n"
+				<< response << std::endl;
+
+
+
+}
+
 void	Cluster::readData(const struct epoll_event &event)
 {
-	char buffer[2048] = {'\0'};
-	// memset(buffer, '\0', sizeof(buffer));
-	int bytes_received = -1;
+	int 		bytes_received = -1;
+	char		buffer[2048] = {'\0'};
+	std::string	response;
+
 	do {
-		bytes_received = recv(event.data.fd, buffer, sizeof(buffer) - 1, 0);
+		bytes_received = recv(event.data.fd, buffer, sizeof(buffer), 0);
 		if (bytes_received < 0) {
 			perror("recv");
 			return;
 		}
-		if (bytes_received < static_cast<int>(sizeof(buffer)))
+		response += buffer;
+		if (bytes_received < static_cast<int>(sizeof(buffer))) {
+			std::cout << "HERE : bytes_received = " << bytes_received << " sizeof(buffer) = " << sizeof(buffer) << std::endl;
 			break;
-		std::cout	<< "RECEIVED FROM CLIENT:\n"
-					<< buffer << std::endl;
+
+		}
 	} while (bytes_received > 0);
 	/*	* apres cette boucle
 		* une fonction pour analyser la requete et envoyer la reponse appropriee
 	*/
-	writeData(event);
+	// writeData(event);
+	parseHeader(response);
 }
 
 void	Cluster::writeData(const struct epoll_event &event)
@@ -325,26 +339,33 @@ void	Cluster::writeData(const struct epoll_event &event)
 	close(event.data.fd);
 }
 
-void	Cluster::acceptConnexion(const struct epoll_event &event)
+void	Cluster::acceptConnexion(const struct epoll_event &event) // rob: je pense que c'est ici que je vais check la requete
 {
 	socklen_t		addrSize;
 	struct sockaddr *addr = NULL;
 	const int		clientSocket = accept(event.data.fd, addr, &addrSize);
-
-	if (clientSocket < 0) {
-		perror("accept()");
-		return;
+#ifdef TEST
+	static int i = 0;
+	if (i++ % 8 == 0) {
+		close(clientSocket);
+		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
 	}
+#else
+	if (clientSocket < 0)
+		throw RunException(__FILE__, __LINE__ - 1, "Error accept():");
+#endif
 	
 	int flags = fcntl(clientSocket, F_GETFL, 0);
 	if (flags == -1) {
-		std::cerr << RED << __LINE__ << " " RESET << std::endl;
-		perror("fcntl");
+		if (close(clientSocket) == -1)
+			; // crash serveur ?
+		throw RunException(__FILE__, __LINE__, "Error fcntl():");
 	}
-   	flags = flags | O_NONBLOCK;
-   	if (fcntl(clientSocket, F_SETFL, flags)) {
-		std::cerr << RED << __LINE__ << " " RESET << std::endl;
-		perror("fcntl");
+   	flags = flags | O_NONBLOCK | O_CLOEXEC;
+   	if (fcntl(clientSocket, F_SETFL, flags) == -1) {
+		if (close(clientSocket) == -1)
+			; // crash serveur ?
+		throw RunException(__FILE__, __LINE__, "Error fcntl():");
 	}
 
 	struct epoll_event	ev;
@@ -352,9 +373,9 @@ void	Cluster::acceptConnexion(const struct epoll_event &event)
 	ev.events = EPOLLIN | EPOLLOUT;
 	ev.data.fd = clientSocket;
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, clientSocket, &ev) == -1) {
-		perror("epoll_ctl: clientSocket");
-		close(clientSocket);
-		return;
+		if (close(clientSocket) == -1)
+			; // crash serveur ?
+		throw RunException(__FILE__, __LINE__, "Error epoll_ctl():");
 	}
 }
 
@@ -362,6 +383,7 @@ void	Cluster::acceptConnexion(const struct epoll_event &event)
 	*
 */
 void	Cluster::runCluster()
+throw()
 {
 	std::string	dot[3] = {".  ", ".. ", "..."};
 	int 		n = 0;
@@ -385,18 +407,23 @@ void	Cluster::runCluster()
 			break;
 		} else if (nbEvents > 0) {
 			for (int i = 0; i < nbEvents; i++) {
-				if (_serverSockets.count(events[i].data.fd) > 0)
-					acceptConnexion(events[i]);
-				else
-				{
-					if (events[i].events & EPOLLIN) {
-						std::cout << BRIGHT_RED "READ" RESET << std::endl;
-						readData(events[i]);
+				try {
+					if (_serverSockets.count(events[i].data.fd) > 0)
+						acceptConnexion(events[i]);
+					else
+					{
+						if (events[i].events & EPOLLIN) {
+							std::cout << BRIGHT_RED "READ" RESET << std::endl;
+							readData(events[i]);
+						}
+						else if (events[i].events & EPOLLOUT) {
+							std::cout << BRIGHT_GREEN "WRITE" RESET << std::endl;
+							writeData(events[i]);
+						}
 					}
-					else if (events[i].events & EPOLLOUT) {
-						std::cout << BRIGHT_GREEN "WRITE" RESET << std::endl;
-						writeData(events[i]);
-					}
+				}
+				catch(const RunException& e) {
+					e.runExcept();
 				}
 			}
 		} else {
@@ -422,7 +449,10 @@ void	Cluster::InitException::setSockExcept() const throw() {
 }
 /*----------------------------------------------------------------------------*/
 
-const char *	Cluster::InitException::what() const throw() {
-	return _msg;
+void	Cluster::RunException::runExcept() const throw() {
+	if (errno != 0)
+		std::cerr << RED << strerror(errno) << ": ";
+	std::cerr	<< YELLOW "at file [" << _file << "] line [" << _line << "]"
+				<< RESET << std::endl << std::endl;
 }
 /*----------------------------------------------------------------------------*/

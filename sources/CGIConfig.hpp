@@ -1,6 +1,8 @@
 #ifndef CGICONFIG_HPP
 # define CGICONFIG_HPP
 
+#include <unistd.h>
+#include <string>
 
 class CGIConfig
 {
@@ -9,10 +11,11 @@ private:
 public:
     CGIConfig();
     ~CGIConfig();
+    void handleRequest(int clientSocket);
 };
 
 
-// futur class pour le parsing
+// ici je vais lire les requetes pour definir si c'est une CGi attendu
 
 
 #endif

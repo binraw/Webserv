@@ -1,0 +1,7 @@
+je dois:
+
+- verifier si la requete est pour un CGI
+- preparez l'appel au script CGI avec bon chemin et bon argument
+- utiliser les appels systeme pour executer le script
+- check passer le bon chemin du fichier comme argument
+- capturz la sortie du cgi et renvoyez au client

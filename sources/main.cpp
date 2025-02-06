@@ -124,7 +124,7 @@ int main(void)
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what() << std::endl
-                    << RED "webserv : EXIT_FAILURE PUSH AGAIN !!"
+                    << RED "webserv : EXIT_FAILURE"
 					<< RESET << std::endl;
         return 1;
     }

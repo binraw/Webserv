@@ -44,7 +44,9 @@ class Cluster
 			InitException(const char *file, int line, const char *msg, const char *serviceName, const int ret)
 				: retAddr(ret), _file(file), _line(line), _msg(msg), _serviceName(serviceName)
 			{	}
-			const char *	what()			const throw();
+			const char *	what()			const throw() {
+				return _msg;
+			};
 			void			setSockExcept() const throw();
 			const int 		retAddr;
 
@@ -53,6 +55,23 @@ class Cluster
 			const int 		_line;
 			const char *	_msg;
 			const char *	_serviceName;	
+	};
+
+	class   RunException : virtual public std::exception
+	{
+		public:
+			RunException(const char *file, int line, const char *msg)
+				: _file(file), _line(line), _msg(msg)
+			{	}
+			const char *	what() const throw() {
+				return _msg;
+			};
+			void			runExcept() const throw();
+
+		private:
+			const char *	_file;
+			const int 		_line;
+			const char *	_msg;
 	};
 
 	public:
@@ -65,17 +84,18 @@ class Cluster
 		const std::vector<Server>	& getAllServer()	const;
 		const std::set<std::string>	& getListenList()	const;
 
-		void	runCluster();
+		void	runCluster() throw();
 
 	private:
 		std::set<std::string>	_listenList;		// liste de tous les ports
 		std::set<std::string>	_incudeList;		// ??
 		std::vector<Server>		_servers;			// ensemble des servers present dans le cluster
-		std::set<int>			_serverSockets;		// ensemble des socket serveur
 		std::string				_configPath;		// chemin vers fichier de config
 		std::string				_defaultType;		// pour default entete http
 		int						_workerConnexion;	// nb total de connexion supportes par le cluster
 		int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
+		
+		std::set<int>			_serverSockets;		// ensemble des socket serveur
 		int						_epollFd;			// fd vers structure epoll
 
 		void	setParams();		// init les parametres (provisoir en attendant parsing)
@@ -86,8 +106,11 @@ class Cluster
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *) throw(InitException);
 
 		void	acceptConnexion(const struct epoll_event &);
-		void	readData(const struct epoll_event &);
+		
 		void	writeData(const struct epoll_event &);
+		void	readData(const struct epoll_event &);
+		void	parseHeader(const std::string &response);
+
 
 		void	closeFdSet();
 };
