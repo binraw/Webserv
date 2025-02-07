@@ -15,8 +15,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 
-/*
-	ressources provisoirs
+/*	* ressources provisoirs
 */
 #include <csignal>
 #define MAXEVENT	10
@@ -42,8 +41,8 @@ void hand(int, siginfo_t *, void *)
 /*----------------------------------------------------------------------------*/
 					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*----------------------------------------------------------------------------*/
-Cluster::Cluster(const std::string &filename)
-throw(InitException) : _configPath(filename), _epollFd(-1)
+Cluster::Cluster(const HttpConfig &config)
+throw(InitException) : _config(config), _epollFd(-1)
 {
 	setParams(); // provisoir
 
@@ -148,6 +147,9 @@ void	displayClient(const struct epoll_event & ev)
 				<< "FD CLIENT [" << ev.data.fd << "]\n";
 }
 /*----------------------------------------------------------------------------*/
+
+
+
 
 /*	* open sockets server and bind them
 */
@@ -288,8 +290,9 @@ void	Cluster::acceptConnexion(const struct epoll_event &event) const
 		throw RunException(__FILE__, __LINE__ - 3, "Error accept():");
 
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> acceptConnexion()\n" RESET
-				<< PURPLE "ClientSocket [" << clientSocket << "]" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> acceptConnexion()\n"
+				<< "ClientSocket [" RESET PURPLE << clientSocket
+				<< BOLD BRIGHT_PURPLE "]" RESET
 				<< std::endl;
 #endif
 
@@ -324,8 +327,9 @@ void	Cluster::acceptConnexion(const struct epoll_event &event) const
 void	Cluster::closeConnexion(const struct epoll_event &event) const
 {
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> closeConnexion()\n" RESET
-				<< PURPLE "Client fd [" << event.data.fd << "]" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> closeConnexion()\n"
+				<< "Client fd [" RESET PURPLE << event.data.fd
+				<< BOLD BRIGHT_PURPLE "]" RESET
 				<< std::endl;
 #endif
 	
@@ -387,7 +391,9 @@ void	Cluster::closeFdSet() const
 void	Cluster::readData(const struct epoll_event &event)
 {
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> readData() {" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> readData() {\n"
+				<< "ClientSocket [" RESET PURPLE << event.data.fd 
+				<< BOLD BRIGHT_PURPLE "]" RESET
 				<< std::endl;
 #endif
 	int 		bytes_received = BUFFERSIZE;
@@ -428,7 +434,9 @@ void	Cluster::readData(const struct epoll_event &event)
 void	Cluster::writeData(const struct epoll_event &event)
 {
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> writeData()" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> writeData()\n"
+				<< "ClientSocket [" RESET PURPLE << event.data.fd
+				<< BOLD BRIGHT_PURPLE "]\n" RESET
 				<< std::endl;
 #endif
 	const char *http_response = HTTPTEST;
@@ -476,7 +484,7 @@ void	Cluster::runCluster()
 	{
 		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
 		if (nbEvents == -1)
-			perror("epoll_wait");
+			perror("\nepoll_wait");
 		else if (nbEvents > 0) {
 			for (int i = 0; i < nbEvents; i++) {
 				try {

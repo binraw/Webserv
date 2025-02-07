@@ -1,24 +1,28 @@
+
+
+
 #ifndef SERVERCONFIG_HPP
 # define SERVERCONFIG_HPP
 
-
-#include "LocationConfig.hpp"
-#include "UtilParsing.hpp"
-
+# include "../includes/webserv.hpp"
+# include "LocationConfig.hpp"
 
 class ServerConfig 
 {
 public:
-    std::vector<std::string>  _serverName;
-    std::vector<std::string> _listenPort;
-    std::string _clientMaxBodySize;
-    std::string _uploadPath;
-    std::vector<LocationConfig> _locations;
+	ServerConfig() {};
+	ServerConfig(const ServerConfig &);
+	std::vector<std::string>	_serverName;
+	std::vector<std::string>	_listenPort;
+	std::vector<LocationConfig>	_locations;
+	
+	std::string	_clientMaxBodySize;
+	std::string	_uploadPath;
 
-    void displayValueServer();
-    void displayAllLocations();
-    void controlDefaultServerConf();
-    void checkSemiColonServer();
+	void displayValueServer();
+	void displayAllLocations();
+	void controlDefaultServerConf();
+	void checkSemiColonServer();
 };
-
+std::ostream & operator<<(std::ostream & o, const ServerConfig &);
 #endif

@@ -110,14 +110,9 @@ int main(void)
     sigaction(SIGINT, &act, NULL);
 
     try {
-        // ConfigParser parser;
-        // HttpConfig config = parser.parse("./config/default.conf");
-        // config.controlDefaultHttpConf();
-        // config.checkSemiColonAllValues();
-        // config.displayDefaultHttp();
-        // config.displayServers();
-
-        Cluster cluster("./config/exemple.conf");
+        ConfigParser parser;
+        Cluster cluster(parser.parse("./config/default.conf"));
+        std::cout << cluster._config << std::endl;
         cluster.runCluster();
     }
     catch(const std::exception& e) {

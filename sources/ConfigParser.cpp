@@ -1,3 +1,6 @@
+
+
+
 #include "ConfigParser.hpp"
 
 HttpConfig ConfigParser::parse(const std::string& filepath) 
@@ -11,10 +14,23 @@ HttpConfig ConfigParser::parse(const std::string& filepath)
     std::string line;
     while (std::getline(file, line)) 
     {
-        if (line.empty() || line[0] == '#') continue;
-
+        if (line.empty() || line[0] == '#')
+			continue;
         if (line.find("http") != std::string::npos) 
             parseHttpBlock(file, httpConfig);
+    }
+
+    /*	* fill the field httpConfig._serviceList
+		* cette boucle permet de recuperer tous les ports d'ecoute de chaque serveur
+		* elle ajoute les nom de port/services au set _serviceList
+		* utiliser un set permet de ne pas avoir de duplicat et donc eviter des logs d'erreur
+    */
+    for (std::vector<ServerConfig>::iterator it = httpConfig._servers.begin();
+        it != httpConfig._servers.end(); it++)
+    {
+        for (std::vector<std::string>::iterator itt = it->_listenPort.begin();
+            itt != it->_listenPort.end(); itt++)
+            httpConfig._serviceList.insert(*itt);
     }
     
     return httpConfig;

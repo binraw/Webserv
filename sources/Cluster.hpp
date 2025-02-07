@@ -4,6 +4,7 @@
 # define CLUSTER_HPP
 
 #include "../includes/webserv.hpp"
+#include "HttpConfig.hpp"
 
 #include "Server.hpp"
 
@@ -75,7 +76,7 @@ class Cluster
 	};
 
 	public:
-		Cluster(const std::string &filename) throw(InitException);
+		Cluster(const HttpConfig &) throw(InitException);
 		Cluster(const Cluster &);
 		~Cluster();
 		Cluster & operator=(const Cluster &);
@@ -89,7 +90,9 @@ class Cluster
 		void	writeData(const struct epoll_event &);
 		void	readData(const struct epoll_event &);
 
+		const HttpConfig	_config;
 	private:
+		
 		std::set<std::string>	_listenList;		// liste de tous les ports
 		std::set<std::string>	_incudeList;		// ??
 		std::vector<Server>		_servers;			// ensemble des servers present dans le cluster
