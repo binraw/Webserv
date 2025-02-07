@@ -4,6 +4,7 @@
 # define CLUSTER_HPP
 
 #include "../includes/webserv.hpp"
+#include "HttpConfig.hpp"
 
 #include "Server.hpp"
 
@@ -75,14 +76,14 @@ class Cluster
 	};
 
 	public:
-		Cluster(const std::string &filename) throw(InitException);
+		Cluster(const std::string &) throw(InitException);
 		Cluster(const Cluster &);
 		~Cluster();
 		Cluster & operator=(const Cluster &);
 
 		const std::string			&getFileConfig()	const;
 		const std::vector<Server>	&getAllServer()	const;
-		const std::set<std::string>	&getListenList()	const;
+		const std::set<std::string>	&getServiceList()	const;
 
 		void	runCluster();
 
@@ -90,16 +91,19 @@ class Cluster
 		void	readData(const struct epoll_event &);
 
 	private:
-		std::set<std::string>	_listenList;		// liste de tous les ports
-		std::set<std::string>	_incudeList;		// ??
-		std::vector<Server>		_servers;			// ensemble des servers present dans le cluster
-		std::string				_configPath;		// chemin vers fichier de config
-		std::string				_defaultType;		// pour default entete http
-		int						_workerConnexion;	// nb total de connexion supportes par le cluster
-		int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
 		
-		std::set<int>			_serverSockets;		// ensemble des socket serveur
-		int						_epollFd;			// fd vers structure epoll
+		// std::set<std::string>	_listenList;		// liste de tous les ports
+		// std::set<std::string>	_incudeList;		// ??
+		// std::vector<Server>		_servers;			// ensemble des servers present dans le cluster
+		// std::string				_configPath;		// chemin vers fichier de config
+		// std::string				_defaultType;		// pour default entete http
+		// int						_workerConnexion;	// nb total de connexion supportes par le cluster
+		// int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
+
+		const HttpConfig	_config;
+		std::set<int>		_serverSockets;		// ensemble des socket serveur
+		std::set<std::string>	_serviceList;
+		int					_epollFd;			// fd vers structure epoll
 
 		void	setParams();		// init les parametres (provisoir en attendant parsing)
 		void	setEpollFd() throw(InitException);

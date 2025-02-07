@@ -80,7 +80,7 @@ $(NAME)	: $(OBJ)
 	@echo "$(GREEN)-- linking & building completed --$(RESET)"
 
 #--------------------# ==== COMPILATION OBJ - DEPS ==== #----------------------#
-$(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile 
+$(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile
 	@$(MKD) $(dir $@) $(DEP_PATH)
 	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
 	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)

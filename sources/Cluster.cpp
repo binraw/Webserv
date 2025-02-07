@@ -5,6 +5,7 @@
 						/*### HEADER FILES ###*/
 /*----------------------------------------------------------------------------*/
 #include "Cluster.hpp"
+#include "ConfigParser.hpp"
 
 #include <cstring>
 #include <cerrno>
@@ -15,8 +16,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 
-/*
-	ressources provisoirs
+/*	* ressources provisoirs
 */
 #include <csignal>
 #define MAXEVENT	10
@@ -42,10 +42,15 @@ void hand(int, siginfo_t *, void *)
 /*----------------------------------------------------------------------------*/
 					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*----------------------------------------------------------------------------*/
-Cluster::Cluster(const std::string &filename)
-throw(InitException) : _configPath(filename), _epollFd(-1)
+Cluster::Cluster(const std::string &filepath)
+throw(InitException) : _config(ConfigParser().parse(filepath)), _epollFd(-1)
 {
-	setParams(); // provisoir
+#ifdef TEST
+	std::cout	<< BOLD BRIGHT_PURPLE "Config Cluster:\n" RESET
+				<< PURPLE << _config
+				<< RESET << std::endl;
+#endif
+	setParams();
 
 	try {
 		setServerSockets();
@@ -97,8 +102,8 @@ std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 	o	<< BOLD BLUE << "CLUSTER:" << std::endl
 		<< "std::set<std::string>	_listenList:" << RESET
 		<< BLUE << std::endl;
-	for (std::set<std::string>::iterator it = ref.getListenList().begin();
-										it != ref.getListenList().end(); it++)
+	for (std::set<std::string>::iterator it = ref.getServiceList().begin();
+										it != ref.getServiceList().end(); it++)
 		o << "[" << *it << "]" << std::endl;
 	return o << RESET;
 }
@@ -107,18 +112,14 @@ std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 /*----------------------------------------------------------------------------*/
                         	/*### GETTER ###*/
 /*----------------------------------------------------------------------------*/
-const std::string	& Cluster::getFileConfig() const {
-	return const_cast<std::string &>(_configPath);
-}
+
+// const std::vector<Server>	& Cluster::getAllServer() const {
+// 	return const_cast<std::vector<Server> & >(_servers);
+// }
 /*----------------------------------------------------------------------------*/
 
-const std::vector<Server>	& Cluster::getAllServer() const {
-	return const_cast<std::vector<Server> & >(_servers);
-}
-/*----------------------------------------------------------------------------*/
-
-const std::set<std::string>	& Cluster::getListenList() const {
-	return const_cast<std::set<std::string>	&>(_listenList);
+const std::set<std::string>	& Cluster::getServiceList() const {
+	return const_cast<std::set<std::string>	&>(_serviceList);
 }
 /*----------------------------------------------------------------------------*/
 
@@ -130,16 +131,15 @@ const std::set<std::string>	& Cluster::getListenList() const {
 */
 void	Cluster::setParams()
 {
-	_listenList.insert("8000");
-	// _listenList.insert("8001");
-	_listenList.insert("8002");
-	// _listenList.insert("100000");
-	// _listenList.insert("http");
-	// _listenList.insert("8002");
-	// _listenList.insert("8002 ");
-	// _listenList.insert("8002");
-	_workerConnexion = 1024;
-	_keepAliveTime = 65;
+    for (std::vector<ServerConfig>::const_iterator it = _config._servers.begin();
+        it != _config._servers.end(); it++)
+    {
+        for (std::vector<std::string>::const_iterator itt = it->_listenPort.begin();
+            itt != it->_listenPort.end(); itt++)
+            _serviceList.insert(*itt);
+    }
+	// _workerConnexion = 1024;
+	// _keepAliveTime = 65;
 }
 
 void	displayClient(const struct epoll_event & ev)
@@ -148,6 +148,9 @@ void	displayClient(const struct epoll_event & ev)
 				<< "FD CLIENT [" << ev.data.fd << "]\n";
 }
 /*----------------------------------------------------------------------------*/
+
+
+
 
 /*	* open sockets server and bind them
 */
@@ -160,8 +163,8 @@ throw(InitException)
 # endif
 	struct addrinfo	*res = NULL;
 	
-	for (std::set<std::string>::iterator it = _listenList.begin(); \
-										it != _listenList.end(); it++)
+	for (std::set<std::string>::iterator it = _serviceList.begin(); \
+										it != _serviceList.end(); it++)
 	{
 		int	sockFd = 0;
 		try {
@@ -288,8 +291,9 @@ void	Cluster::acceptConnexion(const struct epoll_event &event) const
 		throw RunException(__FILE__, __LINE__ - 3, "Error accept():");
 
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> acceptConnexion()\n" RESET
-				<< PURPLE "ClientSocket [" << clientSocket << "]" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> acceptConnexion()\n"
+				<< "ClientSocket [" RESET PURPLE << clientSocket
+				<< BOLD BRIGHT_PURPLE "]" RESET
 				<< std::endl;
 #endif
 
@@ -324,8 +328,9 @@ void	Cluster::acceptConnexion(const struct epoll_event &event) const
 void	Cluster::closeConnexion(const struct epoll_event &event) const
 {
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> closeConnexion()\n" RESET
-				<< PURPLE "Client fd [" << event.data.fd << "]" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> closeConnexion()\n"
+				<< "Client fd [" RESET PURPLE << event.data.fd
+				<< BOLD BRIGHT_PURPLE "]" RESET
 				<< std::endl;
 #endif
 	
@@ -387,7 +392,9 @@ void	Cluster::closeFdSet() const
 void	Cluster::readData(const struct epoll_event &event)
 {
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> readData() {" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> readData() {\n"
+				<< "ClientSocket [" RESET PURPLE << event.data.fd 
+				<< BOLD BRIGHT_PURPLE "]" RESET
 				<< std::endl;
 #endif
 	int 		bytes_received = BUFFERSIZE;
@@ -428,7 +435,9 @@ void	Cluster::readData(const struct epoll_event &event)
 void	Cluster::writeData(const struct epoll_event &event)
 {
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> writeData()" RESET
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> writeData()\n"
+				<< "ClientSocket [" RESET PURPLE << event.data.fd
+				<< BOLD BRIGHT_PURPLE "]\n" RESET
 				<< std::endl;
 #endif
 	const char *http_response = HTTPTEST;
@@ -476,7 +485,7 @@ void	Cluster::runCluster()
 	{
 		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
 		if (nbEvents == -1)
-			perror("epoll_wait");
+			perror("\nepoll_wait");
 		else if (nbEvents > 0) {
 			for (int i = 0; i < nbEvents; i++) {
 				try {

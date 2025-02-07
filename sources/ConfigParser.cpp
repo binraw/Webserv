@@ -1,3 +1,6 @@
+
+
+
 #include "ConfigParser.hpp"
 
 HttpConfig ConfigParser::parse(const std::string& filepath) 
@@ -11,12 +14,12 @@ HttpConfig ConfigParser::parse(const std::string& filepath)
     std::string line;
     while (std::getline(file, line)) 
     {
-        if (line.empty() || line[0] == '#') continue;
-
+        if (line.empty() || line[0] == '#')
+			continue;
         if (line.find("http") != std::string::npos) 
             parseHttpBlock(file, httpConfig);
     }
-    
+
     return httpConfig;
 }
 

@@ -92,8 +92,6 @@
 //     return (0);
 // }
 
-#include "ConfigParser.hpp"
-
 #include "Cluster.hpp"
 #include <cstring>
 #include <csignal>
@@ -110,14 +108,7 @@ int main(void)
     sigaction(SIGINT, &act, NULL);
 
     try {
-        // ConfigParser parser;
-        // HttpConfig config = parser.parse("./config/default.conf");
-        // config.controlDefaultHttpConf();
-        // config.checkSemiColonAllValues();
-        // config.displayDefaultHttp();
-        // config.displayServers();
-
-        Cluster cluster("./config/exemple.conf");
+        Cluster cluster("./config/default.conf"/*argv[1]*/);
         cluster.runCluster();
     }
     catch(const std::exception& e) {
