@@ -43,7 +43,7 @@ void hand(int, siginfo_t *, void *)
 					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
 /*----------------------------------------------------------------------------*/
 Cluster::Cluster(const std::string &filepath)
-throw(InitException) : _config(ConfigParser().parse(filepath)), _epollFd(-1)
+throw(InitException) : _config(ConfigParser().parse(filepath))
 {
 #ifdef TEST
 	std::cout	<< BOLD BRIGHT_PURPLE "Config Cluster:\n" RESET
@@ -131,6 +131,7 @@ const std::set<std::string>	& Cluster::getServiceList() const {
 */
 void	Cluster::setParams()
 {
+	_epollFd = -1;
     for (std::vector<ServerConfig>::const_iterator it = _config._servers.begin();
         it != _config._servers.end(); it++)
     {

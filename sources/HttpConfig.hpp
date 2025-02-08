@@ -19,6 +19,7 @@ class HttpConfig
 
 		// std::set<std::string>		_serviceList;	//liste de tous les services (a mettre directement dans Cluster)
 
+		std::set<std::string>		_serviceList;
 
 		void	displayDefaultHttp();
 		void	displayServers();

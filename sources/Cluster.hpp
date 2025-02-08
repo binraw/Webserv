@@ -100,10 +100,10 @@ class Cluster
 		// int						_workerConnexion;	// nb total de connexion supportes par le cluster
 		// int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
 
-		const HttpConfig	_config;
-		std::set<int>		_serverSockets;		// ensemble des socket serveur
+		int				_epollFd;			// fd vers structure epoll
+		std::set<int>	_serverSockets;		// ensemble des socket serveur
+		const HttpConfig		_config;
 		std::set<std::string>	_serviceList;
-		int					_epollFd;			// fd vers structure epoll
 
 		void	setParams();		// init les parametres (provisoir en attendant parsing)
 		void	setEpollFd() throw(InitException);
