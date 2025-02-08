@@ -47,7 +47,7 @@ DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
 SRC	=	main.cpp  \
 		UtilParsing.cpp ConfigParser.cpp HttpConfig.cpp LocationConfig.cpp ServerConfig.cpp \
-		Cluster.cpp Server.cpp
+		Cluster.cpp Server.cpp Client.cpp
 # HEADERS_INC = Server.hpp
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#

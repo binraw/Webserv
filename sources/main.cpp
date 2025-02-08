@@ -97,6 +97,7 @@
 #include "ConfigParser.hpp"
 
 #include "Cluster.hpp"
+#include "Client.hpp"
 #include <cstring>
 #include <csignal>
 
@@ -119,8 +120,10 @@ int main(void)
         // config.displayDefaultHttp();
         // config.displayServers();
 
-        Cluster cluster("./config/exemple.conf");
-        cluster.runCluster();
+        // Cluster cluster("./config/exemple.conf");
+        // cluster.runCluster();
+        Client rob("cgi-bin/script.pl");
+        std::cout << rob.playCGI() << std::endl;
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what() << std::endl

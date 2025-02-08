@@ -6,19 +6,20 @@
 #include "Server.hpp"
 #include <sys/wait.h>
 
-class Client : virtual public Server
+class Client /*: virtual public Server*/
 {
 private:
-    int _fd;
-    ARequest* _request;
+    // int _fd;
+    // ARequest* _request;
     // variables utils a tout typoes de requete
      
     
     std::string _pathCGI;
-    std::string playCGI();
+    
 public:
     // Client(int fd, ARequest* request);
-    Client();
+    std::string playCGI();
+    Client(std::string file);
     ~Client();
 };
 
