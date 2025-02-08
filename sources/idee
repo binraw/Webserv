@@ -5,3 +5,10 @@ je dois:
 - utiliser les appels systeme pour executer le script
 - check passer le bon chemin du fichier comme argument
 - capturz la sortie du cgi et renvoyez au client
+
+
+
+
+faire une class client 
+-pointer sur une class abstraite arequest qui va pointer sur tout type de requete
+-identifier le client avec le fd et son server

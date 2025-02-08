@@ -18,6 +18,7 @@ public:
     std::string _path;
     std::string _root;
     std::string _index;
+    std::string _cgipath;
     std::vector<std::string> _methods;
 
 

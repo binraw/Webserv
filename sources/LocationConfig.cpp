@@ -6,6 +6,7 @@ void LocationConfig::displayLocation()
     std::cout << _path << std::endl;
     std::cout << _root << std::endl;
     std::cout << _index << std::endl;
+    std::cout << _cgipath << std::endl;
     UtilParsing::displayVector(_methods);
 }
 
@@ -29,6 +30,8 @@ void LocationConfig::checkSemiColonLocation()
         _root = UtilParsing::trimSemicolon(_root);
     if (_index.find(";") != std::string::npos)
         _index = UtilParsing::trimSemicolon(_index);
+    if (_cgipath.find(";") != std::string::npos)
+        _cgipath = UtilParsing::trimSemicolon(_cgipath);
     for (std::vector<std::string>::iterator it = _methods.begin(); it != _methods.end(); it++)
     {
         if (it->find(";") != std::string::npos)

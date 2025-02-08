@@ -1,14 +1,11 @@
-#include "CGIConfig.hpp"
+#include "ARequest.hpp"
 
-CGIConfig::CGIConfig()
+
+ARequest::~ARequest()
 {
 }
 
-CGIConfig::~CGIConfig()
-{
-}
-
-void CGIConfig::handleRequest(int clientSocket)
+ARequest* handleRequest(int clientSocket)
 {
     char buffer[1024];
     int bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
@@ -23,5 +20,5 @@ void CGIConfig::handleRequest(int clientSocket)
     {
         //ici traiter la requete normalement
     }
-    close(clientSocket);
+    return NULL;
 }

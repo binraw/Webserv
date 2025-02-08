@@ -76,10 +76,17 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
             locationConfig._root = UtilParsing::recoverValue(line, "root");
         else if (line.find("index") != std::string::npos) 
             locationConfig._index = UtilParsing::recoverValue(line, "index");
-        else if (line.find("methods_accept") != std::string::npos) 
+        else if (line.find("methods_accept") != std::string::npos)
             locationConfig._methods = UtilParsing::splitSpecialDeleteKey(line, std::string(" "));
-        else if (line.find("}") != std::string::npos) 
+        else if (line.find("cgi_path") != std::string::npos)
+            locationConfig._cgipath = UtilParsing::recoverValue(line, "cgi_path");
+        else if (line.find("}") != std::string::npos)
+        {
+            if (locationConfig._cgipath.empty())
+                locationConfig._cgipath = std::string("none");
             break;
+        } 
+            
     }
 }
 
