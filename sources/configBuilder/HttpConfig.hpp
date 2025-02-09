@@ -15,7 +15,7 @@ class HttpConfig
 		std::string	_keepalive_timeout;	//in secondes
 		std::string	_worker_connexion;	//nb total client
 		std::vector<std::string>	_include;	//files includes in custer config?
-		std::vector<ServerConfig>	_servers;	//toutes les config extraits du parsing
+		std::vector<ServerConfig>	_serversConfig;	//toutes les config extraits du parsing
 
 		// std::set<std::string>		_serviceList;	//liste de tous les services (a mettre directement dans Cluster)
 

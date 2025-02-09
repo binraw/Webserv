@@ -4,15 +4,16 @@
 /*============================================================================*/
 							/*### HEADER FILES ###*/
 /*============================================================================*/
-#include "../includes/webserv.hpp"
-#include "Cluster.hpp"
+#include "webserv.hpp"
+#include "Server.hpp"
+#include "UtilParsing.hpp"
 
 /*============================================================================*/
 			/*### CONSTRUCTORS - DESTRUCTOR _ OVERLOAD OPERATORS ###*/
 /*============================================================================*/
 
-Server::Server(const std::vector<std::string> &, Cluster & )
-  :	_backLog(1024)
+Server::Server(const ServerConfig & config)
+  : _config(config)
 {
 	UtilParsing::convertVectorToSet(_nameList, _config._serverName);
 	UtilParsing::convertVectorToSet(_serviceList, _config._listenPort);
@@ -21,33 +22,15 @@ Server::Server(const std::vector<std::string> &, Cluster & )
 }
 /*----------------------------------------------------------------------------*/
 
-Server::Server(const Server & ref)
-  : _backLog(ref._backLog)
+Server::Server(const Server &ref)
+  : _config(ref._config)
 {	}
 /*----------------------------------------------------------------------------*/
-
-/*============================================================================*/
-                        /*### DESTRUCTORS ###*/
-/*============================================================================*/
 
 Server::~Server() 
 {	}
 /*----------------------------------------------------------------------------*/
 
-<<<<<<< HEAD
-/*============================================================================*/
-                    /*### OVERLOAD OPERATOR ###*/
-/*============================================================================*/
-Server  & Server::operator=(const Server &)
-{ return *this; }
-/*----------------------------------------------------------------------------*/
-
-std::ostream	& operator<<(std::ostream & o, const Server & ref)
-{
-	o	<< BOLD BRIGHT_CYAN "SERVER:\n" << std::endl
-		<< BOLD BRIGHT_CYAN "_backlog: " RESET CYAN << ref.getBacklog()
-		<< std::endl;
-=======
 Server  & Server::operator=(const Server &ref)
 {
 	UtilParsing::deepCopieSet(_nameList, ref._nameList);
@@ -62,7 +45,6 @@ bool	Server::operator<(const Server &ref) const {
 	return _serviceList < ref._serviceList;
 }
 /*----------------------------------------------------------------------------*/
->>>>>>> 8db5554 (intergration of the parsing terminated. Analysis of GET and POST requests. clean compilation)
 
 std::ostream & operator<<(std::ostream & o, const Server &ref)
 {
@@ -94,11 +76,6 @@ std::ostream & operator<<(std::ostream & o, const Server &ref)
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
-const int	& Server::getBacklog() const {
-	return _backLog;
-}
-/*----------------------------------------------------------------------------*/
-
 const std::set<std::string>	& Server::getNameList() const {
 	return const_cast<std::set<std::string> &>(_nameList);
 }
@@ -106,11 +83,6 @@ const std::set<std::string>	& Server::getNameList() const {
 
 const std::set<std::string> & Server::getServiceList() const {
 	return const_cast<std::set<std::string>&>(_serviceList);
-}
-/*----------------------------------------------------------------------------*/
-
-const std::set<std::string>	& Server::getNameList() const {
-	return const_cast<std::set<std::string>&>(_nameList);
 }
 /*----------------------------------------------------------------------------*/
 
@@ -136,15 +108,6 @@ void	Server::setLocationPath()
 }
 /*----------------------------------------------------------------------------*/
 
-<<<<<<< HEAD
-/*============================================================================*/
-                        /*### PUBLIC METHODS ###*/
-/*============================================================================*/
-
-/*----------------------------------------------------------------------------*/
-
-=======
->>>>>>> 8db5554 (intergration of the parsing terminated. Analysis of GET and POST requests. clean compilation)
 /*============================================================================*/
 							/*### EXCEPTIONS ###*/
 /*============================================================================*/

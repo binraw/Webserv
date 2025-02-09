@@ -9,7 +9,7 @@
 HttpConfig::HttpConfig(const HttpConfig & ref)
   : _default_type(ref._default_type), _keepalive_timeout(ref._keepalive_timeout), \
 	_worker_connexion(ref._worker_connexion), _include(ref._include), \
-	_servers(ref._servers)
+	_serversConfig(ref._serversConfig)
 {   }
 
 std::vector<std::string> HttpConfig::getIncludes() {
@@ -38,7 +38,7 @@ void HttpConfig::displayDefaultHttp()
 }
 
 void HttpConfig::displayServers() {
-	for(std::vector<ServerConfig>::iterator it = _servers.begin(); it != _servers.end(); it++)
+	for(std::vector<ServerConfig>::iterator it = _serversConfig.begin(); it != _serversConfig.end(); it++)
 		it->displayValueServer();
 }
 
@@ -53,7 +53,7 @@ void HttpConfig::controlDefaultHttpConf()
 	if (_worker_connexion.empty())
 		throw std::invalid_argument("'worker_connexion' must not be empty. Put the keyword (in quotes) followed by its value(s) separated by a space.");
 
-	for (size_t i = 0; i <= _servers.size() - 1; i++)
+	for (size_t i = 0; i <= _serversConfig.size() - 1; i++)
 	{
 		_serversConfig[i].controlDefaultServerConf();
 		for (std::vector<LocationConfig>::iterator it = _serversConfig[i]._locationConfig.begin(); it != _serversConfig[i]._locationConfig.end(); it++)
@@ -74,7 +74,7 @@ void HttpConfig::checkSemiColonAllValues()
 		if (it->find(";") != std::string::npos)
 			*it = UtilParsing::trimSemicolon(*it);
 	}
-	for (size_t i = 0; i <= _servers.size() - 1; i++)
+	for (size_t i = 0; i <= _serversConfig.size() - 1; i++)
 	{
 		_serversConfig[i].checkSemiColonServer();
 		for (std::vector<LocationConfig>::iterator y = _serversConfig[i]._locationConfig.begin(); y != _serversConfig[i]._locationConfig.end(); y++)
@@ -92,9 +92,9 @@ std::ostream & operator<<(std::ostream & o, const HttpConfig &ref)
 		it != ref._include.end(); it++)
 		o   << *it << " ";
 
-	o   << std::endl << "_servers:\n" ;
-	for (std::vector<ServerConfig>::const_iterator it = ref._servers.begin();
-		it != ref._servers.end(); it++)
+	o   << std::endl << "_serversConfig:\n" ;
+	for (std::vector<ServerConfig>::const_iterator it = ref._serversConfig.begin();
+		it != ref._serversConfig.end(); it++)
 		o << *it << std::endl;
 	return o;
 }

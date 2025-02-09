@@ -40,7 +40,7 @@ void ConfigParser::parseHttpBlock(std::ifstream& file, HttpConfig& httpConfig)
         {
             ServerConfig serverConfig;
             parseServerBlock(file, serverConfig);
-            httpConfig._servers.push_back(serverConfig);
+            httpConfig._serversConfig.push_back(serverConfig);
         }
     }
 }

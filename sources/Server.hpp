@@ -8,7 +8,7 @@
 class Server
 {
 	public:
-		Server(const std::vector<std::string> & data, Cluster &);
+		Server(const ServerConfig &);
 		Server(const Server &);
 		~Server();
 		Server	&operator=(const Server &);

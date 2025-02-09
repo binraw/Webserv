@@ -1,9 +1,9 @@
 
 
 
-/*----------------------------------------------------------------------------*/
-						/*### HEADER FILES ###*/
-/*----------------------------------------------------------------------------*/
+/*============================================================================*/
+								/*### HEADERS ###*/
+/*============================================================================*/
 #include "Cluster.hpp"
 #include "ARequest.hpp"
 #include "ConfigParser.hpp"
@@ -46,11 +46,12 @@ void hand(int, siginfo_t *, void *)
 }
 /*----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------*/
-					/*### CONSTRUCTORS (DEFAULT & COPY) ###*/
-/*----------------------------------------------------------------------------*/
+/*============================================================================*/
+				/*### CONSTRUCTORS - DESTRUCTOR - OVERLOAD OP ###*/
+/*============================================================================*/
+
 Cluster::Cluster(const std::string &filepath)
-throw(InitException) : _config(ConfigParser().parse(filepath))
+  : _config(ConfigParser().parse(filepath))
 {
 	setServers();
 	setServiceList();
@@ -86,18 +87,12 @@ Cluster::Cluster(const Cluster & )
 {	}
 /*----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------*/
-							/*### DESTRUCTOR ###*/
-/*----------------------------------------------------------------------------*/
 Cluster::~Cluster() {
 	_epollFd > 0 ? close(_epollFd) : _epollFd;
 	closeFdSet();
 }
 /*----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------*/
-						/*### OVERLOAD OPERATOR ###*/
-/*----------------------------------------------------------------------------*/
 Cluster & Cluster::operator=(const Cluster & ) {
 	return *this;
 }
@@ -120,22 +115,22 @@ std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 }
 /*----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------*/
-                        	/*### GETTER ###*/
-/*----------------------------------------------------------------------------*/
 
-// const std::vector<Server>	& Cluster::getAllServer() const {
-// 	return const_cast<std::vector<Server> & >(_servers);
-// }
-/*----------------------------------------------------------------------------*/
+
+
+/*============================================================================*/
+						/*### PUBLIC METHODS ###*/
+/*============================================================================*/
 
 const std::set<std::string>	& Cluster::getServiceList() const {
 	return const_cast<std::set<std::string>	&>(_serviceList);
 }
 /*----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------*/
-                        	/*### SETTERS ###*/
+
+const HttpConfig & Cluster::getConfig() const {
+	return _config;
+}
 /*----------------------------------------------------------------------------*/
 
 const std::set<Server> & Cluster::getServers() const {
@@ -257,7 +252,7 @@ void	Cluster::sendData(const struct epoll_event &event)
 			-> recoit une connexion sur un socket serveur (nouveau client donc ouverture socket client)
 			-> Déconnexion d'un client (fermeture d'un socket client)
 */
-void	Cluster::setParams()
+void	Cluster::runCluster()
 {
 	std::string	dot[3] = {".  ", ".. ", "..."};
 	int 		n = 0;
@@ -322,13 +317,9 @@ void	Cluster::setServiceList()
 }
 /*----------------------------------------------------------------------------*/
 
-
-
-
 /*	* open sockets server and bind them
 */
 void	Cluster::setServerSockets()
-throw(InitException)
 {
 # ifdef TEST
 	std::cout	<< BOLD BLUE << "Function -> setSocket() {"
@@ -376,7 +367,6 @@ throw(InitException)
 /*	* open epoll & add the server sockets to the set 
 */
 void	Cluster::setEpollFd()
-throw(InitException)
 {
 #ifdef TEST
 	std::cout	<< BOLD BLUE << "Function -> setEpollFd() {"
@@ -400,14 +390,9 @@ throw(InitException)
 }
 /*----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------*/
-						/*### PRIVATE METHODS ###*/
-/*----------------------------------------------------------------------------*/
-
 /*	* get an availble address on an avaible service (port)
 */
 void	Cluster::safeGetAddr(const char *serviceName, struct addrinfo **res) const
-throw(InitException)
 {
 	struct addrinfo	hints;
 
@@ -429,7 +414,6 @@ throw(InitException)
 	* avoiding "Address already in use" errors
 */
 void	Cluster::createAndLinkSocketServer(const struct addrinfo &res, const std::string & serviceName, int *sockfd)
-throw(InitException)
 {
 	for (const struct addrinfo *currNode = &res; currNode != NULL; currNode = currNode->ai_next)
 	{
@@ -510,7 +494,6 @@ void	Cluster::closeConnexion(const struct epoll_event &event) const
 /*	* init epoll events for servers & new client socket and add the fd in epoll set
 */
 void	Cluster::addFdInEpoll(const bool isServerSocket, const int fd) const
-throw(RunException)
 {
 	struct epoll_event	ev;
 	memset(&ev, 0, sizeof(ev));
@@ -529,7 +512,6 @@ throw(RunException)
 /*	* switch events mode between EPOLLOUT and EPOLLIN
 */
 void	Cluster::changeEventMod(const bool changeForRead, const int fd) const
-throw(RunException)
 {
 	struct epoll_event	ev;
 	memset(&ev, 0, sizeof(ev));
@@ -550,135 +532,8 @@ void	Cluster::closeFdSet() const
 }
 /*----------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------*/
-						/*### PUBLIC METHODS ###*/
-/*----------------------------------------------------------------------------*/
 
-void	Cluster::readData(const struct epoll_event &event)
-{
-#ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> readData() {\n"
-				<< "ClientSocket [" RESET PURPLE << event.data.fd 
-				<< BOLD BRIGHT_PURPLE "]" RESET
-				<< std::endl;
-#endif
-	int 		bytes_received = BUFFERSIZE;
-	char		buffer[BUFFERSIZE] = {'\0'};
-	std::string	response;
-	
-	while (bytes_received == BUFFERSIZE)
-	{
-		bytes_received = recv(event.data.fd, buffer, BUFFERSIZE, MSG_DONTWAIT);
-		if (bytes_received < 0) {
-			perror("recv");
-			break; // handle error
-		}
-		response += buffer;
-	}
-#ifdef TEST
-	std::cout	<< BRIGHT_PURPLE BOLD "MSG_CLIENT[" RESET
-				<< PURPLE << response
-				<< BRIGHT_PURPLE BOLD "]MSG_END" RESET
-				<< std::endl;
-#endif
-	/*	* apres cette boucle
-		* creer une instance de serveur ou appeler un serveur d'un client deja existant
-		* donner en parametre constructeur std::string response
-		* les les client doivent avoir leur instance dediee
-	*/
-	try {
-		changeEventMod(false, event.data.fd);
-	}
-	catch(const RunException& e) {
-		e.runExcept();
-		closeConnexion(event);
-		throw;
-	}
 
-}
-
-void	Cluster::writeData(const struct epoll_event &event)
-{
-#ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> writeData()\n"
-				<< "ClientSocket [" RESET PURPLE << event.data.fd
-				<< BOLD BRIGHT_PURPLE "]\n" RESET
-				<< std::endl;
-#endif
-	const char *http_response = HTTPTEST;
-	ssize_t		bytes_sended = 0;
-	int			httpSize = strlen(http_response);
-
-	while (bytes_sended != httpSize)
-	{
-		ssize_t ret = send(event.data.fd, http_response, strlen(http_response), 0);
-		if (ret < 0) {
-			perror("send()");
-			break;
-		}
-		bytes_sended += ret;
-	} 
-	
-	try {
-		changeEventMod(true, event.data.fd);
-	}
-	catch(const RunException& e) {
-		e.runExcept();
-		closeConnexion(event);
-		throw;
-	}
-}
-
-/*	* server main loop
-	* MAXEVENT
-		. nb max d'evenement I/O qui peuvent etre rapportes simultanement
-		. un evenement signifie qu'un fd surveille par epoll est pret pour une operation d'I/O
-		. cela signifie que le fd : 
-			-> a des données disponibles en lecture
-			-> peut ecrire / envoyer des donnees sans bloquer
-			-> recoit une connexion sur un socket serveur (nouveau client donc ouverture socket client)
-			-> Déconnexion d'un client (fermeture d'un socket client)
-*/
-void	Cluster::runCluster()
-{
-	std::string	dot[3] = {".  ", ".. ", "..."};
-	int 		n = 0;
-	
-	struct epoll_event	events[MAXEVENT];
-	g_runServer = 1;
-	while (g_runServer)
-	{
-		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 1000);
-		if (nbEvents == -1)
-			perror("\nepoll_wait");
-		else if (nbEvents > 0) {
-			for (int i = 0; i < nbEvents; i++) {
-				try {
-					if (_serverSockets.count(events[i].data.fd) > 0)
-						acceptConnexion(events[i]);
-					else
-					{
-						if (events[i].events & (EPOLLHUP | EPOLLRDHUP))
-							closeConnexion(events[i]);
-						else if (events[i].events & EPOLLIN)
-							readData(events[i]);
-						else if (events[i].events & EPOLLOUT)
-							writeData(events[i]);
-						else
-							std::cerr << "have to print EPOLLERR" << std::endl;
-					}
-				}
-				catch(const std::exception& e) {
-					std::cerr << e.what() << std::endl;
-				}
-			}
-		}
-		else
-			std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
-						<< std::flush;
-	}
-}
-/*----------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------------------*/
 							/*### EXCEPTIONS ###*/

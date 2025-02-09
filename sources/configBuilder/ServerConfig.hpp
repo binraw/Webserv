@@ -12,6 +12,9 @@ class ServerConfig
 public:
 	ServerConfig() {};
 	ServerConfig(const ServerConfig &);
+
+	ServerConfig & operator=(const ServerConfig &ref);
+	
 	std::vector<std::string>	_serverName;
 	std::vector<std::string>	_listenPort;
 	std::vector<LocationConfig>	_locationConfig;

@@ -76,36 +76,31 @@ class Cluster
 	};
 
 	public:
-		Cluster(const std::string &) throw(InitException);
+		Cluster(const std::string &);
 		Cluster(const Cluster &);
 		~Cluster();
 		Cluster & operator=(const Cluster &);
 
-		const std::string			&getFileConfig()	const;
-		const std::vector<Server>	&getAllServer()	const;
 		const std::set<std::string>	&getServiceList()	const;
 		const std::set<Server>		&getServers()	const;
 		const HttpConfig			&getConfig()	const;
 
 		void	runCluster();
 
-		void	writeData(const struct epoll_event &);
+		void	sendData(const struct epoll_event &);
 		void	readData(const struct epoll_event &);
 
 	private:
-		int				_epollFd;		// fd vers structure epoll
-		std::set<int>	_serverSockets;	// ensemble des socket serveur (un par port)
 		const HttpConfig	_config;
 		std::set<Server>	_servers;
-
-		int				_epollFd;			// fd vers structure epoll
-		std::set<int>	_serverSockets;		// ensemble des socket serveur
-		const HttpConfig		_config;
+		int					_epollFd;		// fd vers structure epoll
+		std::set<int>		_serverSockets;	// ensemble des socket serveur (un par port)
 		std::set<std::string>	_serviceList;
 
+
 		void	setServers();
-		void	setServiceList();
 		void	setEpollFd();
+		void	setServiceList();
 		void	setServerSockets();
 		void	safeGetAddr(const char *, struct addrinfo **) const;
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
@@ -113,8 +108,8 @@ class Cluster
 
 		void	acceptConnexion(const struct epoll_event &) const;
 		void	closeConnexion(const struct epoll_event &event) const;
-		void	addFdInEpoll(const bool, const int)	const throw(RunException);
-		void	changeEventMod(const bool, const int) const throw(RunException);
+		void	addFdInEpoll(const bool, const int)	const;
+		void	changeEventMod(const bool, const int) const;
 };
 
 std::ostream	& operator<<(std::ostream &, const Cluster &);
