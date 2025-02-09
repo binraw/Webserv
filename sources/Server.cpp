@@ -2,19 +2,24 @@
 
 
 /*============================================================================*/
-                        /*### HEADER FILES ###*/
+							/*### HEADER FILES ###*/
 /*============================================================================*/
 #include "../includes/webserv.hpp"
 #include "Cluster.hpp"
 
 /*============================================================================*/
-                    /*### CONSTRUCTORS (DEFAULT & COPY) ###*/
+			/*### CONSTRUCTORS - DESTRUCTOR _ OVERLOAD OPERATORS ###*/
 /*============================================================================*/
 
 Server::Server(const std::vector<std::string> &, Cluster & )
   :	_backLog(1024)
 {
-	// setSocket(current);
+	UtilParsing::convertVectorToSet(_nameList, _config._serverName);
+	UtilParsing::convertVectorToSet(_service, _config._listenPort);
+	for (std::vector<LocationConfig>::const_iterator it = _config._locationConfig.begin();
+		it != _config._locationConfig.end(); it++) {
+			this->_locationPath.insert(it->_path);
+			}
 }
 /*----------------------------------------------------------------------------*/
 
@@ -49,7 +54,7 @@ std::ostream	& operator<<(std::ostream & o, const Server & ref)
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                        	/*### GETTER ###*/
+						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
 const int	& Server::getBacklog() const {
@@ -63,13 +68,10 @@ const std::set<std::string>	& Server::getNameList() const {
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                        /*### PRIVATE METHODS ###*/
+						/*### PRIVATE METHODS ###*/
 /*============================================================================*/
-
-void	Server::setParams(std::vector<std::string> &)
-{
-	/* code */
-}
+void	Server::setNameList(std::vector<std::string> &)
+{}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
@@ -79,5 +81,5 @@ void	Server::setParams(std::vector<std::string> &)
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
-                            /*### EXCEPTIONS ###*/
+							/*### EXCEPTIONS ###*/
 /*============================================================================*/

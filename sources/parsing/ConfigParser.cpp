@@ -63,7 +63,7 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
             LocationConfig locationConfig;
             locationConfig._path = UtilParsing::recoverValue(line, "location");
             parseLocationBlock(file, locationConfig);
-            serverConfig._locations.push_back(locationConfig);
+            serverConfig._locationConfig.push_back(locationConfig);
         } 
         else if (line.find("}") != std::string::npos) 
             break;

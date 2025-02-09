@@ -1,12 +1,5 @@
-
-
-
-
-
-
-
 #==============================================================================#
-#                              SETTING VARIABLES                               #
+#							  SETTING VARIABLES								   #
 #==============================================================================#
 
 RESET		= \033[0m
@@ -20,13 +13,13 @@ NAME		= webserv
 CXX			= c++
 
 #---------------------------# ==== SHELL CMDS ==== #---------------------------#
-RM          = rm -rf
+RM		  = rm -rf
 MKD			= mkdir -p
 VALGRIND	= valgrind --leak-check=full 
 
 #-----------------------# ==== SOURCE CODE DIRECTORIES ==== #------------------#
-HDR_PATH	= ./headers
-SRC_PATH	= ./sources
+INCLUDES	= ./includes ./sources ./sources/config ./sources/parsing
+SRC_PATH	= sources
 
 #---------------------# ==== TEMPORARY FILES DIRECTORIES ==== #----------------#
 TEMP_PATH	= .temp
@@ -45,17 +38,16 @@ endif
 DEPFLAGS	= -MM -MT $@ $< -MF $(DEP_PATH)/$*.d
 
 #------------------------# ==== MANDATORY FILES ==== #-------------------------#
-SRC	=	main.cpp  \
-		UtilParsing.cpp ConfigParser.cpp HttpConfig.cpp LocationConfig.cpp ServerConfig.cpp \
-		Cluster.cpp Server.cpp
-# HEADERS_INC = Server.hpp
+SRC = $(shell find $(SRC_PATH) -type f -name "*.cpp"  | sed 's|^\./||')
 
 #------------------------# ==== TEMPORARY FILES ==== #-------------------------#
-OBJ	= $(SRC:%.cpp=$(OBJ_PATH)/%.o)
-DEP	= $(SRC:%.cpp=$(DEP_PATH)/%.d)
+DEP	= $(patsubst $(SRC_PATH)/%.cpp,$(DEP_PATH)/%.d,$(SRC))
+OBJ	= $(patsubst $(SRC_PATH)/%.cpp,$(OBJ_PATH)/%.o,$(SRC))
+
+DEP_DIRS = $(sort $(dir $(DEP)))
 
 #==============================================================================#
-#                            COMPILATION MANDATORY                             #
+#							COMPILATION MANDATORY							 #
 #==============================================================================#
 default: all
 
@@ -81,9 +73,9 @@ $(NAME)	: $(OBJ)
 
 #--------------------# ==== COMPILATION OBJ - DEPS ==== #----------------------#
 $(OBJ_PATH)/%.o : $(SRC_PATH)/%.cpp Makefile
-	@$(MKD) $(dir $@) $(DEP_PATH)
-	$(CXX) $(COMPFLAGS) -I$(HDR_PATH) -c $< -o $@
-	@$(CXX) $(DEPFLAGS) -I$(HDR_PATH)
+	@$(MKD) $(dir $@) $(dir $(patsubst $(OBJ_PATH)/%.o,$(DEP_PATH)/%.d,$@))
+	$(CXX) $(COMPFLAGS) $(foreach dir,$(INCLUDES),-I$(dir)) -c $< -o $@
+	@$(CXX) $(DEPFLAGS) $(foreach dir,$(INCLUDES),-I$(dir))
 
 -include $(DEP)
 

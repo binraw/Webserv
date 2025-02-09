@@ -3,7 +3,7 @@
 #ifndef CLUSTER_HPP
 # define CLUSTER_HPP
 
-#include "../includes/webserv.hpp"
+#include "webserv.hpp"
 #include "HttpConfig.hpp"
 
 #include "Server.hpp"

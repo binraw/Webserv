@@ -14,7 +14,7 @@ public:
 	ServerConfig(const ServerConfig &);
 	std::vector<std::string>	_serverName;
 	std::vector<std::string>	_listenPort;
-	std::vector<LocationConfig>	_locations;
+	std::vector<LocationConfig>	_locationConfig;
 	
 	std::string	_clientMaxBodySize;
 	std::string	_uploadPath;

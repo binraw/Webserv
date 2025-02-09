@@ -55,8 +55,8 @@ void HttpConfig::controlDefaultHttpConf()
 
 	for (size_t i = 0; i <= _servers.size() - 1; i++)
 	{
-		_servers[i].controlDefaultServerConf();
-		for (std::vector<LocationConfig>::iterator it = _servers[i]._locations.begin(); it != _servers[i]._locations.end(); it++)
+		_serversConfig[i].controlDefaultServerConf();
+		for (std::vector<LocationConfig>::iterator it = _serversConfig[i]._locationConfig.begin(); it != _serversConfig[i]._locationConfig.end(); it++)
 			it->controlDefaultLocationConf();
 	}
 }
@@ -76,8 +76,8 @@ void HttpConfig::checkSemiColonAllValues()
 	}
 	for (size_t i = 0; i <= _servers.size() - 1; i++)
 	{
-		_servers[i].checkSemiColonServer();
-		for (std::vector<LocationConfig>::iterator y = _servers[i]._locations.begin(); y != _servers[i]._locations.end(); y++)
+		_serversConfig[i].checkSemiColonServer();
+		for (std::vector<LocationConfig>::iterator y = _serversConfig[i]._locationConfig.begin(); y != _serversConfig[i]._locationConfig.end(); y++)
 			y->checkSemiColonLocation();
 	}
 }
