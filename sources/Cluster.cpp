@@ -5,6 +5,7 @@
 						/*### HEADER FILES ###*/
 /*----------------------------------------------------------------------------*/
 #include "Cluster.hpp"
+#include "ARequest.hpp"
 #include "ConfigParser.hpp"
 
 #include <cstring>
@@ -19,17 +20,23 @@
 /*	* ressources provisoirs
 */
 #include <csignal>
+#include <fstream>
+
 #define MAXEVENT	10
 #define BUFFERSIZE	2048
+
 #define HTTPTEST	"HTTP/1.1 200 OK\r\n" \
 					"Content-Type: text/html\r\n" \
-					"Content-Length: 38\r\n" \
+					"Content-Length: 208\r\n" \
 					"\r\n" \
 					"<http>" \
 					"<h1>TITLE<h1>" \
 					"Hello, World!" \
+					"<form action=/submit method=POST>" \
+    				"<input type=text name=nom>" \
+    				"<button type=submit>OK</button>" \
+					"</form>" \
 					"<http>"
-
 
 int g_runServer = 0;
 
@@ -45,24 +52,22 @@ void hand(int, siginfo_t *, void *)
 Cluster::Cluster(const std::string &filepath)
 throw(InitException) : _config(ConfigParser().parse(filepath))
 {
-#ifdef TEST
-	std::cout	<< BOLD BRIGHT_PURPLE "Config Cluster:\n" RESET
-				<< PURPLE << _config
-				<< RESET << std::endl;
-#endif
-	setParams();
-
+	setServers();
+	setServiceList();
 	try {
+		_serverSockets.clear();
 		setServerSockets();
 	}
 	catch(const std::exception& e) {
 		closeFdSet();
 		throw;
 	}
-	if (_serverSockets.empty() == true) {
+
+	if (_serverSockets.empty() == true) 
 		throw InitException(NULL, 0, ENOSERVICE, NULL, 0);
-	}
+
 	try {
+		_epollFd = -1;
 		setEpollFd();
 	}
 	catch(const InitException& e) {
@@ -71,7 +76,8 @@ throw(InitException) : _config(ConfigParser().parse(filepath))
 		throw;
 	}
 #ifdef TEST
-	std::cout << BOLD BLUE "\nINIT TERMINATED\n" RESET << std::endl;
+	std::cout	<< BOLD BRIGHT_YELLOW "\nINIT TERMINATED\n" RESET << std::endl
+				<< *this ;
 #endif
 }
 /*----------------------------------------------------------------------------*/
@@ -103,8 +109,13 @@ std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 		<< "std::set<std::string>	_listenList:" << RESET
 		<< BLUE << std::endl;
 	for (std::set<std::string>::iterator it = ref.getServiceList().begin();
-										it != ref.getServiceList().end(); it++)
-		o << "[" << *it << "]" << std::endl;
+		it != ref.getServiceList().end(); it++) {
+			o << "[" << *it << "] ";
+		}
+	o	<< std::endl << "_servers:\n";
+	for (std::set<Server>::iterator it = ref.getServers().begin();
+		it != ref.getServers().end(); it++)
+			o	<< *it << std::endl;
 	return o << RESET;
 }
 /*----------------------------------------------------------------------------*/
@@ -127,26 +138,187 @@ const std::set<std::string>	& Cluster::getServiceList() const {
                         	/*### SETTERS ###*/
 /*----------------------------------------------------------------------------*/
 
-/*	* temporary functions
+const std::set<Server> & Cluster::getServers() const {
+	return const_cast<std::set<Server>&>(_servers);
+}
+/*----------------------------------------------------------------------------*/
+
+void	Cluster::readData(const struct epoll_event &event)
+{
+#ifdef TEST
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> readData() {\n"
+				<< "ClientSocket [" RESET PURPLE << event.data.fd 
+				<< BOLD BRIGHT_PURPLE "]" RESET
+				<< std::endl;
+#endif
+	int 		bytes_received = BUFFERSIZE;
+	char		buffer[BUFFERSIZE] = {'\0'};
+	std::string	response;
+	
+	while (bytes_received == BUFFERSIZE)
+	{
+		bytes_received = recv(event.data.fd, buffer, BUFFERSIZE, MSG_DONTWAIT);
+		if (bytes_received < 0) {
+			perror("recv");
+			break; // handle error
+		}
+		response += buffer;
+	}
+#ifdef TEST
+	std::cout	<< BRIGHT_PURPLE BOLD "MSG_CLIENT[" RESET
+				<< PURPLE << response
+				<< BRIGHT_PURPLE BOLD "]MSG_END" RESET
+				<< std::endl;
+	// std::ofstream logFile("header.log", std::ios::app);
+	// if (logFile) {
+	// 	logFile << response;
+	// }
+	// else {
+	// 	perror("ERROR LOG TEST");
+	// }
+#endif
+
+	// est ce que le client existe deja ?
+	std::set<Server>::const_iterator		itServer;
+	std::map<int, Client>::const_iterator	itClient;
+
+	for (itServer = _servers.begin(); itServer != _servers.end(); itServer++)
+	{
+		itClient = itServer->getClientList().find(event.data.fd);
+		if (itClient != itServer->getClientList().end())
+			break;
+	}
+	if (response.find("POST", 0) != std::string::npos)
+		std::cout << RED "POST" RESET << std::endl;
+	else if (response.find("GET", 0) != std::string::npos)
+		std::cout << RED "GET" RESET << std::endl;
+	else
+		std::cout << RED "OTHER" RESET << std::endl;
+
+	// itServer != _servers.end() ? itClient->second.handlerequest : _createClient()
+
+	/*	* apres cette boucle
+		* parser la requete
+	*/
+
+
+
+
+	try {
+		changeEventMod(false, event.data.fd);
+	}
+	catch(const RunException& e) {
+		e.runExcept();
+		closeConnexion(event);
+		throw;
+	}
+
+}
+
+void	Cluster::sendData(const struct epoll_event &event)
+{
+#ifdef TEST
+	std::cout	<< BOLD BRIGHT_PURPLE "\nFunction -> sendData()\n"
+				<< "ClientSocket [" RESET PURPLE << event.data.fd
+				<< BOLD BRIGHT_PURPLE "]\n" RESET
+				<< std::endl;
+#endif
+	const char *http_response = HTTPTEST;
+	ssize_t		bytes_sended = 0;
+	int			httpSize = strlen(http_response);
+
+	while (bytes_sended != httpSize)
+	{
+		ssize_t ret = send(event.data.fd, http_response, strlen(http_response), 0);
+		if (ret < 0) {
+			perror("send()");
+			break;
+		}
+		bytes_sended += ret;
+	} 
+	
+	try {
+		changeEventMod(true, event.data.fd);
+	}
+	catch(const RunException& e) {
+		e.runExcept();
+		closeConnexion(event);
+		throw;
+	}
+}
+
+/*	* server main loop
+	* MAXEVENT
+		. nb max d'evenement I/O qui peuvent etre rapportes simultanement
+		. un evenement signifie qu'un fd surveille par epoll est pret pour une operation d'I/O
+		. cela signifie que le fd : 
+			-> a des données disponibles en lecture
+			-> peut ecrire / envoyer des donnees sans bloquer
+			-> recoit une connexion sur un socket serveur (nouveau client donc ouverture socket client)
+			-> Déconnexion d'un client (fermeture d'un socket client)
 */
 void	Cluster::setParams()
 {
-	_epollFd = -1;
-    for (std::vector<ServerConfig>::const_iterator it = _config._servers.begin();
-        it != _config._servers.end(); it++)
-    {
-        for (std::vector<std::string>::const_iterator itt = it->_listenPort.begin();
-            itt != it->_listenPort.end(); itt++)
-            _serviceList.insert(*itt);
-    }
-	// _workerConnexion = 1024;
-	// _keepAliveTime = 65;
+	std::string	dot[3] = {".  ", ".. ", "..."};
+	int 		n = 0;
+	
+	struct epoll_event	events[MAXEVENT];
+	g_runServer = 1;
+	while (g_runServer)
+	{
+		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 777);
+		if (nbEvents == -1)
+			perror("\nepoll_wait");
+		else if (nbEvents > 0) {
+			for (int i = 0; i < nbEvents; i++) {
+				try {
+					if (_serverSockets.count(events[i].data.fd) > 0)
+						acceptConnexion(events[i]);
+					else
+					{
+						if (events[i].events & (EPOLLHUP | EPOLLRDHUP))
+							closeConnexion(events[i]);
+						else if (events[i].events & EPOLLIN)
+							readData(events[i]);
+						else if (events[i].events & EPOLLOUT)
+							sendData(events[i]);
+						else
+							std::cerr << "have to print EPOLLERR" << std::endl;
+					}
+				}
+				catch(const std::exception& e) {
+					std::cerr << e.what() << std::endl;
+				}
+			}
+		}
+		else
+			std::cout	<< "\rWaiting on a connection" << dot[n == 3 ? n = 0 : n++]
+						<< std::flush;
+	}
 }
+/*----------------------------------------------------------------------------*/
 
-void	displayClient(const struct epoll_event & ev)
+/*============================================================================*/
+						/*### PRIVATE METHODS ###*/
+/*============================================================================*/
+
+/*	* Init Cluster params from HttpConfig
+*/
+void	Cluster::setServers()
 {
-	std::cout	<< "EVENT NUMBER [" << ev.events << "]\n"
-				<< "FD CLIENT [" << ev.data.fd << "]\n";
+	for (std::vector<ServerConfig>::const_iterator it = _config._serversConfig.begin();
+		it != _config._serversConfig.end(); it++)
+			_servers.insert(Server(*it));
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* fill the serviceSet without duplicating services and ports
+*/
+void	Cluster::setServiceList()
+{
+	for (std::set<Server>::iterator it = _servers.begin();
+		it != _servers.end(); it++) 
+			UtilParsing::deepCopieSet(_serviceList, it->getServiceList());
 }
 /*----------------------------------------------------------------------------*/
 
@@ -298,21 +470,13 @@ void	Cluster::acceptConnexion(const struct epoll_event &event) const
 				<< std::endl;
 #endif
 
-	int flags = fcntl(clientSocket, F_GETFL);
-	if (flags == -1)
-	{
-		if (close(clientSocket) == -1)
-			perror("close() in acceptConnexion()");
-		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
-	}
-	flags |= O_NONBLOCK | O_CLOEXEC;
+	int flags = O_NONBLOCK | FD_CLOEXEC;
    	if (fcntl(clientSocket, F_SETFL, flags) == -1)
 	{
 		if (close(clientSocket) == -1)
 			perror("close() in acceptConnexion()");
 		throw RunException(__FILE__, __LINE__ - 2, "Error fcntl():");
 	}
-
 	try {
 		addFdInEpoll(false, clientSocket);
 	}

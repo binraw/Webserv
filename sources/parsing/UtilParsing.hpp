@@ -42,13 +42,8 @@ class UtilParsing
         static std::vector<std::string>	split(const std::string & line, const std::string & set); 
 		static std::vector<std::string>	splitSpecialDeleteKey(const std::string & line, const std::string & set);
 
-<<<<<<< HEAD:sources/UtilParsing.hpp
-    private:
-        UtilParsing() {};
-=======
 	private:
 		UtilParsing() {};
->>>>>>> 11bb8bd (makefile automation and repository reorganization, clean compilation):sources/parsing/UtilParsing.hpp
 };
 
 #endif

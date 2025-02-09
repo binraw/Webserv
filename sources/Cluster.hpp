@@ -84,6 +84,8 @@ class Cluster
 		const std::string			&getFileConfig()	const;
 		const std::vector<Server>	&getAllServer()	const;
 		const std::set<std::string>	&getServiceList()	const;
+		const std::set<Server>		&getServers()	const;
+		const HttpConfig			&getConfig()	const;
 
 		void	runCluster();
 
@@ -91,25 +93,22 @@ class Cluster
 		void	readData(const struct epoll_event &);
 
 	private:
-		
-		// std::set<std::string>	_listenList;		// liste de tous les ports
-		// std::set<std::string>	_incudeList;		// ??
-		// std::vector<Server>		_servers;			// ensemble des servers present dans le cluster
-		// std::string				_configPath;		// chemin vers fichier de config
-		// std::string				_defaultType;		// pour default entete http
-		// int						_workerConnexion;	// nb total de connexion supportes par le cluster
-		// int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
+		int				_epollFd;		// fd vers structure epoll
+		std::set<int>	_serverSockets;	// ensemble des socket serveur (un par port)
+		const HttpConfig	_config;
+		std::set<Server>	_servers;
 
 		int				_epollFd;			// fd vers structure epoll
 		std::set<int>	_serverSockets;		// ensemble des socket serveur
 		const HttpConfig		_config;
 		std::set<std::string>	_serviceList;
 
-		void	setParams();		// init les parametres (provisoir en attendant parsing)
-		void	setEpollFd() throw(InitException);
-		void	setServerSockets() throw(InitException);
-		void	safeGetAddr(const char *, struct addrinfo **) const throw(InitException);
-		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *) throw(InitException);
+		void	setServers();
+		void	setServiceList();
+		void	setEpollFd();
+		void	setServerSockets();
+		void	safeGetAddr(const char *, struct addrinfo **) const;
+		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
 		void	closeFdSet() const;
 
 		void	acceptConnexion(const struct epoll_event &) const;

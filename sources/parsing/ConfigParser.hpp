@@ -1,17 +1,13 @@
 #ifndef CONFIGPARSER_HPP
 # define CONFIGPARSER_HPP
 
-#include <vector>
+#include "HttpConfig.hpp"
+#include "webserv.hpp"
 #include "UtilParsing.hpp"
-#include <iostream>
 #include <sstream>
 #include <fstream>
-#include <string>
 #include <cstring>
-#include <map>
-#include <vector>
 #include <unistd.h>
-#include "HttpConfig.hpp"
 
 
 class ConfigParser 

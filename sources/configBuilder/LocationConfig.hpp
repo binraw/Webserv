@@ -2,7 +2,7 @@
 #ifndef LOCATIONCONFIG_HPP
 # define LOCATIONCONFIG_HPP
 
-#include "../includes/webserv.hpp"
+#include "webserv.hpp"
 
 class LocationConfig 
 {
