@@ -1,3 +1,6 @@
+
+
+
 #include "ConfigParser.hpp"
 
 HttpConfig ConfigParser::parse(const std::string& filepath) 
@@ -11,12 +14,12 @@ HttpConfig ConfigParser::parse(const std::string& filepath)
     std::string line;
     while (std::getline(file, line)) 
     {
-        if (line.empty() || line[0] == '#') continue;
-
+        if (line.empty() || line[0] == '#')
+			continue;
         if (line.find("http") != std::string::npos) 
             parseHttpBlock(file, httpConfig);
     }
-    
+
     return httpConfig;
 }
 
@@ -37,7 +40,7 @@ void ConfigParser::parseHttpBlock(std::ifstream& file, HttpConfig& httpConfig)
         {
             ServerConfig serverConfig;
             parseServerBlock(file, serverConfig);
-            httpConfig._servers.push_back(serverConfig);
+            httpConfig._serversConfig.push_back(serverConfig);
         }
     }
 }
@@ -60,7 +63,7 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
             LocationConfig locationConfig;
             locationConfig._path = UtilParsing::recoverValue(line, "location");
             parseLocationBlock(file, locationConfig);
-            serverConfig._locations.push_back(locationConfig);
+            serverConfig._locationConfig.push_back(locationConfig);
         } 
         else if (line.find("}") != std::string::npos) 
             break;

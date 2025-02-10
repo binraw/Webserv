@@ -1,16 +1,8 @@
+
 #ifndef LOCATIONCONFIG_HPP
 # define LOCATIONCONFIG_HPP
 
-#include <vector>
-#include "UtilParsing.hpp"
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <string>
-#include <cstring>
-#include <map>
-#include <vector>
-#include <unistd.h>
+#include "webserv.hpp"
 
 class LocationConfig 
 {
@@ -26,5 +18,5 @@ public:
     void controlDefaultLocationConf();
     void checkSemiColonLocation();
 };
-
+std::ostream & operator<<(std::ostream &, const LocationConfig &ref);
 #endif

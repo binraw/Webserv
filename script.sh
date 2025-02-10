@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SERVER="localhost:8000"
-SERVER2="localhost:8001"
-SERVER3="localhost:8002"
+SERVER2="localhost:3030"
+SERVER3="localhost:8080"
 NUM_CLIENTS=5  # Nombre de clients à simuler
 
 # Liste des User-Agents pour simuler différents navigateurs

@@ -14,13 +14,13 @@ public:
 class PHPScript : public CGIScript
 {
 public:
-    void execute() override;
+    void execute();
 };
 
 class PerlScript : public CGIScript
 {
     public:
-    void execute() override;
+    void execute();
 };
 
 

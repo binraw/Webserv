@@ -113,17 +113,8 @@ int main(void)
     sigaction(SIGINT, &act, NULL);
 
     try {
-        // ConfigParser parser;
-        // HttpConfig config = parser.parse("./config/default.conf");
-        // config.controlDefaultHttpConf();
-        // config.checkSemiColonAllValues();
-        // config.displayDefaultHttp();
-        // config.displayServers();
-
-        // Cluster cluster("./config/exemple.conf");
-        // cluster.runCluster();
-        Client rob("cgi-bin/script.pl");
-        std::cout << rob.playCGI() << std::endl;
+        Cluster cluster("./config/default.conf"/*argv[1]*/);
+        cluster.runCluster();
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what() << std::endl

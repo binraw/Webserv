@@ -3,7 +3,8 @@
 #ifndef CLUSTER_HPP
 # define CLUSTER_HPP
 
-#include "../includes/webserv.hpp"
+#include "webserv.hpp"
+#include "HttpConfig.hpp"
 
 #include "Server.hpp"
 
@@ -41,20 +42,21 @@ class Cluster
 	class   InitException : virtual public std::exception
 	{
 		public:
-			InitException(const char *file, int line, const char *msg, const char *serviceName, const int ret)
-				: retAddr(ret), _file(file), _line(line), _msg(msg), _serviceName(serviceName)
+			InitException(const char *file, int line, const std::string &msg, const int ret)
+				: retAddr(ret), _file(file), _line(line), _msg(msg)
 			{	}
-			const char *	what()			const throw() {
-				return _msg;
+			virtual ~InitException() throw() {}
+			virtual const char *	what() const throw() {
+				return _msg.c_str();
 			};
 			void			setSockExcept() const throw();
 			const int 		retAddr;
 
 		private:
-			const char *	_file;
-			const int 		_line;
-			const char *	_msg;
-			const char *	_serviceName;	
+			const char *_file;
+			const int 	_line;
+			// const char *_msg;
+			std::string	_msg;
 	};
 
 	class   RunException : virtual public std::exception
@@ -75,44 +77,40 @@ class Cluster
 	};
 
 	public:
-		Cluster(const std::string &filename) throw(InitException);
+		Cluster(const std::string &);
 		Cluster(const Cluster &);
 		~Cluster();
-		Cluster &	operator=(const Cluster &);
+		Cluster & operator=(const Cluster &);
 
-		const std::string			& getFileConfig()	const;
-		const std::vector<Server>	& getAllServer()	const;
-		const std::set<std::string>	& getListenList()	const;
+		const std::map<std::string, Server >	&getServersByPort()	const;
+		const HttpConfig			&getConfig()	const;
 
-		void	runCluster() throw();
+		void	runCluster();
+
+		void	sendData(const struct epoll_event &);
+		void	readData(const struct epoll_event &);
 
 	private:
-		std::set<std::string>	_listenList;		// liste de tous les ports
-		std::set<std::string>	_incudeList;		// ??
-		std::vector<Server>		_servers;			// ensemble des servers present dans le cluster
-		std::string				_configPath;		// chemin vers fichier de config
-		std::string				_defaultType;		// pour default entete http
-		int						_workerConnexion;	// nb total de connexion supportes par le cluster
-		int						_keepAliveTime;		// le temps que le serveur garde une conneion active entre deyux requetes (secondes)
+		const HttpConfig	_config;
+		int					_epollFd;		// fd vers structure epoll
+		std::set<int>		_serverSockets;	// ensemble des socket serveur (un par port)
 		
-		std::set<int>			_serverSockets;		// ensemble des socket serveur
-		int						_epollFd;			// fd vers structure epoll
+		std::map<std::string, Server >	_serversByService;
 
-		void	setParams();		// init les parametres (provisoir en attendant parsing)
+		void	setServersByPort();
 
-		void	setEpollFd() throw(InitException);
-		void	setServerSockets() throw(InitException);
-		void	safeGetAddr(const char *, struct addrinfo **) const throw(InitException); 
-		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *) throw(InitException);
-
-		void	acceptConnexion(const struct epoll_event &);
+		void	setEpollFd();
+		void	setServerSockets();
 		
-		void	writeData(const struct epoll_event &);
-		void	readData(const struct epoll_event &);
-		void	parseHeader(const std::string &response);
+		void	safeGetAddr(const std::pair<const std::string, Server> &, struct addrinfo **) const;
+		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
+		
+		void	closeFdSet() const;
 
-
-		void	closeFdSet();
+		void	acceptConnexion(const struct epoll_event &) const;
+		void	closeConnexion(const struct epoll_event &event) const;
+		void	addFdInEpoll(const bool, const int)	const;
+		void	changeEventMod(const bool, const int) const;
 };
 
 std::ostream	& operator<<(std::ostream &, const Cluster &);

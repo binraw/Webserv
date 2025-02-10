@@ -1,6 +1,9 @@
-#include "UtilParsing.hpp"
 
-bool    UtilParsing::isOnlySpace(const std::string & str)
+
+#include "UtilParsing.hpp"
+#include <cstring>
+
+bool	UtilParsing::isOnlySpace(const std::string & str)
 {
     size_t  i;
     size_t  size = str.size();
@@ -13,7 +16,7 @@ bool    UtilParsing::isOnlySpace(const std::string & str)
     return (i == size);
 }
 
-std::vector<std::string> UtilParsing::split(const std::string & line, const std::string & set)
+std::vector<std::string>	UtilParsing::split(const std::string & line, const std::string & set)
  {
     std::vector<std::string> result;
 
@@ -27,7 +30,7 @@ std::vector<std::string> UtilParsing::split(const std::string & line, const std:
     return result; 
 }
 
-std::vector<std::string> UtilParsing::splitSpecialDeleteKey(const std::string & line, const std::string & set)
+std::vector<std::string>	UtilParsing::splitSpecialDeleteKey(const std::string & line, const std::string & set)
  {
     std::vector<std::string> result;
 
@@ -44,10 +47,10 @@ std::vector<std::string> UtilParsing::splitSpecialDeleteKey(const std::string & 
     return result; 
 }
 
-std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec) {
+std::vector<std::string>	UtilParsing::cleanVector(std::vector<std::string> vec)
+{
     for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); ) {
-        if (*it == "{" || *it == "}") 
-        { 
+        if (*it == "{" || *it == "}") { 
             it = vec.erase(it);
         } 
         else 
@@ -56,12 +59,10 @@ std::vector<std::string> UtilParsing::cleanVector(std::vector<std::string> vec) 
     return vec;
 }
 
-
-std::vector<std::string> UtilParsing::cleanVectorClose(std::vector<std::string> vec)
+std::vector<std::string>	UtilParsing::cleanVectorClose(std::vector<std::string> vec)
 {
     for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); ) {
-        if (*it == "}") 
-        { 
+        if (*it == "}") { 
             it = vec.erase(it);
         } else 
             ++it;
@@ -69,11 +70,10 @@ std::vector<std::string> UtilParsing::cleanVectorClose(std::vector<std::string> 
     return vec;
 }
 
-void UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::vector<std::string> > >& allMapRoads)
+void	UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::vector<std::string> > >& allMapRoads)
 {
     for (std::map<int, std::map<std::string, std::vector<std::string> > >::const_iterator outerIt = allMapRoads.begin(); 
-         outerIt != allMapRoads.end(); 
-         ++outerIt)
+        outerIt != allMapRoads.end(); ++outerIt)
     {
         int index = outerIt->first;
         const std::map<std::string, std::vector<std::string> >& innerMap = outerIt->second;
@@ -97,7 +97,8 @@ void UtilParsing::printMapVector(const std::map<int, std::map<std::string, std::
         }
     }
 }
-void UtilParsing::controlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads, std::string keyValue)
+
+void	UtilParsing::controlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads, std::string keyValue)
 {
     int index = 0;
     for (std::map<int, std::map<std::string, std::vector<std::string> > >::const_iterator outerIt = allMapRoads.begin(); 
@@ -107,20 +108,17 @@ void UtilParsing::controlMapLocation(std::map<int, std::map<std::string, std::ve
         std::map<std::string, std::vector<std::string> > innerMap = outerIt->second;
         std::map<std::string, std::vector<std::string> >::const_iterator innerIt = innerMap.find(keyValue);
         
-        if (innerIt != innerMap.end()) // value trouver
-        {
+        if (innerIt != innerMap.end()) {
             std::cout << "Find !" << std::endl;
         }
-        else 
-        {
+        else {
             std::cout << "Probleme aucune key : " << keyValue << " dans index : " << index <<  std::endl;
-            // outerIt = allMapRoads.erase(outerIt);
         }
         index++;
     }
 }
 
-void UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads)
+void	UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, std::vector<std::string> > > allMapRoads)
 {
     UtilParsing::controlMapLocation(allMapRoads, "location");
     UtilParsing::controlMapLocation(allMapRoads, "root");
@@ -128,53 +126,52 @@ void UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, s
     UtilParsing::controlMapLocation(allMapRoads, "methods_accept");
 }
 
+void	UtilParsing::displayVector(std::vector<std::string> vec)
+{
+    for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
+        std::cout   << CYAN << *it << " ";
+    std::cout << RESET << std::endl;
+}
 
-std::string UtilParsing::trim(const std::string& str) 
+std::string	UtilParsing::trim(const std::string& str) 
 {
     std::size_t first = str.find_first_not_of(' ');
     std::size_t last = str.find_last_not_of(' ');
 
-    if (first == std::string::npos) 
-    {
+    if (first == std::string::npos) {
         return "";
     }
 
     return str.substr(first, last - first + 1);
 }
 
-std::string UtilParsing::trimSemicolon(const std::string& str) 
+std::string	UtilParsing::trimSemicolon(const std::string& str) 
 {
     std::size_t first = str.find_first_not_of(';');
     std::size_t last = str.find_last_not_of(';');
 
-    if (first == std::string::npos) 
-    {
+    if (first == std::string::npos) {
         return "";
     }
 
     return str.substr(first, last - first + 1);
 }
 
-std::string UtilParsing::recoverValue(std::string line, std::string key)
+std::string	UtilParsing::recoverValue(std::string line, std::string key)
 {
     if (line.find(key) != std::string::npos) 
     {
-    std::size_t pos = line.find(key.c_str());
-    if (pos != std::string::npos) 
-    {
-        std::size_t startPos = line.find_first_not_of(' ', pos + std::strlen(key.c_str()));
-        std::size_t endPos = line.find(';', startPos);
-        if (startPos != std::string::npos) 
+        std::size_t pos = line.find(key.c_str());
+        if (pos != std::string::npos) 
         {
-            std::string value = line.substr(startPos, endPos - startPos);
-            return UtilParsing::trim(value);
+            std::size_t startPos = line.find_first_not_of(' ', pos + std::strlen(key.c_str()));
+            std::size_t endPos = line.find(';', startPos);
+            if (startPos != std::string::npos) 
+            {
+                std::string value = line.substr(startPos, endPos - startPos);
+                return UtilParsing::trim(value);
+            }
         }
     }
-    }
     return "";
-}
-void UtilParsing::displayVector(std::vector<std::string> vec)
-{
-    for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
-        std::cout << *it << std::endl;
 }
