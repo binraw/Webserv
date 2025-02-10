@@ -6,7 +6,10 @@ ServerConfig::ServerConfig(const ServerConfig & ref)
   :	_serverName(ref._serverName), _listenPort(ref._listenPort), \
 	_locationConfig(ref._locationConfig), _clientMaxBodySize(ref._clientMaxBodySize), \
 	_uploadPath(ref._uploadPath)
-{	}
+{
+	static int i = 0;
+	_serverIndex = i++;
+}
 
 void	ServerConfig::displayValueServer()
 {

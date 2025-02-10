@@ -16,6 +16,7 @@ class Client
 
 	private:
 		ARequest	*_request;
+		std::string	_response;
 };
 
 std::ostream & operator<<(std::ostream &, const Client &);

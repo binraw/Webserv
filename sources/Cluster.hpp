@@ -42,20 +42,21 @@ class Cluster
 	class   InitException : virtual public std::exception
 	{
 		public:
-			InitException(const char *file, int line, const char *msg, const char *serviceName, const int ret)
-				: retAddr(ret), _file(file), _line(line), _msg(msg), _serviceName(serviceName)
+			InitException(const char *file, int line, const std::string &msg, const int ret)
+				: retAddr(ret), _file(file), _line(line), _msg(msg)
 			{	}
-			const char *	what()			const throw() {
-				return _msg;
+			virtual ~InitException() throw() {}
+			virtual const char *	what() const throw() {
+				return _msg.c_str();
 			};
 			void			setSockExcept() const throw();
 			const int 		retAddr;
 
 		private:
-			const char *	_file;
-			const int 		_line;
-			const char *	_msg;
-			const char *	_serviceName;	
+			const char *_file;
+			const int 	_line;
+			// const char *_msg;
+			std::string	_msg;
 	};
 
 	class   RunException : virtual public std::exception
@@ -81,8 +82,7 @@ class Cluster
 		~Cluster();
 		Cluster & operator=(const Cluster &);
 
-		const std::set<std::string>	&getServiceList()	const;
-		const std::set<Server>		&getServers()	const;
+		const std::map<std::string, Server >	&getServersByPort()	const;
 		const HttpConfig			&getConfig()	const;
 
 		void	runCluster();
@@ -92,24 +92,19 @@ class Cluster
 
 	private:
 		const HttpConfig	_config;
-		std::set<Server>	_servers;
 		int					_epollFd;		// fd vers structure epoll
 		std::set<int>		_serverSockets;	// ensemble des socket serveur (un par port)
 		
-		//la liste de service devrait etre une map de serveur 
-		//un vecteur de nom de domaine (qui sont les nom des serveurs)
-		std::set<std::string>	_serviceList;
-		std::map<std::set<std::string>, Server> _serverList;	
+		std::map<std::string, Server >	_serversByService;
 
-		// void	setServerList();
-		void	setServers();
-		void	setServiceList();
-
+		void	setServersByPort();
 
 		void	setEpollFd();
 		void	setServerSockets();
-		void	safeGetAddr(const char *, struct addrinfo **) const;
+		
+		void	safeGetAddr(const std::pair<const std::string, Server> &, struct addrinfo **) const;
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
+		
 		void	closeFdSet() const;
 
 		void	acceptConnexion(const struct epoll_event &) const;

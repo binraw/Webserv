@@ -21,7 +21,8 @@ class Server
 		const std::set<std::string>	&getLocationPath() const;
 
 	private:
-		const ServerConfig	_config;
+		const ServerConfig	_config;//contient un index pour avoir l'ordre de creation des serveurs virtuel suivant le fichier de config
+									//cette index est la uniquement pour pouvoir maper les server comme une key dans std::map
 		
 		std::set<std::string>	_nameList;		//localhost - serverExemple.com - www.serverExemple.fr
 		std::set<std::string>	_serviceList;	//port and service name

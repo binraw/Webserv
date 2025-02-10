@@ -21,6 +21,7 @@ public:
 	
 	std::string	_clientMaxBodySize;
 	std::string	_uploadPath;
+	int			_serverIndex;
 
 	void displayValueServer();
 	void displayAllLocations();
