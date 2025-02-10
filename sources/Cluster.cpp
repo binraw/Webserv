@@ -282,8 +282,6 @@ void	Cluster::parseHeader(const std::string &response)
 	std::cout	<< "RECEIVED FROM CLIENT:\n"
 				<< response << std::endl;
 
-
-
 }
 
 void	Cluster::readData(const struct epoll_event &event)

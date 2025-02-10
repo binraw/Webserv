@@ -12,9 +12,6 @@ Client::Client(std::string request)
         _pathCGI = "cgi-bin/script.pl";
     else
     {
-        // std::cout << request << std::endl;
-        // ICI je recupere que le nom du script mais a l'avenir il faut aussi :
-        // 
         _pathCGI = request;
     }
         
@@ -23,11 +20,16 @@ Client::~Client()
 {
 }
 
+Client &Client::operator=(const Client &)
+{
+    return *this;
+}
+
 std::string Client::playCGI()
 {
     std::string output;
     int pipfd[2];
-    // std::cout << "valeur path: " << _pathCGI.c_str() << std::endl;
+
     if (pipe(pipfd) == -1)
     {
         std::cerr << "Error pipe CGI" << std::endl;
@@ -66,9 +68,9 @@ std::string Client::playCGI()
         waitpid(pid, &status, 0);
         if (WIFEXITED(status)) 
         {
-            // std::cout << "'" << output << "'" << std::endl;
-            // std::cout << "CGI script exited with status: " << WEXITSTATUS(status) << std::endl;
-        } else 
+            // ici tout fonctionne donc a voir si on doit rajouter un truc ou simplement return
+        } 
+        else 
         {
             std::cout << "CGI script did not terminate normally" << std::endl;
         }

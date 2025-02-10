@@ -122,7 +122,7 @@ int main(void)
 
         // Cluster cluster("./config/exemple.conf");
         // cluster.runCluster();
-        Client rob("cgi-bin/upload.pl");
+        Client rob("cgi-bin/script.pl");
         std::cout << rob.playCGI() << std::endl;
     }
     catch(const std::exception& e) {

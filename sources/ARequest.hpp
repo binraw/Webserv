@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <string>
+#include "../includes/webserv.hpp"
 
 class ARequest
 {

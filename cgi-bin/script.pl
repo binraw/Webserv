@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use POSIX 'strftime';
-
+print "HTTP/1.1 200 OK\r\n";
 print "Content-Type: text/html\n\n";
 print "<HTML><HEAD><TITLE>Time</TITLE></HEAD><BODY>\n";
 print "<h1>Hello, World.</h1>\n";
