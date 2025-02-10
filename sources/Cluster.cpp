@@ -82,7 +82,7 @@ Cluster::Cluster(const std::string &filepath)
 	}
 #ifdef TEST
 	std::cout	<< BOLD BRIGHT_YELLOW "\nINIT TERMINATED\n" RESET << std::endl
-				<< *this ;
+				<< "at line " << __LINE__ << " file " << __FILE__ << " \n"  << *this ;
 #endif
 }
 /*----------------------------------------------------------------------------*/
@@ -110,7 +110,7 @@ std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 	for (std::map<std::string, Server >::const_iterator it = ref.getServersByPort().begin();
 		it != ref.getServersByPort().end(); it++)
 			o	<< "port [" + it->first + "] associate with server:" << std::endl
-				<< it->second;
+				<< it->second << std::endl;
 	return o << RESET;
 }
 /*----------------------------------------------------------------------------*/
@@ -406,7 +406,6 @@ void	Cluster::safeGetAddr(const std::pair<const std::string, Server> &server, st
 			std::string errorMsg = "Error -> setsockopt() at " + *it + " on port [" + server.first + "]";
 			throw InitException(__FILE__, __LINE__ - 2, errorMsg.c_str(), ret);
 		}
-			// throw InitException(__FILE__, __LINE__ - 2, std::string("Error -> setsockopt() at " + *it + " on port [" + server.first + "]" + '\0').c_str(), ret);
 	}
 }
 /*----------------------------------------------------------------------------*/
