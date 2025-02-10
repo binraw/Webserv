@@ -18,7 +18,7 @@ class UtilParsing
 		static void	deepCopieSet(std::set<T> &dest, const std::set<T> &src) {
 			for (typename std::set<T>::const_iterator it = src.begin();
 				it != src.end(); it++)
-				dest.insert(*it);
+					dest.insert(*it);
 		}
 		template<typename T>
 		static void	deepCopieVector(std::vector<T> &dest, const std::vector<T> &src) {

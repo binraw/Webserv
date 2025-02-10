@@ -24,7 +24,12 @@ Server::Server(const ServerConfig & config)
 
 Server::Server(const Server &ref)
   : _config(ref._config)
-{	}
+{
+	UtilParsing::deepCopieSet(_nameList, ref._nameList);
+	UtilParsing::deepCopieSet(_locationPath, ref._locationPath);
+	_serviceList = ref._serviceList;
+	_clientList = ref._clientList;
+}
 /*----------------------------------------------------------------------------*/
 
 Server::~Server() 

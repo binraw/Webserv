@@ -53,6 +53,7 @@ void hand(int, siginfo_t *, void *)
 Cluster::Cluster(const std::string &filepath)
   : _config(ConfigParser().parse(filepath))
 {
+	// setServerList();
 	setServers();
 	setServiceList();
 	try {
@@ -101,21 +102,19 @@ Cluster & Cluster::operator=(const Cluster & ) {
 std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 {
 	o	<< BOLD BLUE << "CLUSTER:" << std::endl
-		<< "std::set<std::string>	_listenList:" << RESET
-		<< BLUE << std::endl;
+		<< "std::set<std::string>	_listenList:"
+		<< RESET << BLUE;
 	for (std::set<std::string>::iterator it = ref.getServiceList().begin();
 		it != ref.getServiceList().end(); it++) {
 			o << "[" << *it << "] ";
 		}
-	o	<< std::endl << "_servers:\n";
+	o	<< std::endl << "_servers:\n" << RESET;
 	for (std::set<Server>::iterator it = ref.getServers().begin();
 		it != ref.getServers().end(); it++)
 			o	<< *it << std::endl;
 	return o << RESET;
 }
 /*----------------------------------------------------------------------------*/
-
-
 
 
 /*============================================================================*/
@@ -126,7 +125,6 @@ const std::set<std::string>	& Cluster::getServiceList() const {
 	return const_cast<std::set<std::string>	&>(_serviceList);
 }
 /*----------------------------------------------------------------------------*/
-
 
 const HttpConfig & Cluster::getConfig() const {
 	return _config;
@@ -317,12 +315,26 @@ void	Cluster::setServiceList()
 }
 /*----------------------------------------------------------------------------*/
 
+// void	Cluster::setServerList()
+// {
+// 	for (std::vector<ServerConfig>::const_iterator it = _config._serversConfig.begin();
+// 		it != _config._serversConfig.end(); it++)
+// 	{
+// 		Server server(*it);
+
+
+// 			_servers.insert(Server(*it));
+// 	}
+
+// }
+/*----------------------------------------------------------------------------*/
+
 /*	* open sockets server and bind them
 */
 void	Cluster::setServerSockets()
 {
 # ifdef TEST
-	std::cout	<< BOLD BLUE << "Function -> setSocket() {"
+	std::cout	<< BOLD BLUE << "Function -> setServerSockets() {"
 				<< RESET << std::endl;
 # endif
 	struct addrinfo	*res = NULL;
@@ -357,8 +369,7 @@ void	Cluster::setServerSockets()
 			continue;
 	}
 # ifdef TEST
-	std::cout	<< *this << std::endl
-				<< BOLD BLUE "}\n" RESET
+	std::cout	<< BOLD BLUE "}\n" RESET
 				<< std::endl;
 # endif
 }

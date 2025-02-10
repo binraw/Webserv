@@ -95,12 +95,18 @@ class Cluster
 		std::set<Server>	_servers;
 		int					_epollFd;		// fd vers structure epoll
 		std::set<int>		_serverSockets;	// ensemble des socket serveur (un par port)
+		
+		//la liste de service devrait etre une map de serveur 
+		//un vecteur de nom de domaine (qui sont les nom des serveurs)
 		std::set<std::string>	_serviceList;
+		std::map<std::set<std::string>, Server> _serverList;	
 
-
+		// void	setServerList();
 		void	setServers();
-		void	setEpollFd();
 		void	setServiceList();
+
+
+		void	setEpollFd();
 		void	setServerSockets();
 		void	safeGetAddr(const char *, struct addrinfo **) const;
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
