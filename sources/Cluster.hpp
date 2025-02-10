@@ -102,7 +102,7 @@ class Cluster
 		void	setEpollFd();
 		void	setServerSockets();
 		
-		void	safeGetAddr(const std::pair<const std::string, Server> &, struct addrinfo **) const;
+		void	safeGetAddr(const char *, struct addrinfo **) const;
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
 		
 		void	closeFdSet() const;

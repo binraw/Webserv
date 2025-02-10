@@ -312,8 +312,9 @@ void Cluster::setServersByPort()
 		{
 			result = _serversByService.insert(std::make_pair(*itServiceList, Server(*itConfigServer)));
 			if (!result.second) {
-				std::cerr << "Port [" << *itServiceList << "] still handle by server "
-						  << *(result.first->second.getNameList().begin()) << std::endl;
+				std::cerr << YELLOW "Port [" << *itServiceList << "] still handle by server "
+						  << *(result.first->second.getNameList().begin())
+						  << RESET << std::endl;
 			}
 		}
 	}
@@ -335,7 +336,7 @@ void	Cluster::setServerSockets()
 		int				sockFd = 0;
 		struct addrinfo	*res = NULL;
 		try {
-			safeGetAddr(*it, &res);
+			safeGetAddr(it->first.c_str(), &res);
 			createAndLinkSocketServer(*res, it->first, &sockFd);
 		}
 		catch(const InitException &e) {
@@ -388,7 +389,7 @@ void	Cluster::setEpollFd()
 
 /*	* get an availble address on an avaible service (port)
 */
-void	Cluster::safeGetAddr(const std::pair<const std::string, Server> &server, struct addrinfo **res) const
+void	Cluster::safeGetAddr(const char *serviceName, struct addrinfo **res) const
 {
 	struct addrinfo	hints;
 
@@ -398,14 +399,10 @@ void	Cluster::safeGetAddr(const std::pair<const std::string, Server> &server, st
 	hints.ai_protocol = IPPROTO_TCP;			// Définit le protocole de transport comme étant TCP (Transmission Control Protocol).
 	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
 												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
-	std::set<std::string>::iterator it = server.second.getNameList().begin();
-	for (; it != server.second.getNameList().end(); it++)
-	{
-		int ret = getaddrinfo(it->c_str(), server.first.c_str(), &hints, res);
-		if (ret != 0) {
-			std::string errorMsg = "Error -> setsockopt() at " + *it + " on port [" + server.first + "]";
-			throw InitException(__FILE__, __LINE__ - 2, errorMsg.c_str(), ret);
-		}
+	int ret = getaddrinfo(NULL, serviceName, &hints, res);
+	if (ret != 0) {
+		std::string errorMsg = "Error -> safeGetAddr() on port [" + std::string(serviceName) + "]";
+		throw InitException(__FILE__, __LINE__ - 2, errorMsg.c_str(), ret);
 	}
 }
 /*----------------------------------------------------------------------------*/
