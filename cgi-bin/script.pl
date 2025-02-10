@@ -1,13 +1,11 @@
 #!/usr/bin/perl
+use POSIX 'strftime';
 
 print "Content-Type: text/html\n\n";
-print "<HTML><HEAD><TITLE>Variables</TITLE></HEAD><BODY>\n";
-
-# while (($name, $value) = each %ENV)
-# {
-#     print "$name = $value <BR>\n";
-# }
+print "<HTML><HEAD><TITLE>Time</TITLE></HEAD><BODY>\n";
+print "<h1>Hello, World.</h1>\n";
+my $date_hours = strftime "%Y-%m-%d %H:%M:%S", localtime;
+print "$date_hours\n";
 print "</BODY></HTML>\n";
 
-#script pour afficher toutes les value de l'environnement 
 #sert a rien mais permet de capter comment ca fonctionne
