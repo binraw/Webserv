@@ -21,6 +21,7 @@
 */
 #include <csignal>
 #include <fstream>
+#include "UtilParsing.hpp"
 
 #define MAXEVENT	10
 #define BUFFERSIZE	2048
@@ -54,11 +55,6 @@ Cluster::Cluster(const std::string &filepath)
   : _config(ConfigParser().parse(filepath))
 {
 	setServersByPort();
-	// for (std::map<std::string, Server >::const_iterator it = getServersByPort().begin();
-	// it != getServersByPort().end(); it++)
-	// 	std::cout	<< "port [" << it->first.c_str() << "] associate with server:" << std::endl
-	// 				<< it->second;
-
 	try {
 		_serverSockets.clear();
 		setServerSockets();
@@ -156,6 +152,9 @@ void	Cluster::readData(const struct epoll_event &event)
 				<< PURPLE << response
 				<< BRIGHT_PURPLE BOLD "]MSG_END" RESET
 				<< std::endl;
+	std::vector<std::string> splited = UtilParsing::split(response, " \n\r");
+	std::cout	<< "split response: " << std::endl;
+	UtilParsing::displayVector(splited);
 	// std::ofstream logFile("header.log", std::ios::app);
 	// if (logFile) {
 	// 	logFile << response;
@@ -300,23 +299,24 @@ void	Cluster::runCluster()
 
 void Cluster::setServersByPort()
 {
-	std::vector<std::string>::const_iterator	itServiceList;
-	std::vector<ServerConfig>::const_iterator	itConfigServer;
+	std::vector<ServerConfig>::iterator	itConfigServer = _config._serversConfig.begin();
 	std::pair<std::map<std::string, Server>::iterator, bool>	result;
 
-	for (itConfigServer = _config._serversConfig.begin();
-		itConfigServer != _config._serversConfig.end(); itConfigServer++)
+	while (itConfigServer != _config._serversConfig.end())
 	{
-		for (itServiceList = itConfigServer->_listenPort.begin();
-			itServiceList != itConfigServer->_listenPort.end(); itServiceList++)
+		std::vector<std::string>::iterator	itServiceList = itConfigServer->_listenPort.begin();
+		while (itServiceList != itConfigServer->_listenPort.end())
 		{
-			result = _serversByService.insert(std::make_pair(*itServiceList, Server(*itConfigServer)));
-			if (!result.second) {
-				std::cerr << YELLOW "Port [" << *itServiceList << "] still handle by server "
+			result = _serversByService.insert(std::make_pair(*itServiceList, Server(*itConfigServer, *itServiceList)));
+			if (!result.second)
+			{
+				std::cerr << YELLOW "Port [" << *itServiceList << "] still required by server "
 						  << *(result.first->second.getNameList().begin())
 						  << RESET << std::endl;
 			}
+			itServiceList++;
 		}
+		itConfigServer++;
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -329,15 +329,18 @@ void	Cluster::setServerSockets()
 	std::cout	<< BOLD BLUE << "Function -> setServerSockets() {"
 				<< RESET << std::endl;
 # endif
+
+	std::map<std::string, Server>::iterator itServer = _serversByService.begin();
 	
-	for (std::map<std::string, Server>::iterator it = _serversByService.begin(); \
-												it != _serversByService.end(); it++)
+	while (itServer != _serversByService.end())
 	{
 		int				sockFd = 0;
 		struct addrinfo	*res = NULL;
 		try {
-			safeGetAddr(it->first.c_str(), &res);
-			createAndLinkSocketServer(*res, it->first, &sockFd);
+			safeGetAddr(itServer->first.c_str(), &res);
+			createAndLinkSocketServer(*res, itServer->first, &sockFd);
+			freeaddrinfo(res);
+			itServer++;
 		}
 		catch(const InitException &e) {
 			if (sockFd == -1){
@@ -350,9 +353,12 @@ void	Cluster::setServerSockets()
 			}
 			e.setSockExcept();
 			std::cerr << (e.what() != NULL ? e.what() : "") << std::endl;
+
+			std::map<std::string, Server>::iterator tmp = itServer;
+			tmp++;
+			_serversByService.erase(itServer);
+			itServer = tmp;
 		}
-		if (res)
-			freeaddrinfo(res);
 	}
 # ifdef TEST
 	std::cout	<< BOLD BLUE "}\n" RESET

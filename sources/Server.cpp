@@ -12,11 +12,10 @@
 			/*### CONSTRUCTORS - DESTRUCTOR _ OVERLOAD OPERATORS ###*/
 /*============================================================================*/
 
-Server::Server(const ServerConfig & config)
-  : _config(config)
+Server::Server(ServerConfig & config, const std::string &service)
+  : _config(config), _service(service)
 {
 	UtilParsing::convertVectorToSet(_nameList, _config._serverName);
-	UtilParsing::convertVectorToSet(_serviceList, _config._listenPort);
 	setLocationPath();
 	_clientList.clear();
 }
@@ -27,7 +26,7 @@ Server::Server(const Server &ref)
 {
 	UtilParsing::deepCopieSet(_nameList, ref._nameList);
 	UtilParsing::deepCopieSet(_locationPath, ref._locationPath);
-	_serviceList = ref._serviceList;
+	_service = ref._service;
 	_clientList = ref._clientList;
 }
 /*----------------------------------------------------------------------------*/
@@ -38,8 +37,8 @@ Server::~Server()
 
 Server  & Server::operator=(const Server &ref)
 {
+	_service = ref._service;
 	UtilParsing::deepCopieSet(_nameList, ref._nameList);
-	UtilParsing::deepCopieSet(_serviceList, ref._serviceList);
 	UtilParsing::deepCopieSet(_locationPath, ref._locationPath);
 
 	return *this;
@@ -47,7 +46,7 @@ Server  & Server::operator=(const Server &ref)
 /*----------------------------------------------------------------------------*/
 
 bool	Server::operator<(const Server &ref) const {
-	return _serviceList < ref._serviceList;
+	return _service < ref._service;
 }
 /*----------------------------------------------------------------------------*/
 
@@ -59,10 +58,7 @@ std::ostream & operator<<(std::ostream & o, const Server &ref)
 		it != ref.getNameList().end(); it++)
 			o	<< "[" << *it << "] ";
 	
-	o	<< "\n_serviceList: ";
-	for (std::set<std::string>::const_iterator it = ref.getServiceList().begin();
-		it != ref.getServiceList().end(); it++)
-			o	<< "[" << *it << "] ";
+	o	<< "\n_service: " << ref.getService() ;
 	
 	o	<< "\n_locationPath: ";
 	for (std::set<std::string>::const_iterator it = ref.getLocationPath().begin();
@@ -86,8 +82,13 @@ const std::set<std::string>	& Server::getNameList() const {
 }
 /*----------------------------------------------------------------------------*/
 
-const std::set<std::string> & Server::getServiceList() const {
-	return const_cast<std::set<std::string>&>(_serviceList);
+const ServerConfig	&Server::getConfig() const {
+	return _config;
+}
+/*----------------------------------------------------------------------------*/
+
+const std::string & Server::getService() const {
+	return _service;
 }
 /*----------------------------------------------------------------------------*/
 

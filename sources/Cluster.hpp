@@ -55,7 +55,6 @@ class Cluster
 		private:
 			const char *_file;
 			const int 	_line;
-			// const char *_msg;
 			std::string	_msg;
 	};
 
@@ -91,20 +90,17 @@ class Cluster
 		void	readData(const struct epoll_event &);
 
 	private:
-		const HttpConfig	_config;
-		int					_epollFd;		// fd vers structure epoll
-		std::set<int>		_serverSockets;	// ensemble des socket serveur (un par port)
-		
+		HttpConfig		_config;
+		int				_epollFd;		// fd vers structure epoll
+		std::set<int>	_serverSockets;	// ensemble des socket serveur (un par port)
 		std::map<std::string, Server >	_serversByService;
 
 		void	setServersByPort();
-
 		void	setEpollFd();
 		void	setServerSockets();
 		
 		void	safeGetAddr(const char *, struct addrinfo **) const;
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
-		
 		void	closeFdSet() const;
 
 		void	acceptConnexion(const struct epoll_event &) const;
