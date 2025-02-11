@@ -14,10 +14,10 @@ class Server
 		Server	&operator=(const Server &);
 		bool 	operator<(const Server &other) const;
 
-		const ServerConfig		&getConfig() const;
-		const std::string		&getService() const;
-		const std::map<int, Client>	&getClientList() const;
+		const ServerConfig	&getConfig() const;
+		const std::string	&getService() const;
 		const std::set<std::string>	&getNameList() const;
+		const std::map<int, Client>	&getClientList() const;
 		const std::set<std::string>	&getLocationPath() const;
 
 	private:

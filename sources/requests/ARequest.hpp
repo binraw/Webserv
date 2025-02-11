@@ -11,24 +11,45 @@
 
 class ARequest
 {
+	class   RequestException : virtual public std::exception
+	{
+		public:
+			RequestException(const std::string &msg)
+				: _msg(msg)
+			{	}
+			virtual ~RequestException() throw() {}
+			virtual const char *	what() const throw() {
+				return _msg.c_str();
+			};
+		private:
+			std::string	_msg;
+	};
+
 	public:
 		ARequest(const std::string &);
-		ARequest(const ARequest &);
 		virtual ~ARequest() {};
+		virtual	ARequest *	createRequest(const std::string &) = 0;
 
-		ARequest *newRequest(const std::string &);
 	protected:
-		std::vector<std::string>	_fileByToken;
-
-		bool		_connexionType; //true == keepalive
-		std::string	_host;	//identifie le domaine recherche par le client format servername:port
-		std::string	_url;	//chemin vers la requete du client
-		std::string	_userAgent;
+		const std::vector<std::string>	_responseByToken;
+		
+		bool	_keepAlive;
+		std::string	_url;
 		std::string	_requestType;
-		std::vector<std::string>	_respponseByToken;
-
-
+		std::string	_protocolVersion;
+		std::string	_formatsAccepted;
+		std::pair<std::string, std::string>	_host;
+	
+		ARequest(const std::vector<std::string> &);
+	
+	private:
+		// void	_setUrl();
+		// void	_sethost();
+		// void	_setKeepAlive();
+		// void	_setRequestType();
+		// void	_setProtocolVersion();
+		// void	_setformatsAccepted();
+		static std::string	_requestHandle[];
 };
-std::ostream	& operator<<(std::ostream &, const ARequest &);
 
 #endif

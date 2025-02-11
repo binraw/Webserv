@@ -13,7 +13,9 @@
 
 Client::Client(const int)
   : _request(NULL)
-{	}
+{
+	
+}
 /*----------------------------------------------------------------------------*/
 
 Client::Client(const Client &) // Usefull ??
