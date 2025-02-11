@@ -5,7 +5,6 @@
 								/*### HEADERS ###*/
 /*============================================================================*/
 #include "Cluster.hpp"
-#include "ARequest.hpp"
 #include "ConfigParser.hpp"
 
 #include <cstring>
@@ -21,6 +20,9 @@
 */
 #include <csignal>
 #include <fstream>
+
+#include "ARequest.hpp"
+#include "GetRequest.hpp"
 #include "UtilParsing.hpp"
 
 #define MAXEVENT	10
@@ -152,9 +154,6 @@ void	Cluster::readData(const struct epoll_event &event)
 				<< PURPLE << response
 				<< BRIGHT_PURPLE BOLD "]MSG_END" RESET
 				<< std::endl;
-	std::vector<std::string> splited = UtilParsing::split(response, " \n\r");
-	std::cout	<< "split response: " << std::endl;
-	UtilParsing::displayVector(splited);
 	// std::ofstream logFile("header.log", std::ios::app);
 	// if (logFile) {
 	// 	logFile << response;
@@ -163,7 +162,30 @@ void	Cluster::readData(const struct epoll_event &event)
 	// 	perror("ERROR LOG TEST");
 	// }
 #endif
+	UtilParsing::displayVector(UtilParsing::split(response, " \n\r"));
 
+	ARequest *request = NULL;
+	if (response.find("GET") != std::string::npos) {
+		// request = new GetRequest(response);
+		std::cout << "GET" <<std::endl;
+	}
+	else if (response.find("POST") != std::string::npos) {
+		std::cout << "POST" <<std::endl;
+
+	}
+	else if (response.find("DELETE") != std::string::npos) {
+		std::cout << "DELETE" <<std::endl;
+
+	}
+	else {
+		// ask to return method unreconize in send function
+	}
+
+	// std::cout << *request << std::endl;
+	delete request;
+	
+	
+	
 	// est ce que le client existe deja ?
 	// std::set<Server>::const_iterator		itServer;
 	// std::map<int, Client>::const_iterator	itClient;
