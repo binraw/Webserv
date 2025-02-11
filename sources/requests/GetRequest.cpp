@@ -11,7 +11,8 @@ GetRequest::GetRequest(const std::string &response)
 }
 
 GetRequest::GetRequest(const GetRequest &ref)
-  : ARequest(ref._responseByToken) {
+  :	ARequest()
+{
 	*this = ref;
 }
 

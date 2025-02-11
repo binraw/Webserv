@@ -6,19 +6,19 @@
 
 class Client
 {
-	public:
-		Client(const int);
-		Client(const Client &);
-		~Client();
-		Client	&operator=(const Client &);
+	// public:
+	// 	Client(const int);
+	// 	Client(const Client &);
+	// 	~Client();
+	// 	Client	&operator=(const Client &);
 
-		const ARequest *getRequest() const;
+	// 	const ARequest *getRequest() const;
 
-	private:
-		ARequest	*_request;
-		std::string	_response;
+	// private:
+	// 	ARequest	*_request;
+	// 	std::string	_response;
 };
 
-std::ostream & operator<<(std::ostream &, const Client &);
+// std::ostream & operator<<(std::ostream &, const Client &);
 
 #endif

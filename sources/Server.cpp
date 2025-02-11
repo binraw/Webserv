@@ -16,6 +16,8 @@ Server::Server(ServerConfig & config, const std::string &service)
   : _config(config), _service(service)
 {
 	UtilParsing::convertVectorToSet(_nameList, _config._serverName);
+	if (_nameList.empty() == true)
+		_nameList.insert("localhost");
 	setLocationPath();
 	_clientList.clear();
 }

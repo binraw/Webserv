@@ -28,14 +28,14 @@
 #define MAXEVENT	10
 #define BUFFERSIZE	2048
 
-#define HTTPTEST	"HTTP/1.1 200 OK\r\n" \
-					"Content-Type: text/html\r\n" \
+#define HTTPTEST	"HTTP/1.1        200          OK\n" \
+					"Content-Type:                      text/html\r\n" \
 					"Content-Length: 208\r\n" \
 					"\r\n" \
 					"<http>" \
-					"<h1>TITLE<h1>" \
+					"<h1>TITLE<h1>                    " \
 					"Hello, World!" \
-					"<form action=/submit method=POST>" \
+					"<form action=/submit        method=POST>" \
     				"<input type=text name=nom>" \
     				"<button type=submit>OK</button>" \
 					"</form>" \
@@ -162,11 +162,17 @@ void	Cluster::readData(const struct epoll_event &event)
 	// 	perror("ERROR LOG TEST");
 	// }
 #endif
-	UtilParsing::displayVector(UtilParsing::split(response, " \n\r"));
 
-	ARequest *request = NULL;
+	ARequest request(response);
 	if (response.find("GET") != std::string::npos) {
-		// request = new GetRequest(response);
+		// try {
+		// 	// request = new GetRequest(response);
+		// }
+		// catch(const std::exception& e)
+		// {
+		// 	std::cerr << e.what() << '\n';
+		// }
+		
 		std::cout << "GET" <<std::endl;
 	}
 	else if (response.find("POST") != std::string::npos) {
@@ -181,37 +187,14 @@ void	Cluster::readData(const struct epoll_event &event)
 		// ask to return method unreconize in send function
 	}
 
-	// std::cout << *request << std::endl;
-	delete request;
+	// delete request;
+	// find server with port and name
+	// find client
 	
 	
 	
-	// est ce que le client existe deja ?
-	// std::set<Server>::const_iterator		itServer;
-	// std::map<int, Client>::const_iterator	itClient;
-
-	// for (itServer = _servers.begin(); itServer != _servers.end(); itServer++)
-	// {
-	// 	itClient = itServer->getClientList().find(event.data.fd);
-	// 	if (itClient != itServer->getClientList().end())
-	// 		break;
-	// }
-	// if (response.find("POST", 0) != std::string::npos)
-	// 	std::cout << RED "POST" RESET << std::endl;
-	// else if (response.find("GET", 0) != std::string::npos)
-	// 	std::cout << RED "GET" RESET << std::endl;
-	// else
-	// 	std::cout << RED "OTHER" RESET << std::endl;
-
-	// itServer != _servers.end() ? itClient->second.handlerequest : _createClient()
-
-	/*	* apres cette boucle
-		* parser la requete
-	*/
-
-
-
-
+	
+	
 	try {
 		changeEventMod(false, event.data.fd);
 	}

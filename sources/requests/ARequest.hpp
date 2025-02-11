@@ -11,28 +11,28 @@
 
 class ARequest
 {
-	class   RequestException : virtual public std::exception
-	{
-		public:
-			RequestException(const std::string &msg)
-				: _msg(msg)
-			{	}
-			virtual ~RequestException() throw() {}
-			virtual const char *	what() const throw() {
-				return _msg.c_str();
-			};
-		private:
-			std::string	_msg;
-	};
+	// class   RequestException : virtual public std::exception
+	// {
+	// 	public:
+	// 		RequestException(const std::string &msg, int errcode)
+	// 			: _msg(msg), _errcode(errcode)
+	// 		{	}
+	// 		virtual ~RequestException() throw() {}
+	// 		virtual const char *	what() const throw() {
+	// 			return _msg.c_str();
+	// 		};
+	// 	private:
+	// 		int			_errcode;
+	// 		std::string	_msg;
+	// };
 
 	public:
 		ARequest(const std::string &);
-		virtual ~ARequest() {};
-		virtual	ARequest *	createRequest(const std::string &) = 0;
+		~ARequest() {};
+		ARequest *	createRequest(const std::string &);
 
 	protected:
-		const std::vector<std::string>	_responseByToken;
-		
+
 		bool	_keepAlive;
 		std::string	_url;
 		std::string	_requestType;
@@ -40,15 +40,14 @@ class ARequest
 		std::string	_formatsAccepted;
 		std::pair<std::string, std::string>	_host;
 	
-		ARequest(const std::vector<std::string> &);
+		ARequest(/* const std::vector<std::string> & */);
+		void	_setKeepAlive(bool);
 	
 	private:
-		// void	_setUrl();
-		// void	_sethost();
-		// void	_setKeepAlive();
-		// void	_setRequestType();
-		// void	_setProtocolVersion();
-		// void	_setformatsAccepted();
+		void	initRequestLine(const std::string &);
+		void	initMandatoryFields();
+
+		void	initformatsAccepted();
 		static std::string	_requestHandle[];
 };
 
