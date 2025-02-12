@@ -37,6 +37,9 @@
 	// }	t_paramsCluster;
 */
 
+
+// timeout client ne fonctionne pas correctement
+
 class Cluster
 {
 	class   InitException : virtual public std::exception

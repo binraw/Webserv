@@ -26,9 +26,7 @@ GetRequest &	GetRequest::operator=(const GetRequest &ref)
 		_keepAlive = ref._keepAlive;
 		_url = ref._url;
 		_requestType = ref._requestType;
-		_protocolVersion = ref._protocolVersion;
 		_formatsAccepted = ref._formatsAccepted;
-		_host = ref._host;
 	}
 	return *this;
 }

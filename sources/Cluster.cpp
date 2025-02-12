@@ -79,8 +79,9 @@ Cluster::Cluster(const std::string &filepath)
 		throw;
 	}
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_YELLOW "\nINIT TERMINATED\n" RESET << std::endl
-				<< "at line " << __LINE__ << " file " << __FILE__ << " \n"  << *this ;
+	std::cout	<< std::endl << *this
+				<< BOLD BRIGHT_YELLOW "\nINIT TERMINATED\n" RESET
+				<< std::endl;
 #endif
 }
 /*----------------------------------------------------------------------------*/
@@ -102,9 +103,9 @@ Cluster & Cluster::operator=(const Cluster & ) {
 
 std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 {
-	o	<< BOLD BLUE << "CLUSTER:" << std::endl
-		<< RESET << BLUE << "_serversByService:"
-		<< std::endl << RESET;
+	o	<< BOLD "CLUSTER:" RESET << std::endl
+		<< "_serversByService:"
+		<< std::endl;
 	for (std::map<std::string, Server >::const_iterator it = ref.getServersByPort().begin();
 		it != ref.getServersByPort().end(); it++)
 			o	<< "port [" + it->first + "] associate with server:" << std::endl
@@ -112,7 +113,6 @@ std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 	return o << RESET;
 }
 /*----------------------------------------------------------------------------*/
-
 
 /*============================================================================*/
 						/*### PUBLIC METHODS ###*/

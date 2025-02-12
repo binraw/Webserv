@@ -131,7 +131,7 @@ void	UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, s
 void	UtilParsing::displayVector(std::vector<std::string> vec)
 {
     for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
-        std::cout   << "[" CYAN << *it << RESET "]" << "\n";
+        std::cout   << "[" << *it << "]" << "\n";
     std::cout << RESET << std::endl;
 }
 
