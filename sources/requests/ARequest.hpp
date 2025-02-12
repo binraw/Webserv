@@ -37,10 +37,10 @@ class ARequest
 		std::string	_url;
 		std::string	_requestType;
 		
-		std::string	_formatsAccepted;
+		std::string	_mimeType;
 		
 		std::string	_hostName;
-		std::string	_hostPosrt;
+		std::string	_hostPort;
 	
 		ARequest(/* const std::vector<std::string> & */);
 		void	_setKeepAlive(bool);
@@ -49,7 +49,7 @@ class ARequest
 		void	initRequestLine(const std::string &);
 		void	initHost(std::vector<std::string>::const_iterator &, std::vector<std::string>::const_iterator);
 
-		void	initformatsAccepted();
+		void	initMimeType(std::vector<std::string>::const_iterator &, std::vector<std::string>::const_iterator);
 		static std::string	_requestHandle[];
 };
 

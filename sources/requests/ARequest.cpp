@@ -28,7 +28,7 @@
 
 #include "ARequest.hpp"
 #include "UtilParsing.hpp"
-
+#define	PROTOCOL_VERION	"HTTP/1.1"
 
 std::string ARequest::_requestHandle[] =
 {
@@ -36,11 +36,6 @@ std::string ARequest::_requestHandle[] =
 	"POST",
 	"DELETE"
 };
-
-
-
-#define PROTOCOL_VERION	"HTTP/1.1"
-
 
 /*============================================================================*/
 				/*### CONSTRUCTORS - DESTRUCTOR - OVERLOAD OP ###*/
@@ -50,21 +45,22 @@ std::string ARequest::_requestHandle[] =
 	* http version
 	* method type
 	* path to ressource
+	* Host error
 */
 ARequest::ARequest(const std::string &response)
   :	_keepAlive(response.find("keepalive") != response.npos ? true : false)
 {
 	const std::vector<std::string>	token = UtilParsing::split(response, "\r\n");
 	std::vector<std::string>::const_iterator itToken = token.begin();
+	
+	initRequestLine(*itToken);
+	initHost(++itToken, token.end());
+	initMimeType(itToken, token.end());
 
 #ifdef TEST
 	std::cout	<< "Request by token: (IN ARequest constructor)" << std::endl;
 	UtilParsing::displayVector(UtilParsing::split(response, "\n\r"));
 #endif
-	
-	initRequestLine(*itToken);
-	initHost(itToken, token.end());
-
 
 }
 /*----------------------------------------------------------------------------*/
@@ -118,14 +114,12 @@ void	ARequest::initRequestLine(const std::string &requestLine)
 
 }
 
-/*	* 
+/*	* extract the hostname and the host port required by the client
 */
 void	ARequest::initHost(std::vector<std::string>::const_iterator &itToken, std::vector<std::string>::const_iterator itEnd)
 {
-	std::cout << "hostline in initHost(): " << *itToken << std::endl;
+	std::cout << RED "hostline in initHost(): " << *itToken << std::endl;
 
-	_hostName.clear();
-	_hostPosrt.clear();
 
 	while (itToken != itEnd) {
 		if (itToken->find("Host") != itToken->npos)
@@ -136,15 +130,27 @@ void	ARequest::initHost(std::vector<std::string>::const_iterator &itToken, std::
 		std::cerr << RED "NO HOST in initHost()" << std::endl;
 		return;
 	}
-
-	std::cout << "hostline in initHost(): " << *itToken << std::endl;
-
-	
+	_hostName.clear();
+	_hostPort.clear();
+	size_t idx = itToken->find_last_of(":");
+	_hostName = itToken->substr(itToken->find_last_of(" ", idx), idx - itToken->find_last_of(" ", idx));
+	_hostPort = itToken->substr(idx + 1, itToken->find_first_of(" ", idx) - idx);
 }
 /*----------------------------------------------------------------------------*/
 
-void	ARequest::initformatsAccepted()
+void	ARequest::initMimeType(std::vector<std::string>::const_iterator &token, std::vector<std::string>::const_iterator itEnd)
 {
+	_mimeType.clear();
+	while (token != itEnd) {
+		if (token->find("Accept") != token->npos)
+			break;
+	}
+	// if (token == itEnd)
+	// 	_mimeType = "application/octet-stream";
+	// else
+	// {
+	// 	_mimeType
+	// }
 
 }
 /*----------------------------------------------------------------------------*/
