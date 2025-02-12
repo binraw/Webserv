@@ -20,8 +20,10 @@ std::vector<std::string>	UtilParsing::split(const std::string & line, const std:
  {
     std::vector<std::string> result;
 
-    for (size_t i = 0; i != std::string::npos;) {
+    for (size_t i = 0; i != std::string::npos;)
+    {
         size_t end = line.find_first_of(set, i);
+
         result.push_back(line.substr(i, end - i));
         if (result.back().empty() || UtilParsing::isOnlySpace(result.back()))
             result.pop_back();
@@ -129,7 +131,7 @@ void	UtilParsing::manageControlMapLocation(std::map<int, std::map<std::string, s
 void	UtilParsing::displayVector(std::vector<std::string> vec)
 {
     for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++)
-        std::cout   << CYAN << *it << " ";
+        std::cout   << "[" << *it << "]" << "\n";
     std::cout << RESET << std::endl;
 }
 

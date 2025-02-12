@@ -17,11 +17,12 @@ class GetRequest : virtual public ARequest
 		~GetRequest();
 		GetRequest &operator=(const GetRequest &);
 
-		GetRequest *duplicate();
+		// ARequest * createRequest(const std::string &);
 
 	private:
 
+
 };
-std::ostream	& operator<<(std::ostream &, const GetRequest &);
 
 #endif
+

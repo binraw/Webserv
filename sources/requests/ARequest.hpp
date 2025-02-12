@@ -11,26 +11,46 @@
 
 class ARequest
 {
+	// class   RequestException : virtual public std::exception
+	// {
+	// 	public:
+	// 		RequestException(const std::string &msg, int errcode)
+	// 			: _msg(msg), _errcode(errcode)
+	// 		{	}
+	// 		virtual ~RequestException() throw() {}
+	// 		virtual const char *	what() const throw() {
+	// 			return _msg.c_str();
+	// 		};
+	// 	private:
+	// 		int			_errcode;
+	// 		std::string	_msg;
+	// };
+
 	public:
 		ARequest(const std::string &);
-		ARequest(const ARequest &);
-		virtual ~ARequest() {};
+		~ARequest() {};
+		ARequest *	createRequest(const std::string &);
 
-		ARequest *newRequest(const std::string &);
 	protected:
-		bool	_connexionType; //true == keepalive
-		std::string	_host;	//identifie le domaine recherche par le client format servername:port
-		std::string	_url;	//chemin vers la requete du client
-		std::string	_userAgent;
+
+		bool	_keepAlive;
+		std::string	_url;
 		std::string	_requestType;
-		std::vector<std::string>	_filesTypesAccepted;
 		
+		std::string	_formatsAccepted;
+		
+		std::string	_hostName;
+		std::string	_hostPosrt;
+	
+		ARequest(/* const std::vector<std::string> & */);
+		void	_setKeepAlive(bool);
+	
+	private:
+		void	initRequestLine(const std::string &);
+		void	initHost(std::vector<std::string>::const_iterator &, std::vector<std::string>::const_iterator);
 
-		ARequest & operator=(const ARequest &);
-		void	setParams(std::vector<std::string> &);
-
-
+		void	initformatsAccepted();
+		static std::string	_requestHandle[];
 };
-std::ostream	& operator<<(std::ostream &, const ARequest &);
 
 #endif

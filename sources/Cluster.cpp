@@ -5,7 +5,6 @@
 								/*### HEADERS ###*/
 /*============================================================================*/
 #include "Cluster.hpp"
-#include "ARequest.hpp"
 #include "ConfigParser.hpp"
 
 #include <cstring>
@@ -22,17 +21,21 @@
 #include <csignal>
 #include <fstream>
 
+#include "ARequest.hpp"
+#include "GetRequest.hpp"
+#include "UtilParsing.hpp"
+
 #define MAXEVENT	10
 #define BUFFERSIZE	2048
 
-#define HTTPTEST	"HTTP/1.1 200 OK\r\n" \
-					"Content-Type: text/html\r\n" \
+#define HTTPTEST	"HTTP/1.1        200          OK\n" \
+					"Content-Type:                      text/html\r\n" \
 					"Content-Length: 208\r\n" \
 					"\r\n" \
 					"<http>" \
-					"<h1>TITLE<h1>" \
+					"<h1>TITLE<h1>                    " \
 					"Hello, World!" \
-					"<form action=/submit method=POST>" \
+					"<form action=/submit        method=POST>" \
     				"<input type=text name=nom>" \
     				"<button type=submit>OK</button>" \
 					"</form>" \
@@ -54,11 +57,6 @@ Cluster::Cluster(const std::string &filepath)
   : _config(ConfigParser().parse(filepath))
 {
 	setServersByPort();
-	// for (std::map<std::string, Server >::const_iterator it = getServersByPort().begin();
-	// it != getServersByPort().end(); it++)
-	// 	std::cout	<< "port [" << it->first.c_str() << "] associate with server:" << std::endl
-	// 				<< it->second;
-
 	try {
 		_serverSockets.clear();
 		setServerSockets();
@@ -81,8 +79,9 @@ Cluster::Cluster(const std::string &filepath)
 		throw;
 	}
 #ifdef TEST
-	std::cout	<< BOLD BRIGHT_YELLOW "\nINIT TERMINATED\n" RESET << std::endl
-				<< *this ;
+	std::cout	<< std::endl << *this
+				<< BOLD BRIGHT_YELLOW "\nINIT TERMINATED\n" RESET
+				<< std::endl;
 #endif
 }
 /*----------------------------------------------------------------------------*/
@@ -104,17 +103,16 @@ Cluster & Cluster::operator=(const Cluster & ) {
 
 std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 {
-	o	<< BOLD BLUE << "CLUSTER:" << std::endl
-		<< RESET << BLUE << "_serversByService:"
-		<< std::endl << RESET;
+	o	<< BOLD "CLUSTER:" RESET << std::endl
+		<< "_serversByService:"
+		<< std::endl;
 	for (std::map<std::string, Server >::const_iterator it = ref.getServersByPort().begin();
 		it != ref.getServersByPort().end(); it++)
 			o	<< "port [" + it->first + "] associate with server:" << std::endl
-				<< it->second;
+				<< it->second << std::endl;
 	return o << RESET;
 }
 /*----------------------------------------------------------------------------*/
-
 
 /*============================================================================*/
 						/*### PUBLIC METHODS ###*/
@@ -165,32 +163,38 @@ void	Cluster::readData(const struct epoll_event &event)
 	// }
 #endif
 
-	// est ce que le client existe deja ?
-	// std::set<Server>::const_iterator		itServer;
-	// std::map<int, Client>::const_iterator	itClient;
+	ARequest request(response);
+	if (response.find("GET") != std::string::npos) {
+		// try {
+		// 	// request = new GetRequest(response);
+		// }
+		// catch(const std::exception& e)
+		// {
+		// 	std::cerr << e.what() << '\n';
+		// }
+		
+		std::cout << "GET" <<std::endl;
+	}
+	else if (response.find("POST") != std::string::npos) {
+		std::cout << "POST" <<std::endl;
 
-	// for (itServer = _servers.begin(); itServer != _servers.end(); itServer++)
-	// {
-	// 	itClient = itServer->getClientList().find(event.data.fd);
-	// 	if (itClient != itServer->getClientList().end())
-	// 		break;
-	// }
-	// if (response.find("POST", 0) != std::string::npos)
-	// 	std::cout << RED "POST" RESET << std::endl;
-	// else if (response.find("GET", 0) != std::string::npos)
-	// 	std::cout << RED "GET" RESET << std::endl;
-	// else
-	// 	std::cout << RED "OTHER" RESET << std::endl;
+	}
+	else if (response.find("DELETE") != std::string::npos) {
+		std::cout << "DELETE" <<std::endl;
 
-	// itServer != _servers.end() ? itClient->second.handlerequest : _createClient()
+	}
+	else {
+		// ask to return method unreconize in send function
+	}
 
-	/*	* apres cette boucle
-		* parser la requete
-	*/
-
-
-	std::cout << "RECEIVED FROM CLIENT:\n" << response << std::endl;
-
+	// delete request;
+	// find server with port and name
+	// find client
+	
+	
+	
+	
+	
 	try {
 		changeEventMod(false, event.data.fd);
 	}
@@ -213,13 +217,16 @@ void	Cluster::sendData(const struct epoll_event &event)
 	char buff[4096];
 	memset(buff, '\0', sizeof(buff));
 
-	int fd = open("./website/form.html", O_RDONLY | O_WRONLY); // jai rajouter le owronly mais aucun changement
+	int fd = open("./website/form.html", O_RDONLY); // determiner le chemin demander par user
 	if (fd == -1)
 		perror("OPENTEST");	
 	read(fd, buff, sizeof(buff));
-	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 400\r\n\r\n";
+	std::string response("HTTP/1.1 OK\r\nContent-Type: text/html\r\n");
+	response += std::string(_config._serversConfig[0]._clientMaxBodySize); // determiner quel server appel la fonction
+	response += "\r\n\r\n";
 	response += buff;
-
+// Content-Length: 200M\r\n\r\n
+	std::cout << "Valeur de la response :" <<  response << std::endl;
 	ssize_t		bytes_sended = 0;
 	int			httpSize = response.size();//strlen(http_response);
 
@@ -300,22 +307,24 @@ void	Cluster::runCluster()
 
 void Cluster::setServersByPort()
 {
-	std::vector<std::string>::const_iterator	itServiceList;
-	std::vector<ServerConfig>::const_iterator	itConfigServer;
+	std::vector<ServerConfig>::iterator	itConfigServer = _config._serversConfig.begin();
 	std::pair<std::map<std::string, Server>::iterator, bool>	result;
 
-	for (itConfigServer = _config._serversConfig.begin();
-		itConfigServer != _config._serversConfig.end(); itConfigServer++)
+	while (itConfigServer != _config._serversConfig.end())
 	{
-		for (itServiceList = itConfigServer->_listenPort.begin();
-			itServiceList != itConfigServer->_listenPort.end(); itServiceList++)
+		std::vector<std::string>::iterator	itServiceList = itConfigServer->_listenPort.begin();
+		while (itServiceList != itConfigServer->_listenPort.end())
 		{
-			result = _serversByService.insert(std::make_pair(*itServiceList, Server(*itConfigServer)));
-			if (!result.second) {
-				std::cerr << "Port [" << *itServiceList << "] still handle by server "
-						  << *(result.first->second.getNameList().begin()) << std::endl;
+			result = _serversByService.insert(std::make_pair(*itServiceList, Server(*itConfigServer, *itServiceList)));
+			if (!result.second)
+			{
+				std::cerr << YELLOW "Port [" << *itServiceList << "] still required by server "
+						  << *(result.first->second.getNameList().begin())
+						  << RESET << std::endl;
 			}
+			itServiceList++;
 		}
+		itConfigServer++;
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -328,15 +337,18 @@ void	Cluster::setServerSockets()
 	std::cout	<< BOLD BLUE << "Function -> setServerSockets() {"
 				<< RESET << std::endl;
 # endif
+
+	std::map<std::string, Server>::iterator itServer = _serversByService.begin();
 	
-	for (std::map<std::string, Server>::iterator it = _serversByService.begin(); \
-												it != _serversByService.end(); it++)
+	while (itServer != _serversByService.end())
 	{
 		int				sockFd = 0;
 		struct addrinfo	*res = NULL;
 		try {
-			safeGetAddr(*it, &res);
-			createAndLinkSocketServer(*res, it->first, &sockFd);
+			safeGetAddr(itServer->first.c_str(), &res);
+			createAndLinkSocketServer(*res, itServer->first, &sockFd);
+			freeaddrinfo(res);
+			itServer++;
 		}
 		catch(const InitException &e) {
 			if (sockFd == -1){
@@ -349,9 +361,12 @@ void	Cluster::setServerSockets()
 			}
 			e.setSockExcept();
 			std::cerr << (e.what() != NULL ? e.what() : "") << std::endl;
+
+			std::map<std::string, Server>::iterator tmp = itServer;
+			tmp++;
+			_serversByService.erase(itServer);
+			itServer = tmp;
 		}
-		if (res)
-			freeaddrinfo(res);
 	}
 # ifdef TEST
 	std::cout	<< BOLD BLUE "}\n" RESET
@@ -388,7 +403,7 @@ void	Cluster::setEpollFd()
 
 /*	* get an availble address on an avaible service (port)
 */
-void	Cluster::safeGetAddr(const std::pair<const std::string, Server> &server, struct addrinfo **res) const
+void	Cluster::safeGetAddr(const char *serviceName, struct addrinfo **res) const
 {
 	struct addrinfo	hints;
 
@@ -398,15 +413,10 @@ void	Cluster::safeGetAddr(const std::pair<const std::string, Server> &server, st
 	hints.ai_protocol = IPPROTO_TCP;			// Définit le protocole de transport comme étant TCP (Transmission Control Protocol).
 	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
 												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
-	std::set<std::string>::iterator it = server.second.getNameList().begin();
-	for (; it != server.second.getNameList().end(); it++)
-	{
-		int ret = getaddrinfo(it->c_str(), server.first.c_str(), &hints, res);
-		if (ret != 0) {
-			std::string errorMsg = "Error -> setsockopt() at " + *it + " on port [" + server.first + "]";
-			throw InitException(__FILE__, __LINE__ - 2, errorMsg.c_str(), ret);
-		}
-			// throw InitException(__FILE__, __LINE__ - 2, std::string("Error -> setsockopt() at " + *it + " on port [" + server.first + "]" + '\0').c_str(), ret);
+	int ret = getaddrinfo(NULL, serviceName, &hints, res);
+	if (ret != 0) {
+		std::string errorMsg = "Error -> safeGetAddr() on port [" + std::string(serviceName) + "]";
+		throw InitException(__FILE__, __LINE__ - 2, errorMsg.c_str(), ret);
 	}
 }
 /*----------------------------------------------------------------------------*/
