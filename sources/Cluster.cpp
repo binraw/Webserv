@@ -213,7 +213,7 @@ void	Cluster::sendData(const struct epoll_event &event)
 	char buff[4096];
 	memset(buff, '\0', sizeof(buff));
 
-	int fd = open("./website/form.html", O_RDONLY);
+	int fd = open("./website/form.html", O_RDONLY | O_WRONLY); // jai rajouter le owronly mais aucun changement
 	if (fd == -1)
 		perror("OPENTEST");	
 	read(fd, buff, sizeof(buff));

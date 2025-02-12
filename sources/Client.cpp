@@ -67,10 +67,8 @@ std::string Client::playCGI()
         close(pipfd[0]);
         int status;
         waitpid(pid, &status, 0);
-        if (WIFEXITED(status)) 
-        {
-            // ici tout fonctionne donc a voir si on doit rajouter un truc ou simplement return
-        } 
+        if (WIFEXITED(status))
+            return output;
         else 
         {
             std::cout << "CGI script did not terminate normally" << std::endl;
@@ -122,10 +120,8 @@ std::string Client::playUploadCGI()
         close(pipfd[0]);
         int status;
         waitpid(pid, &status, 0);
-        if (WIFEXITED(status)) 
-        {
-      
-        } 
+        if (WIFEXITED(status))
+            return output;
         else 
         {
             std::cout << "CGI script did not terminate normally" << std::endl;
