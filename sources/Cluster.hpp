@@ -40,6 +40,7 @@
 
 // timeout client ne fonctionne pas correctement
 
+
 class Cluster
 {
 	class   InitException : virtual public std::exception
@@ -84,8 +85,8 @@ class Cluster
 		~Cluster();
 		Cluster & operator=(const Cluster &);
 
-		const std::map<std::string, Server >	&getServersByPort()	const;
-		const HttpConfig			&getConfig()	const;
+		const HttpConfig					& getConfig() const;
+		const std::map<std::string, Server>	& getServersByPort() const;
 
 		void	runCluster();
 
@@ -93,23 +94,24 @@ class Cluster
 		void	readData(const struct epoll_event &);
 
 	private:
-		HttpConfig		_config;
 		int				_epollFd;		// fd vers structure epoll
+		HttpConfig		_config;
 		std::set<int>	_serverSockets;	// ensemble des socket serveur (un par port)
 		std::map<std::string, Server >	_serversByService;
+		// static const std::map<std::string, ptrToRequestBuilder>	_requestTable[];
 
-		void	setServersByPort();
 		void	setEpollFd();
+		void	setServersByPort();
 		void	setServerSockets();
 		
+		void	closeFdSet() const;
 		void	safeGetAddr(const char *, struct addrinfo **) const;
 		void	createAndLinkSocketServer(const struct addrinfo &, const std::string &, int *);
-		void	closeFdSet() const;
 
-		void	acceptConnexion(const struct epoll_event &) const;
-		void	closeConnexion(const struct epoll_event &event) const;
 		void	addFdInEpoll(const bool, const int)	const;
 		void	changeEventMod(const bool, const int) const;
+		void	acceptConnexion(const struct epoll_event &) const;
+		void	closeConnexion(const struct epoll_event &event) const;
 };
 
 std::ostream	& operator<<(std::ostream &, const Cluster &);

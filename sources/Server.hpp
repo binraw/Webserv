@@ -29,7 +29,8 @@ class Server
 		std::set<std::string>	_locationPath;	//websites handle by the server (/website/site1.com)
 		std::map<int, Client>	_clientList;
 		// std::set<Location>	_locations
-
+		
+		std::map<int, Client>::iterator	findClient(const int);
 		void	setLocationPath();
 
 };

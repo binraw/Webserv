@@ -30,12 +30,6 @@
 #include "UtilParsing.hpp"
 #define	PROTOCOL_VERION	"HTTP/1.1"
 
-std::string ARequest::_requestHandle[] =
-{
-	"GET",
-	"POST",
-	"DELETE"
-};
 
 /*============================================================================*/
 				/*### CONSTRUCTORS - DESTRUCTOR - OVERLOAD OP ###*/
@@ -48,7 +42,7 @@ std::string ARequest::_requestHandle[] =
 	* Host error
 */
 ARequest::ARequest(const std::string &response)
-  :	_keepAlive(response.find("keepalive") != response.npos ? true : false)
+  :	_keepAlive(response.find("keep-alive") != response.npos ? true : false)
 {
 	const std::vector<std::string>	token = UtilParsing::split(response, "\r\n");
 	std::vector<std::string>::const_iterator itToken = token.begin();
@@ -58,15 +52,20 @@ ARequest::ARequest(const std::string &response)
 	initMimeType(itToken, token.end());
 
 #ifdef TEST
-	std::cout	<< "Request by token: (IN ARequest constructor)" << std::endl;
-	UtilParsing::displayVector(UtilParsing::split(response, "\n\r"));
+	std::cout	<< "ARequest:" << std::endl
+				<< "_requestType: [" << _requestType << "]" << std::endl
+				<< "_url: [" << _url << "]" << std::endl
+				<< "_hostName: [" << _hostName << "]" << std::endl
+				<< "_hostPort: [" << _hostPort << "]" << std::endl
+				<< "_keepAlive: [" << _keepAlive << "]" << std::endl
+				<< "_mimeType: [" << _mimeType << "]"
+				<< std::endl;
 #endif
-
 }
 /*----------------------------------------------------------------------------*/
 
-ARequest::ARequest(/* const std::vector<std::string> &tokenResponse */)
-{	}
+// ARequest::ARequest(/* const std::vector<std::string> &tokenResponse */)
+// {	}
 /*----------------------------------------------------------------------------*/
 
 /*============================================================================*/
@@ -78,12 +77,7 @@ ARequest::ARequest(/* const std::vector<std::string> &tokenResponse */)
 */
 void	ARequest::initRequestLine(const std::string &requestLine)
 {
-	_requestType.clear();
-	for (size_t i = 0; i < _requestHandle->size(); i++)
-	{
-		if (requestLine.find(_requestHandle[i]) != std::string::npos)
-			_requestType = _requestHandle[i];
-	}
+	_requestType = requestLine.substr(0, requestLine.find_first_of(" "));
 	//throw exception with error 415 -> Unsupported Media Type : Format de requête non supporté pour une méthode et une ressource données.
 	if (_requestType.empty() == true) {
 		std::cerr << RED "throw exception with error 415 in initRequestLine()" RESET << std::endl;
@@ -118,45 +112,43 @@ void	ARequest::initRequestLine(const std::string &requestLine)
 */
 void	ARequest::initHost(std::vector<std::string>::const_iterator &itToken, std::vector<std::string>::const_iterator itEnd)
 {
-	std::cout << RED "hostline in initHost(): " << *itToken << std::endl;
-
-
 	while (itToken != itEnd) {
 		if (itToken->find("Host") != itToken->npos)
 			break;
 		itToken++;
 	}
 	if (itToken == itEnd) {
-		std::cerr << RED "NO HOST in initHost()" << std::endl;
+		std::cerr << RED "NO HOST in initHost()" << std::endl; // manage error
 		return;
 	}
+	
 	_hostName.clear();
 	_hostPort.clear();
-	size_t idx = itToken->find_last_of(":");
-	_hostName = itToken->substr(itToken->find_last_of(" ", idx), idx - itToken->find_last_of(" ", idx));
-	_hostPort = itToken->substr(idx + 1, itToken->find_first_of(" ", idx) - idx);
+	size_t idxSpace = itToken->find_last_of(" ");
+	size_t idxSemicolon = itToken->find_last_of(":");
+	_hostName = itToken->substr(idxSpace + 1, idxSemicolon - idxSpace - 1);
+	_hostPort = itToken->substr(idxSemicolon + 1, itToken->length() - idxSemicolon);
 }
 /*----------------------------------------------------------------------------*/
 
+/*	* extract mime types handle by client or set it as application/octet-stream
+*/
 void	ARequest::initMimeType(std::vector<std::string>::const_iterator &token, std::vector<std::string>::const_iterator itEnd)
 {
 	_mimeType.clear();
 	while (token != itEnd) {
 		if (token->find("Accept") != token->npos)
 			break;
+		token++;
 	}
-	// if (token == itEnd)
-	// 	_mimeType = "application/octet-stream";
-	// else
-	// {
-	// 	_mimeType
-	// }
+	if (token == itEnd)
+		_mimeType = "application/octet-stream";
+	else
+	{
+		_mimeType = token->substr(token->find_first_of(" ") + 1, token->length() - token->find_first_of(" "));
+		// _mimeType = token->substr
+	}
 
-}
-/*----------------------------------------------------------------------------*/
-
-void	ARequest::_setKeepAlive(bool isActiv) {
-	_keepAlive = isActiv;
 }
 /*----------------------------------------------------------------------------*/
 

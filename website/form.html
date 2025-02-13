@@ -1,7 +1,18 @@
-<html>
-	<h1>ICI</h1>
-	<form action=/submit method=POST>
-	<input type=text name=nom>
-	<button type=submit>OK</button>
-	</form>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de fichier</title>
+</head>
+<body>
+
+    <h2>Envoyer un fichier</h2>
+
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="fichier" required>
+        <button type="submit">Envoyer</button>
+    </form>
+
+</body>
 </html>

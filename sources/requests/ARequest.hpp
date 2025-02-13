@@ -27,30 +27,23 @@ class ARequest
 	// };
 
 	public:
-		ARequest(const std::string &);
-		~ARequest() {};
-		ARequest *	createRequest(const std::string &);
+		virtual ~ARequest() {};
+		virtual void playRequest() = 0;
 
 	protected:
+		ARequest(const std::string &);
 
 		bool	_keepAlive;
 		std::string	_url;
 		std::string	_requestType;
-		
 		std::string	_mimeType;
-		
 		std::string	_hostName;
 		std::string	_hostPort;
 	
-		ARequest(/* const std::vector<std::string> & */);
-		void	_setKeepAlive(bool);
-	
-	private:
+	private:		
 		void	initRequestLine(const std::string &);
 		void	initHost(std::vector<std::string>::const_iterator &, std::vector<std::string>::const_iterator);
-
 		void	initMimeType(std::vector<std::string>::const_iterator &, std::vector<std::string>::const_iterator);
-		static std::string	_requestHandle[];
 };
 
 #endif

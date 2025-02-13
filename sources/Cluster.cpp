@@ -16,6 +16,13 @@
 #include <fcntl.h>
 #include <netdb.h>
 
+
+
+
+
+
+#include "RequestBuilder.hpp"
+
 /*	* ressources provisoirs
 */
 #include <csignal>
@@ -127,6 +134,12 @@ const HttpConfig & Cluster::getConfig() const {
 	return _config;
 }
 /*----------------------------------------------------------------------------*/
+#include <algorithm>
+
+std::map<int, Client>::iterator	Server::findClient(const int fdClient)
+{
+	_clientList.at(fdClient);
+}
 
 void	Cluster::readData(const struct epoll_event &event)
 {
@@ -137,9 +150,10 @@ void	Cluster::readData(const struct epoll_event &event)
 				<< std::endl;
 #endif
 	int 		bytes_received = BUFFERSIZE;
-	char		buffer[BUFFERSIZE] = {'\0'};
+	char		buffer[4096] = {'\0'};
 	std::string	response;
-	
+
+	response.clear();	
 	while (bytes_received == BUFFERSIZE)
 	{
 		bytes_received = recv(event.data.fd, buffer, BUFFERSIZE, MSG_DONTWAIT);
@@ -154,46 +168,17 @@ void	Cluster::readData(const struct epoll_event &event)
 				<< PURPLE << response
 				<< BRIGHT_PURPLE BOLD "]MSG_END" RESET
 				<< std::endl;
-	// std::ofstream logFile("header.log", std::ios::app);
-	// if (logFile) {
-	// 	logFile << response;
-	// }
-	// else {
-	// 	perror("ERROR LOG TEST");
-	// }
 #endif
 
-	ARequest request(response);
-	if (response.find("GET") != std::string::npos) {
-		// try {
-		// 	// request = new GetRequest(response);
-		// }
-		// catch(const std::exception& e)
-		// {
-		// 	std::cerr << e.what() << '\n';
-		// }
-		
-		std::cout << "GET" <<std::endl;
-	}
-	else if (response.find("POST") != std::string::npos) {
-		std::cout << "POST" <<std::endl;
+	// find client in the good server
 
-	}
-	else if (response.find("DELETE") != std::string::npos) {
-		std::cout << "DELETE" <<std::endl;
+	std::map<int, Client>::iterator itClient = std::for_each(_serversByService.begin(), _serversByService.end(), findClient(event.data.fd));
 
-	}
-	else {
-		// ask to return method unreconize in send function
-	}
+	
 
-	// delete request;
-	// find server with port and name
-	// find client
-	
-	
-	
-	
+
+	ARequest *request = RequestBuiler::createRequest(response);
+
 	
 	try {
 		changeEventMod(false, event.data.fd);

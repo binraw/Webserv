@@ -30,11 +30,6 @@ GetRequest &	GetRequest::operator=(const GetRequest &ref)
 	return *this;
 }
 
-// ARequest *	GetRequest::createRequest(const std::string &)
-// {
-
-
-// }
-
-
-
+ARequest *	GetRequest::createGetRequest(const std::string &data) {
+	return new GetRequest(data);
+}

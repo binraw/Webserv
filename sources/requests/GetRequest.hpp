@@ -13,13 +13,13 @@ class GetRequest : virtual public ARequest
 {
 	public:
 		GetRequest(const std::string &);
-		GetRequest(const GetRequest &);
 		~GetRequest();
-		GetRequest &operator=(const GetRequest &);
 
-		// ARequest * createRequest(const std::string &);
+		ARequest * createGetRequest(const std::string &);
 
 	private:
+		GetRequest(const GetRequest &);
+		GetRequest &operator=(const GetRequest &);
 
 
 };
