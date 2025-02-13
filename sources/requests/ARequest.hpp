@@ -8,6 +8,7 @@
 # define AREQUEST_HPP
 
 # include "webserv.hpp"
+#include "HttpConfig.hpp"
 
 class ARequest
 {
@@ -41,6 +42,7 @@ class ARequest
 		
 		std::string	_hostName;
 		std::string	_hostPosrt;
+		ServerConfig		_config; // je rajoute ca pour pouvoir faire du dynamique sur les path
 	
 		ARequest(/* const std::vector<std::string> & */);
 		void	_setKeepAlive(bool);
