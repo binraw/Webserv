@@ -5,6 +5,9 @@
 #include "ARequest.hpp"
 #include "Server.hpp"
 #include <sys/wait.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 class Client /*: virtual public Server*/
 {

@@ -12,6 +12,9 @@
 #include <sys/wait.h>
 #include <fstream>
 #include <sys/stat.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 class PostRequest : virtual public ARequest
 {
@@ -23,6 +26,8 @@ class PostRequest : virtual public ARequest
 		PostRequest &operator=(const PostRequest &);
 		std::string playCGI(); 
 		std::string playUploadCGI();
+		void save_file(const std::string& request_body);
+		std::string extract_filename(const std::string& request_body);
 
 	private:
 		// std::vector<std::string>	_arguments; ne pas dissocier les arguments je pense que renvoyer le content
