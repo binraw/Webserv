@@ -21,28 +21,25 @@
 
 
 
-#include "RequestBuilder.hpp"
 
 /*	* ressources provisoirs
 */
 #include <csignal>
 #include <fstream>
 
-#include "ARequest.hpp"
-#include "GetRequest.hpp"
+#include "Request.hpp"
 #include "UtilParsing.hpp"
 
 #define MAXEVENT	10
 #define BUFFERSIZE	2048
 
-#define HTTPTEST	"HTTP/1.1        200          OK\n" \
-					"Content-Type:                      text/html\r\n" \
-					"Content-Length: 208\r\n" \
-					"\r\n" \
+#define HTTPTEST	"HTTP/1.1 200 OK\n" \
+					"Content-Type: text/html\r\n" \
+					"Content-Length: 208\r\n\r\n" \
 					"<http>" \
-					"<h1>TITLE<h1>                    " \
+					"<h1>TITLE<h1>" \
 					"Hello, World!" \
-					"<form action=/submit        method=POST>" \
+					"<form action=/submit method=POST>" \
     				"<input type=text name=nom>" \
     				"<button type=submit>OK</button>" \
 					"</form>" \
@@ -125,8 +122,8 @@ std::ostream	& operator<<(std::ostream & o, const Cluster &ref)
 						/*### PUBLIC METHODS ###*/
 /*============================================================================*/
 
-const std::map<std::string, Server > & Cluster::getServersByPort()	const {
-	return _serversByService;
+std::map<std::string, Server> & Cluster::getServersByPort() const {
+	return const_cast<std::map<std::string, Server> & >( _serversByService);
 }
 /*----------------------------------------------------------------------------*/
 
@@ -134,12 +131,35 @@ const HttpConfig & Cluster::getConfig() const {
 	return _config;
 }
 /*----------------------------------------------------------------------------*/
-#include <algorithm>
 
-std::map<int, Client>::iterator	Server::findClient(const int fdClient)
+/*	* 
+	// extract host port from request to find the server
+	// find the good server with the port (only one server by port)
+	// check if client exist in the server
+		// add new client in the set if not exist
+*/
+Client *	Cluster::findClient(const Request &req, const int fdClient)
 {
-	_clientList.at(fdClient);
+	Client *client = NULL;
+	Server *current = NULL;
+
+	try {
+		current = &getServersByPort().at(req.gethostport());
+	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << '\n';
+	}
+
+	try {
+		current->getClientList().insert(std::pair<int, Client>(fdClient, Client(req)));
+	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << '\n';
+	}
+	
+	return client;
 }
+/*----------------------------------------------------------------------------*/
 
 void	Cluster::readData(const struct epoll_event &event)
 {
@@ -163,22 +183,24 @@ void	Cluster::readData(const struct epoll_event &event)
 		}
 		response += buffer;
 	}
+
+	try {
+		// gerer les exception dans le constructeur Request
+		findClient(Request(response), event.data.fd);
+	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << "HEEEEEERE" << '\n';
+		closeConnexion(event); // creer une reponse avec l'erreur associee (ici bad request)
+		return;
+	}
+
 #ifdef TEST
-	std::cout	<< BRIGHT_PURPLE BOLD "MSG_CLIENT[" RESET
-				<< PURPLE << response
-				<< BRIGHT_PURPLE BOLD "]MSG_END" RESET
-				<< std::endl;
+	// std::cout << request << std::endl;
+	// std::cout	<< BRIGHT_PURPLE BOLD "MSG_CLIENT[" RESET
+	// 			<< PURPLE << response
+	// 			<< BRIGHT_PURPLE BOLD "]MSG_END" RESET
+	// 			<< std::endl;
 #endif
-
-	// find client in the good server
-
-	std::map<int, Client>::iterator itClient = std::for_each(_serversByService.begin(), _serversByService.end(), findClient(event.data.fd));
-
-	
-
-
-	ARequest *request = RequestBuiler::createRequest(response);
-
 	
 	try {
 		changeEventMod(false, event.data.fd);
@@ -188,8 +210,8 @@ void	Cluster::readData(const struct epoll_event &event)
 		closeConnexion(event);
 		throw;
 	}
-
 }
+/*----------------------------------------------------------------------------*/
 
 void	Cluster::sendData(const struct epoll_event &event)
 {

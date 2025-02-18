@@ -1,24 +1,26 @@
+
+
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
 # include "webserv.hpp"
-# include "ARequest.hpp"
+# include "Request.hpp"
 
 class Client
 {
-	// public:
-	// 	Client(const int);
-	// 	Client(const Client &);
-	// 	~Client();
-	// 	Client	&operator=(const Client &);
+	public:
+		Client(const Request &req) {
+			_request = req;
+		}
+		Client(){};
+		~Client(){};
 
-	// 	const ARequest *getRequest() const;
+	private:
+		Request _request;
 
-	// private:
-	// 	ARequest	*_request;
-	// 	std::string	_response;
 };
 
 // std::ostream & operator<<(std::ostream &, const Client &);
 
 #endif
+

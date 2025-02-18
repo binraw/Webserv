@@ -85,8 +85,8 @@ class Cluster
 		~Cluster();
 		Cluster & operator=(const Cluster &);
 
-		const HttpConfig					& getConfig() const;
-		const std::map<std::string, Server>	& getServersByPort() const;
+		const HttpConfig				& getConfig() const;
+		std::map<std::string, Server>	& getServersByPort() const;
 
 		void	runCluster();
 
@@ -98,8 +98,8 @@ class Cluster
 		HttpConfig		_config;
 		std::set<int>	_serverSockets;	// ensemble des socket serveur (un par port)
 		std::map<std::string, Server >	_serversByService;
-		// static const std::map<std::string, ptrToRequestBuilder>	_requestTable[];
 
+		Client	*findClient(const Request &req, const int);
 		void	setEpollFd();
 		void	setServersByPort();
 		void	setServerSockets();

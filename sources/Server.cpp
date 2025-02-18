@@ -99,8 +99,8 @@ const std::set<std::string>	& Server::getLocationPath() const {
 }
 /*----------------------------------------------------------------------------*/
 
-const std::map<int, Client>	&Server::getClientList() const {
-	return _clientList;
+std::map<int, Client>	&Server::getClientList() const {
+	return const_cast<std::map<int, Client>& >(_clientList);
 }
 /*----------------------------------------------------------------------------*/
 
