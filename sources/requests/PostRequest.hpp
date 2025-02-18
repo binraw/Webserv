@@ -15,18 +15,19 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "parsing/UtilParsing.hpp"
 
 class PostRequest : virtual public ARequest
 {
 	public:
 		PostRequest(const std::string &);
 		PostRequest(const PostRequest &);
-		void executePostRequest(); // ici ca sera une fct propre a ARequest et seulement sont content diff.
+		int executePostRequest(); // ici ca sera une fct propre a ARequest et seulement sont content diff.
 		~PostRequest();
 		PostRequest &operator=(const PostRequest &);
 		std::string playCGI(); 
 		std::string playUploadCGI();
-		void save_file(const std::string& request_body);
+		int save_file(const std::string& request_body);
 		std::string extract_filename(const std::string& request_body);
 
 	private:

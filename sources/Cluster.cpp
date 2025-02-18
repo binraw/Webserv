@@ -128,6 +128,8 @@ const HttpConfig & Cluster::getConfig() const {
 }
 /*----------------------------------------------------------------------------*/
 
+
+
 void	Cluster::readData(const struct epoll_event &event)
 {
 #ifdef TEST
@@ -216,6 +218,11 @@ void	Cluster::sendData(const struct epoll_event &event)
 #endif
 	char buff[4096];
 	memset(buff, '\0', sizeof(buff));
+
+
+	// it = _serversByService.begin()->second. ;
+	//faire des fct utils qui vont concatener les infos qui sont renvoyer de POST
+
 
 	int fd = open("./website/form.html", O_RDONLY); // determiner le chemin demander par user
 	if (fd == -1)

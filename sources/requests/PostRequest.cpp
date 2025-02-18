@@ -43,33 +43,32 @@ bool directoryExists(const std::string &dirname)
 	return (info.st_mode & S_IFDIR) != 0;
 }
 
-void PostRequest::executePostRequest()
+int PostRequest::executePostRequest()
 {
 	if (_url.find("POST /cgi-bin"))
 	{
-		if (fileExits(_pathCGI))
+		if (UtilParsing::fileExits(_pathCGI))
 		{
 			_contentFileUpdate = playCGI();
-			return; // ici je return car on attend juste que contentFileUpload soit rempli.
+            if (_contentFileForUpload.empty())
+                return 500; // la on met une Internal Server Error car une erreur c'est produite dans l'execution
+			return 200; // request Reussi
 		}
 		else
 			throw;
 	}
 	else if (_url.find("POST" + _config._uploadPath))
 	{
-		if (directoryExists(_config._uploadPath))
+		if (UtilParsing::directoryExists(_config._uploadPath))
 		{
-			save_file(_contentReq);
+			return save_file(_contentReq);
 		}
 	}
     else
     {
-        //mettre une erreur car je pense qu'on peut limiter notre serveur a ces deux type de requete POST.
+       return 400; // la on retourne bad request car notre server ne supprote que ces deux type de POST. 
     }
 }
-
-
-
 
 
 std::string PostRequest::playCGI()
@@ -79,13 +78,13 @@ std::string PostRequest::playCGI()
 
     if (pipe(pipfd) == -1)
     {
-        std::cerr << "Error pipe CGI" << std::endl;
+        std::cerr << "Error pipe CGI" << std::endl; // juste pour futur debug
         return "";
     }
     pid_t pid = fork();
     if (pid < 0)
     {
-        std::cerr << "fork failled" << std::endl;
+        std::cerr << "fork failled" << std::endl; // juste pour futur debug
         return "";
     }
     else if (pid == 0) 
@@ -96,7 +95,7 @@ std::string PostRequest::playCGI()
         char* const args[] = {const_cast<char*>(_pathCGI.c_str()), NULL};
         if (execv(args[0], args) == -1)  
         {
-            std::cerr << "execv failed" << std::endl;
+            std::cerr << "execv failed" << std::endl; // juste pour futur debug
             return "";
         }
     } 
@@ -124,60 +123,6 @@ std::string PostRequest::playCGI()
 }
 
 
-// fct a changer vu qu'il n'y a plus de CGI dassn le telechargement.
-// std::string PostRequest::playUploadCGI()
-// {
-//      std::string output;
-//     int pipfd[2];
-    
-//     if (pipe(pipfd) == -1)
-//     {
-//         std::cerr << "Error pipe CGI" << std::endl;
-//         return "";
-//     }
-    
-//     pid_t pid = fork();
-//     if (pid < 0)
-//     {
-//         std::cerr << "fork failed" << std::endl;
-//         return "";
-//     }
-//     else if (pid == 0) 
-//     {
-//         close(pipfd[0]);
-//         dup2(pipfd[1], STDOUT_FILENO); 
-//         close(pipfd[1]);
-//         char* const args[] = {const_cast<char*>(_pathCGI.c_str()), NULL};
-//         write(STDIN_FILENO, _contentFileForUpload.c_str(), _contentFileForUpload.size());
-//         if (execv(args[0], args) == -1)  
-//         {
-//             std::cerr << "execv failed" << std::endl;
-//             return "";
-//         }
-//     } 
-//     else 
-//     {
-//         close(pipfd[1]);
-//         char buffer[128];
-//         ssize_t bytesRead;
-//         while ((bytesRead = read(pipfd[0], buffer, sizeof(buffer) - 1)) > 0)
-//         {
-//             buffer[bytesRead] = '\0';
-//             output.append(buffer);
-//         }
-//         close(pipfd[0]);
-//         int status;
-//         waitpid(pid, &status, 0);
-//         if (WIFEXITED(status))
-//             return output;
-//         else 
-//         {
-//             std::cout << "CGI script did not terminate normally" << std::endl;
-//         }
-//     }
-//     return output;
-// }
-
 std::string PostRequest::extract_filename(const std::string& request_body) // a voir si cette fonction peut etre utile ailleurs. Donc pas que la mettre dans POST
 {
     std::string filename;
@@ -199,32 +144,33 @@ std::string PostRequest::extract_filename(const std::string& request_body) // a 
     return filename;
 }
 
-void PostRequest::save_file(const std::string& request_body) 
+int PostRequest::save_file(const std::string& request_body) 
 {
     std::string filename = extract_filename(request_body);
     if (filename.empty()) 
-    { // mettre une erreur ici
-        return;
+    {
+        return 404;
     }
     std::string boundary = "------WebKitFormBoundary";
     size_t file_start = request_body.find("\r\n\r\n");
     if (file_start == std::string::npos) 
-    { // encore mettre une erreur
-        return;
+    {
+        return 404;
     }
     file_start += 4;
     size_t file_end = request_body.rfind("--" + boundary);
     if (file_end == std::string::npos) 
     { 
-        return;
+        return 413; // taille max (fichier trop gros)
     }
     std::string file_data = request_body.substr(file_start, file_end - file_start);
     std::string file_path = "upload/" + filename;
     std::ofstream output(file_path.c_str(), std::ios::binary); // le ios binary permet de pas alterer le contenu donc gerer meme les images etc 
     if (!output) 
     {
-        return;
+        return 500; // la erreur au niveau du server on donne pas plus d'info qu'une erreur 500 
     }
     output.write(file_data.c_str(), file_data.size());
     output.close();
+    return 200; // tout est ok
 }

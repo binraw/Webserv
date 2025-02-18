@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "parsing/UtilParsing.hpp"
+#include <sstream>
 
 class Client /*: virtual public Server*/
 {
@@ -21,14 +23,25 @@ private:
     std::string _pathCGI;
     
 public:
-    // Client(int fd, ARequest* request);
+
     ARequest* request;
-    
-    
-    std::string response;
-    std::string playCGI();
+    std::string _response;
+    std::string _url;
+    std::string _filename;
+    std::string _contentBody;
+    std::string _codeResponse;
+    std::string _contentType;
+    std::string _contentLength;
+
     Client(std::string file);
-    std::string playUploadCGI();
+    int executeGetRequest();
+    int writeGetResponse();
+    int executeDeleteRequest();
+    int writeDeleteResponse();
+    int checkPossibilityFile();
+    int checkRequest();
+    void buildCodeResponse(int code);
+    void buildResponse();
     ~Client();
     Client &operator=(const Client &);
 };

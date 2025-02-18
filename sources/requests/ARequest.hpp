@@ -9,6 +9,7 @@
 
 # include "webserv.hpp"
 #include "HttpConfig.hpp"
+#include "PostRequest.hpp"
 
 class ARequest
 {

@@ -177,3 +177,16 @@ std::string	UtilParsing::recoverValue(std::string line, std::string key)
     }
     return "";
 }
+bool UtilParsing::fileExits(const std::string &filename)
+{
+	std::ifstream file(filename.c_str());
+	return file.good();
+}
+
+bool UtilParsing::directoryExists(const std::string &dirname)
+{
+	struct stat info;
+	if (stat(dirname.c_str(), &info) != 0)
+		return false;
+	return (info.st_mode & S_IFDIR) != 0;
+}

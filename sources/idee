@@ -1,14 +1,17 @@
-je dois:
-
-- verifier si la requete est pour un CGI
-- preparez l'appel au script CGI avec bon chemin et bon argument
-- utiliser les appels systeme pour executer le script
-- check passer le bon chemin du fichier comme argument
-- capturz la sortie du cgi et renvoyez au client
 
 
+exemple de test pour POST:
 
 
-faire une class client 
--pointer sur une class abstraite arequest qui va pointer sur tout type de requete
--identifier le client avec le fd et son server
+# ici une requete pour envoyer des donnees au cgi
+curl -X POST http://example.com/your-endpoint -d 'key1=value1&key2=value2'
+
+
+
+# ici une requete pour telecharger un fichier
+curl -X POST -F 'file=@/path/to/file' http://example.com/upload
+
+
+
+# ici une requete DELETE pour suppprimer un fichier qui sera dans notre dossier upload
+curl -X DELETE http://example.com/upload/filename.txt

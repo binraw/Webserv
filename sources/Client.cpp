@@ -7,14 +7,14 @@
 
 // ok ne pas oublier de set script.pl comme fichier par default si l'utilisateru envoie juste cgi-bin/ comme chemin 
 
-Client::Client(std::string request)
+Client::Client(std::string _response)
 {
-    if (request == "cgi-bin/")
-        _pathCGI = "cgi-bin/script.pl";
-    else
-    {
-        _pathCGI = request;
-    }
+    // if (request == "cgi-bin/")
+    //     _pathCGI = "cgi-bin/script.pl";
+    // else
+    // {
+    //     _pathCGI = request;
+    // }
         
 }
 Client::~Client()
@@ -26,106 +26,134 @@ Client &Client::operator=(const Client &)
     return *this;
 }
 
-std::string Client::playCGI()
+// -------------LIRE AVANT TOUT CHANGEMENT -----------------------------
+// l'idee ca va etre que la on a le body de chaque Method
+// maintenant il va falloir rajouter le header a chaque response 
+// le body sera enregistrer dans _contentBody avant d'etre transferer a la valeur response
+// ne pas prendre en compte les noms des variables utiliser dans le code ci-dessous 
+// il va etre changer au moment ou nos deux codes seront liees
+// ----------------------------------------------------------------------
+int Client::checkRequest() 
 {
-    std::string output;
-    int pipfd[2];
-
-    if (pipe(pipfd) == -1)
+    if (_response.find("POST") != std::string::npos)
+        request = new PostRequest(_response); // Post va etre transferer dans cette class au prochain push
+    else if (_response.find("GET") != std::string::npos)
     {
-        std::cerr << "Error pipe CGI" << std::endl;
-        return "";
+        executeGetRequest();
     }
-    pid_t pid = fork();
-    if (pid < 0)
+    else if (_response.find("DELETE") != std::string::npos)
     {
-        std::cerr << "fork failled" << std::endl;
-        return "";
+        executeDeleteRequest();
     }
-    else if (pid == 0) 
+    else
     {
-        close(pipfd[0]);
-        dup2(pipfd[1], STDOUT_FILENO); 
-        close(pipfd[1]);
-        char* const args[] = {const_cast<char*>(_pathCGI.c_str()), NULL};
-        if (execv(args[0], args) == -1)  
-        {
-            std::cerr << "execv failed" << std::endl;
-            return "";
-        }
-    } 
-    else 
-    {
-        close(pipfd[1]);
-        char buffer[128];
-        ssize_t bytesRead;
-        while ((bytesRead = read(pipfd[0], buffer, sizeof(buffer) - 1)) > 0)
-        {
-            buffer[bytesRead] = '\0';
-            output.append(buffer);
-        }
-        close(pipfd[0]);
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status))
-            return output;
-        else 
-        {
-            std::cout << "CGI script did not terminate normally" << std::endl;
-        }
+        return 400; // Bad Request
     }
-    return output;
 }
 
-std::string Client::playUploadCGI()
+int Client::executeGetRequest()
 {
-     std::string output;
-    int pipfd[2];
-    
-    if (pipe(pipfd) == -1)
+    if (_url.find("GET") != std::string::npos) // faut il faire aussi un fork pour renvoyer le bon file ?
     {
-        std::cerr << "Error pipe CGI" << std::endl;
-        return "";
-    }
-    
-    pid_t pid = fork();
-    if (pid < 0)
-    {
-        std::cerr << "fork failed" << std::endl;
-        return "";
-    }
-    else if (pid == 0) 
-    {
-        close(pipfd[0]);
-        dup2(pipfd[1], STDOUT_FILENO); 
-        close(pipfd[1]);
-        char* const args[] = {const_cast<char*>(_pathCGI.c_str()), NULL};
-        write(STDIN_FILENO, _contentFileTeleverser.c_str(), _contentFileTeleverser.size());
-        if (execv(args[0], args) == -1)  
+        if (UtilParsing::fileExits(_filename))
         {
-            std::cerr << "execv failed" << std::endl;
-            return "";
+            return writeGetResponse(); // la je rempli le futur body mais il faut remplir les en-tete
         }
-    } 
-    else 
+        else
+            return 400;
+    }
+    return 404;
+}
+
+int Client::writeGetResponse()
+{
+    std::ifstream file(_filename.c_str());
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    _contentBody = buffer.str();
+    if (_contentBody.empty())
+        return 404;
+    return 200;
+}
+
+int Client::executeDeleteRequest()
+{
+    if (_url.find("DELETE") != std::string::npos)
     {
-        close(pipfd[1]);
-        char buffer[128];
-        ssize_t bytesRead;
-        while ((bytesRead = read(pipfd[0], buffer, sizeof(buffer) - 1)) > 0)
+        if (UtilParsing::fileExits(_filename))
         {
-            buffer[bytesRead] = '\0';
-            output.append(buffer);
+            if (checkPossibilityFile() == 0)
+               if (writeDeleteResponse() == 0)
+                    return 200;
         }
-        close(pipfd[0]);
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status))
-            return output;
-        else 
+        else
+            return 400;
+    }
+    return 404;
+}
+
+int Client::writeDeleteResponse()
+{
+    if (remove(_filename.c_str()) == 0)
+    {
+        _contentBody = "<body><h1>Suppression de " + _filename + " effectué</h1></body>";
+        return 0;
+    }
+    else
+        return 1;
+}
+
+int Client::checkPossibilityFile()
+{
+    if (_filename.find("upload/") != std::string::npos)
+    {
+        if (_filename.find("..") == std::string::npos) // ici on verifie qu'il n'y a pas de ..
         {
-            std::cout << "CGI script did not terminate normally" << std::endl;
+            return 0;
         }
     }
-    return output;
+    return 1;
+}
+
+
+// La derniere fonction pour la renvoyer la response complete pour le server
+// elle ne sera fonctionnel seulement apres la liaison des codes 
+void Client::buildResponse()
+{
+    _response = "HTTP/1.1"  + _codeResponse + "\nContent-Type: " + _contentType + "\nContent-Length: " + _contentLength 
+                + _contentBody;
+}
+
+void Client::buildCodeResponse(int code)
+{
+    if (code == 400)
+        _codeResponse = "400 Bad Request";
+    else if (code == 401)
+        _codeResponse = "401 Unauthorized";
+    else if (code == 403)
+        _codeResponse = "403 Forbidden";
+    else if (code == 404)
+        _codeResponse = "404 Not Found";
+    else if (code == 401)
+        _codeResponse = "401 Unauthorized";
+    else if (code == 405)
+        _codeResponse = "405 Method Not Allowed";
+    else if (code == 408)
+        _codeResponse = "408 Request Timeout";
+    else if (code == 500)
+        _codeResponse = "500 Internal Server Error";
+    else if (code == 501)
+        _codeResponse = "501 Not Implemented";
+    else if (code == 502)
+        _codeResponse = "502 bad Gateway";
+    else if (code == 503)
+        _codeResponse = "503 Service Unavailable";
+    else if (code == 200)
+        _codeResponse = "200 OK";
+    else if (code == 201)
+        _codeResponse = "201 Created";
+    else if (code == 202)
+        _codeResponse = "202 Accepted";
+    else
+        _codeResponse = "204 No Content";
 }
