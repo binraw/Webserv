@@ -18,6 +18,7 @@ public:
 	std::vector<std::string>	_serverName;
 	std::vector<std::string>	_listenPort;
 	std::vector<LocationConfig>	_locationConfig;
+	std::string _errorPath;
 	
 	std::string	_clientMaxBodySize;
 	std::string	_uploadPath;

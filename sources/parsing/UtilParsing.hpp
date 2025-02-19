@@ -45,6 +45,7 @@ class UtilParsing
 		static std::vector<std::string>	splitSpecialDeleteKey(const std::string & line, const std::string & set);
 		static bool fileExits(const std::string &filename);
 		static bool directoryExists(const std::string &dirname);
+		static std::string intToString(int value);
 	private:
 		UtilParsing() {};
 };

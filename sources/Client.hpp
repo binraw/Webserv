@@ -20,20 +20,21 @@ private:
     std::string _contentFileTeleverser;
 
 
-    std::string _pathCGI;
     
 public:
 
-    ARequest* request;
-    std::string _response;
-    std::string _url;
-    std::string _filename;
-    std::string _contentBody;
-    std::string _codeResponse;
-    std::string _contentType;
-    std::string _contentLength;
+    std::string _body; // Contenu envoyer du client
+    std::string _uri; // PATH DEMANDER
+    std::string _requestType; // POST GET DELETE
+    ServerConfig _config; // config du server en cours
+    std::string _response; // renvoi final au client
+    std::string _contentBody; // body renvoyer au client
+    std::string _codeResponse; // code de la response
+    std::string _contentType; // champ obligatoire a renvoyer
+    std::string _contentLength; // taille du body renvoyer au client
 
     Client(std::string file);
+    std::string processResponse();
     int executeGetRequest();
     int writeGetResponse();
     int executeDeleteRequest();
@@ -42,6 +43,18 @@ public:
     int checkRequest();
     void buildCodeResponse(int code);
     void buildResponse();
+    std::string buildDeleteResponse();
+    void controlCodeResponse(int code);
+    std::string buildErrorPage(int code);
+
+
+    // POST
+    int executePostRequest();
+    std::string playCGI();
+    int save_file(const std::string& request_body);
+    std::string extract_filename(const std::string& request_body);
+
+
     ~Client();
     Client &operator=(const Client &);
 };

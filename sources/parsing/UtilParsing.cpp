@@ -190,3 +190,10 @@ bool UtilParsing::directoryExists(const std::string &dirname)
 		return false;
 	return (info.st_mode & S_IFDIR) != 0;
 }
+
+std::string UtilParsing::intToString(int value)
+{
+    char buffer[20];
+    sprintf(buffer, "%d", value);
+    return std::string(buffer);
+}

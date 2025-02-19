@@ -29,19 +29,6 @@ std::ostream & operator<<(std::ostream &o, const PostRequest&)
 {
 	return o;
 }
-bool fileExits(const std::string &filename)
-{
-	std::ifstream file(filename.c_str());
-	return file.good();
-}
-
-bool directoryExists(const std::string &dirname)
-{
-	struct stat info;
-	if (stat(dirname.c_str(), &info) != 0)
-		return false;
-	return (info.st_mode & S_IFDIR) != 0;
-}
 
 int PostRequest::executePostRequest()
 {
@@ -51,8 +38,8 @@ int PostRequest::executePostRequest()
 		{
 			_contentFileUpdate = playCGI();
             if (_contentFileForUpload.empty())
-                return 500; // la on met une Internal Server Error car une erreur c'est produite dans l'execution
-			return 200; // request Reussi
+                return 500;
+			return 200;
 		}
 		else
 			throw;

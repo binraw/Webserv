@@ -58,6 +58,8 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
             serverConfig._clientMaxBodySize = UtilParsing::recoverValue(line, "client_max_body_size");
         else if (line.find("upload_path") != std::string::npos) 
             serverConfig._uploadPath = UtilParsing::recoverValue(line, "upload_path");
+        else if (line.find("error_path") != std::string::npos) 
+            serverConfig._errorPath = UtilParsing::recoverValue(line, "error_path");
         else if (line.find("location") != std::string::npos) 
         {
             LocationConfig locationConfig;
@@ -65,8 +67,12 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
             parseLocationBlock(file, locationConfig);
             serverConfig._locationConfig.push_back(locationConfig);
         } 
-        else if (line.find("}") != std::string::npos) 
+        else if (line.find("}") != std::string::npos)
+        {
+            if (serverConfig._errorPath.empty())
+                serverConfig._errorPath = std::string("none");
             break;
+        }
     }
 }
 
