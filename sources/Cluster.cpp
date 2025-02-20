@@ -198,6 +198,7 @@ void	Cluster::readData(const struct epoll_event &event)
 	
 	
 	try {
+
 		changeEventMod(false, event.data.fd);
 	}
 	catch(const RunException& e) {

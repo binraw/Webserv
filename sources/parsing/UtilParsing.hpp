@@ -46,6 +46,7 @@ class UtilParsing
 		static bool fileExits(const std::string &filename);
 		static bool directoryExists(const std::string &dirname);
 		static std::string intToString(int value);
+		static std::string recoverExtension(const std::string &filename);
 	private:
 		UtilParsing() {};
 };

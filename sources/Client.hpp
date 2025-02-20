@@ -27,11 +27,14 @@ public:
     std::string _uri; // PATH DEMANDER
     std::string _requestType; // POST GET DELETE
     ServerConfig _config; // config du server en cours
+    
     std::string _response; // renvoi final au client
+    
     std::string _contentBody; // body renvoyer au client
     std::string _codeResponse; // code de la response
     std::string _contentType; // champ obligatoire a renvoyer
     std::string _contentLength; // taille du body renvoyer au client
+    std::map<std::string, std::string> _mimeMap;
 
     Client(std::string file);
     std::string processResponse();
@@ -46,6 +49,8 @@ public:
     std::string buildDeleteResponse();
     void controlCodeResponse(int code);
     std::string buildErrorPage(int code);
+    void Client::buildContentType();
+    std::map<std::string, std::string> initMapMime();
 
 
     // POST

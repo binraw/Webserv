@@ -197,3 +197,9 @@ std::string UtilParsing::intToString(int value)
     sprintf(buffer, "%d", value);
     return std::string(buffer);
 }
+
+std::string UtilParsing::recoverExtension(const std::string &filename)
+{
+    std::size_t start = filename.find_last_of(".");
+    return filename.substr(start); // on renvoie avec le . l'extension car dasn la map on garde le .
+}

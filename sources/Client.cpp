@@ -31,7 +31,13 @@ Client &Client::operator=(const Client &)
 
 std::string Client::processResponse()
 {
-    buildCodeResponse(checkRequest());
+    int code;
+    if (_mimeMap.empty())
+        _mimeMap = initMapMime();
+     code = checkRequest();
+    buildContentType();
+    buildCodeResponse(code);
+    controlCodeResponse(code);
     buildResponse();
     return _response;
 }
@@ -136,7 +142,7 @@ void Client::buildResponse()
 {
     int sizeBody = _contentBody.length();
     _contentLength = UtilParsing::intToString(sizeBody);
-    _response = "HTTP/1.1"  + _codeResponse + "\nContent-Type: " + _contentType + "\nContent-Length: " + _contentLength 
+    _response = "HTTP/1.1"  + _codeResponse + "\nContent-Type: " + _contentType + "\nContent-Length: " + _contentLength // rajout /n
                 + _contentBody;
 }
 
@@ -217,7 +223,6 @@ std::string Client::buildErrorPage(int code)
         }
         file.close();
         return content;
-
     }
     else
     {
@@ -369,4 +374,56 @@ int Client::save_file(const std::string& request_body)
     output.write(file_data.c_str(), file_data.size());
     output.close();
     return 200; // tout est ok
+}
+
+std::map<std::string, std::string> Client::initMapMime()
+{
+    std::map<std::string, std::string> fileMime;
+    fileMime[".aac"] = "audio/acc";
+    fileMime[".abw"] = "application/x-abiword";
+    fileMime[".apng"] = "image/apng";
+    fileMime[".arc"] = "application/x-freearc";
+    fileMime[".avif"] = "image/avif";
+    fileMime[".avi"] = "video/x-msvideo";
+    fileMime[".csh"] = "application/x-csh";
+    fileMime[".css"] = "text/css";
+    fileMime[".csv"] = "text/csv";
+    fileMime[".gif"] = "image/gif";
+    fileMime[".html"] = "text/html";
+    fileMime[".htm"] = "text/html";
+    fileMime[".ico"] = "image/vnd.microsoft.icon";
+    fileMime[".jpeg"] = "image/jpeg";
+    fileMime[".jpg"] = "image/jpeg";
+    fileMime[".js"] = "text/javascript";
+    fileMime[".json"] = "application/json";
+    fileMime[".jsonld"] = "application/ld+json";
+    fileMime[".mjs"] = "text/javascript";
+    fileMime[".mp3"] = "audio/mpeg";
+    fileMime[".mp4"] = "video/mp4";
+    fileMime[".png"] = "image/png";
+    fileMime[".pdf"] = "application/pdf";
+    fileMime[".php"] = "application/x-httpd-php";
+    fileMime[".sh"] = "application/x-sh";
+    fileMime[".svg"] = "image/svg+xml";
+    fileMime[".tar"] = "application/x-tar";
+    fileMime[".txt"] = "text/plain";
+    fileMime[".webp"] = "image/webp";
+    fileMime[".xhtml"] = "application/xhtml+xml";
+    fileMime[".xml"] = "application/xml";
+    fileMime[".zip"] = "application/zip";
+    fileMime[".xul"] = "application/vnd.mozilla.xul+xml";
+    fileMime[".3gp"] = "video/3gpp";
+    fileMime[".7z"] = "application/x-7z-compressed";
+    return fileMime;
+}
+
+void Client::buildContentType()
+{
+    std::string extension;
+    extension = UtilParsing::recoverExtension(_uri);
+    std::map<std::string, std::string>::iterator it = _mimeMap.find(extension);
+    if (it != _mimeMap.end())
+        _contentType = it->second;
+    else
+        _contentType = "text/html";
 }
