@@ -251,7 +251,6 @@ void	Cluster::recvData(const struct epoll_event &event)
 	Client *client = findClient(event.data.fd);
 	if (!client)
 	{
-		std::cout << BRIGHT_RED "New client" RESET << std::endl;
 		try {
 			client = addClient(Request(buff), event.data.fd);
 		}
@@ -261,10 +260,8 @@ void	Cluster::recvData(const struct epoll_event &event)
 	}
 	else
 	{
-		std::cout << BRIGHT_GREEN "Old client" RESET << std::endl;
 		if (client->getrequest().gettype().empty() == true)
 		{
-			std::cout << BRIGHT_RED "HERE" << RESET << std::endl;
 			try {
 				client->getrequest() = Request(buff);
 			}
