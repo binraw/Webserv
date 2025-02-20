@@ -34,7 +34,7 @@ public:
     std::string _codeResponse; // code de la response
     std::string _contentType; // champ obligatoire a renvoyer
     std::string _contentLength; // taille du body renvoyer au client
-    std::map<std::string, std::string> _mimeMap;
+    std::map<std::string, std::string> _mimeMap; // map avec tout les mimes possible
 
     Client(std::string file);
     std::string processResponse();

@@ -63,7 +63,7 @@ int Client::checkRequest()
 
 int Client::executeGetRequest()
 {
-    if (_requestType.find("GET") != std::string::npos) // faut il faire aussi un fork pour renvoyer le bon file ?
+    if (_requestType.find("GET") != std::string::npos)
     {
         if (UtilParsing::fileExits(_uri))
         {
@@ -142,7 +142,7 @@ void Client::buildResponse()
 {
     int sizeBody = _contentBody.length();
     _contentLength = UtilParsing::intToString(sizeBody);
-    _response = "HTTP/1.1"  + _codeResponse + "\nContent-Type: " + _contentType + "\nContent-Length: " + _contentLength // rajout /n
+    _response = "HTTP/1.1"  + _codeResponse + "\nContent-Type: " + _contentType + "\nContent-Length: " + _contentLength + "\r\n"
                 + _contentBody;
 }
 
@@ -414,6 +414,7 @@ std::map<std::string, std::string> Client::initMapMime()
     fileMime[".xul"] = "application/vnd.mozilla.xul+xml";
     fileMime[".3gp"] = "video/3gpp";
     fileMime[".7z"] = "application/x-7z-compressed";
+    fileMime[".bin"] = "application/octet-stream";
     return fileMime;
 }
 
@@ -425,5 +426,5 @@ void Client::buildContentType()
     if (it != _mimeMap.end())
         _contentType = it->second;
     else
-        _contentType = "text/html";
+        _contentType = "application/octet-stream";
 }
