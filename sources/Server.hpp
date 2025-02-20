@@ -27,7 +27,6 @@ class Server
 		std::set<std::string>	_nameList;		//localhost - serverExemple.com - www.serverExemple.fr
 		std::set<std::string>	_locationPath;	//websites handle by the server (/website/site1.com)
 		std::map<int, Client>	_clientList;
-		// std::set<Location>	_locations
 		
 		void	setLocationPath();
 

@@ -8,38 +8,7 @@
 
 #include "Server.hpp"
 
-/*	* MIME LIST
-	// typedef struct s_paramsServer
-	// {
-	// 	std::map<std::string, std::string>
-	// 		mimes;
-	// 	s_paramsServer() 
-	// 	{
-	// 		mimes[".bin"].assign("application/octet-stream");
-	// 		mimes[".js"].assign("application/javascript");
-	// 		mimes[".doc"].assign("application/msword");
-	// 		mimes[".csh"].assign("application/x-csh");
-	// 		mimes[".json"].assign("application/json");
-	// 		mimes[".pdf"].assign("application/pdf");
-	// 		mimes[".sh"].assign("application/x-sh");
-	// 		mimes[".jpeg"].assign("image/jpeg");
-	// 		mimes[".jpg"].assign("image/jpeg");
-	// 		mimes[".bmp"].assign("image/bmp");
-	// 		mimes[".gif"].assign("image/gif");
-	// 		mimes[".png"].assign("image/png");
-	// 		mimes[".html"].assign("text/html");
-	// 		mimes[".htm"].assign("text/html");
-	// 		mimes[".css"].assign("text/css");
-	// 		mimes[".csv"].assign("text/csv");
-
-	// 	}
-
-	// }	t_paramsCluster;
-*/
-
-
 // timeout client ne fonctionne pas correctement
-
 
 class Cluster
 {
@@ -90,16 +59,15 @@ class Cluster
 
 		void	runCluster();
 
-		void	sendData(const struct epoll_event &);
-		void	readData(const struct epoll_event &);
-
 	private:
 		int				_epollFd;		// fd vers structure epoll
 		HttpConfig		_config;
 		std::set<int>	_serverSockets;	// ensemble des socket serveur (un par port)
 		std::map<std::string, Server >	_serversByService;
 
-		Client	*findClient(const Request &req, const int);
+		Client	*addClient(const Request &req, const int);
+		Client	*findClient(int fdClient);
+
 		void	setEpollFd();
 		void	setServersByPort();
 		void	setServerSockets();
@@ -112,6 +80,9 @@ class Cluster
 		void	changeEventMod(const bool, const int) const;
 		void	acceptConnexion(const struct epoll_event &) const;
 		void	closeConnexion(const struct epoll_event &event) const;
+
+		void	sendData(const struct epoll_event &);
+		void	recvData(const struct epoll_event &);
 };
 
 std::ostream	& operator<<(std::ostream &, const Cluster &);

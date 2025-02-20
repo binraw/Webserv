@@ -28,6 +28,7 @@
 
 #include "Request.hpp"
 #include "UtilParsing.hpp"
+#include <sstream>
 
 /*============================================================================*/
 				/*### CONSTRUCTORS - DESTRUCTOR - OVERLOAD OP ###*/
@@ -40,23 +41,20 @@
 	* Host error
 */
 Request::Request(const std::string &response)
+  : _keepAlive(response.find("keep-alive") == response.npos ? false : true)
 {
-	size_t			idxSeparator = response.find(BODY_SEPARATOR);
-	std::string		header = response.substr(0, idxSeparator + 1);
-	static size_t	separatorSize = std::string(BODY_SEPARATOR).length();	
-	
-#ifdef TEST
-	std::cout << response << std::endl;
-#endif
-	_body = response.substr(idxSeparator + separatorSize, response.length() - idxSeparator);
+	size_t	idxBodySeparator = response.find(BODY_SEPARATOR);
 
-	const std::vector<std::string>	tokenHeader = UtilParsing::split(header, "\r\n");
-	std::vector<std::string>::const_iterator	itToken = tokenHeader.begin();
-	
+	std::vector<std::string>					tokenHeader;
+	std::vector<std::string>::const_iterator	itToken;
+
+	tokenHeader = UtilParsing::split(response.substr(0, idxBodySeparator + 1), "\r\n"); // extract header and split it
+	itToken = tokenHeader.begin();
+
+	initContentLength(response);
 	initRequestLine(*itToken);
 	initHost(++itToken, tokenHeader.end());
-	_keepAlive = response.find("keep-alive") == response.npos ? false : true;
-	std::cout << *this << std::endl;
+	setBody(response.substr(idxBodySeparator + 4));
 }
 /*----------------------------------------------------------------------------*/
 
@@ -74,6 +72,7 @@ Request & Request::operator=(const Request &ref)
 	if (this != &ref)
 	{
 		_keepAlive = ref._keepAlive;
+		_contentLength = ref._contentLength;
 		_uri = ref._uri;
 		_hostName = ref._hostName;
 		_hostPort = ref._hostPort;
@@ -84,7 +83,7 @@ Request & Request::operator=(const Request &ref)
 }
 /*----------------------------------------------------------------------------*/
 
-std::ostream & operator<<(std::ostream & o, const Request &ref)
+std::ostream & operator<<(std::ostream & o, Request &ref)
 {
 	o	<< BOLD BRIGHT_BLUE "Request:" << std::endl
 		<< "_requestType: [" << ref.gettype() << "]" << std::endl
@@ -92,6 +91,7 @@ std::ostream & operator<<(std::ostream & o, const Request &ref)
 		<< "_hostName: [" << ref.gethostname() << "]" << std::endl
 		<< "_hostPort: [" << ref.gethostport() << "]" << std::endl
 		<< "_keepAlive: [" << (ref.getkeepalive() == true ? "true" : "false") << "]" << std::endl
+		<< "_contentLength: [" << ref.getcontentlength() << "]" << std::endl
 		<< std::endl
 		<< "BODY :\n" << ref.getbody() << RESET;
 	return o;
@@ -107,30 +107,53 @@ bool Request::getkeepalive() const {
 }
 /*----------------------------------------------------------------------------*/
 
-const std::string	Request::geturi() const {
+const std::string&	Request::geturi() const {
 	return _uri;
 }
 /*----------------------------------------------------------------------------*/
 
-const std::string	Request::gethostname() const {
+const std::string&	Request::gethostname() const {
 	return _hostName;
 }
 /*----------------------------------------------------------------------------*/
 
-const std::string	Request::gethostport() const {
+const std::string&	Request::gethostport() const {
 	return _hostPort;
 }
 /*----------------------------------------------------------------------------*/
 
-const std::string	Request::gettype() const {
+const std::string&	Request::gettype() const {
 	return _requestType;
 }
 /*----------------------------------------------------------------------------*/
 
-const std::string	Request::getbody() const {
+std::string&	Request::getbody() {
 	return _body;
 }
 /*----------------------------------------------------------------------------*/
+
+size_t	Request::getcontentlength()	const {
+	return _contentLength;
+}
+/*----------------------------------------------------------------------------*/
+
+void	Request::setBody(const std::string &body) {
+	_body = body;
+}
+/*----------------------------------------------------------------------------*/
+
+void	Request::clearRequest()
+{
+	this->_body.clear();
+	this->_contentLength = 0;
+	this->_hostName.clear();
+	this->_hostPort.clear();
+	this->_keepAlive = false;
+	this->_requestType.clear();
+	this->_uri.clear();
+}
+/*----------------------------------------------------------------------------*/
+
 
 /*============================================================================*/
 						/*### PRIVATE METHODS ###*/
@@ -183,6 +206,25 @@ void	Request::initHost(std::vector<std::string>::const_iterator &itToken, std::v
 	size_t idxSemicolon = itToken->find_last_of(":");
 	_hostName = itToken->substr(idxSpace + 1, idxSemicolon - idxSpace - 1);
 	_hostPort = itToken->substr(idxSemicolon + 1, itToken->length() - idxSemicolon);
+}
+/*----------------------------------------------------------------------------*/
+
+void	Request::initContentLength(const std::string &response)
+{
+	size_t idx = response.find("Content-Length");
+	
+	if (idx == response.npos) {
+		_contentLength = 0;
+		return ;
+	}
+	try {
+		idx = response.find_first_of(' ', idx) + 1;
+		std::stringstream ss(response.substr(idx, response.length() - response.find_first_of(' ', idx)));
+		ss >> _contentLength;
+	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << " Error\n" __FILE__ " : "<< __LINE__;
+	}
 }
 /*----------------------------------------------------------------------------*/
 

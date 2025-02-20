@@ -36,15 +36,20 @@ class Request
 		Request() {};
 		Request & operator=(const Request &);
 	
-		bool				getkeepalive()	const;
-		const std::string	gethostname()	const;
-		const std::string	gethostport()	const;
-		const std::string	geturi()	const;
-		const std::string	gettype()	const;
-		const std::string	getbody()	const;
+		bool		getkeepalive() 		const;
+		size_t		getcontentlength()	const;
+		std::string	&getbody();
+		const std::string	&gethostname()	const;
+		const std::string	&gethostport()	const;
+		const std::string	&geturi()	const;
+		const std::string	&gettype()	const;
+		
+		void	setBody(const std::string &);
+		void	clearRequest();
 
 	private:		
 		bool		_keepAlive;
+		size_t		_contentLength;
 		std::string	_uri;
 		std::string	_hostName;
 		std::string	_hostPort;
@@ -54,8 +59,8 @@ class Request
 
 		void	initRequestLine(const std::string &);
 		void	initHost(std::vector<std::string>::const_iterator &, std::vector<std::string>::const_iterator);
-		// void	initMimeType(std::vector<std::string>::const_iterator &, std::vector<std::string>::const_iterator);
+		void	initContentLength(const std::string &);
 };
-std::ostream & operator<<(std::ostream &, const Request &);
+std::ostream & operator<<(std::ostream &, Request &);
 
 #endif
