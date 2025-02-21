@@ -140,12 +140,10 @@ void	Cluster::runCluster()
 						acceptConnexion(events[i]);
 					else
 					{
-						if (events[i].events & EPOLLIN) {
+						if (events[i].events & EPOLLIN)
 							recvData(events[i]);
-						}
-						else if (events[i].events & EPOLLOUT) {
+						else if (events[i].events & EPOLLOUT)
 							sendData(events[i]);
-						}
 						else if (events[i].events & (EPOLLHUP | EPOLLRDHUP))
 							closeConnexion(events[i]);
 						else
@@ -247,6 +245,8 @@ void	Cluster::recvData(const struct epoll_event &event)
 		}
 		buff.append(buffer, bytes_received);
 	}
+	if (!buff.size())
+		return;
 
 	Client *client = findClient(event.data.fd);
 	if (!client)
@@ -302,7 +302,8 @@ void	Cluster::sendData(const struct epoll_event &event)
 				<< BOLD BRIGHT_PURPLE "]\n" RESET
 				<< std::endl;
 #endif
-	char buff[4096];
+
+	char buff[BUFFERSIZE];
 	memset(buff, '\0', sizeof(buff));
 
 	int fd = open("./website/form.html", O_RDONLY);
@@ -315,6 +316,10 @@ void	Cluster::sendData(const struct epoll_event &event)
 	ssize_t		bytes_sended = 0;
 	int			httpSize = response.size();
 
+	
+	
+	
+	
 	while (bytes_sended != httpSize)
 	{
 		ssize_t ret = send(event.data.fd, response.c_str(), response.length(), 0);
@@ -325,18 +330,22 @@ void	Cluster::sendData(const struct epoll_event &event)
 		bytes_sended += ret;
 	} 
 	
-	Client *client = findClient(event.data.fd);
-	client->getrequest().clearRequest();
-	closeConnexion(event);
+	Request &req = findClient(event.data.fd)->getrequest();
+	if (req.getkeepalive() == true) {
+		req.clearRequest();
+		try {
+			changeEventMod(true, event.data.fd);
+		}
+		catch(const RunException& e) {
+			e.runExcept();
+			closeConnexion(event);
+			throw;
+		}
+	}
+	else {
+		closeConnexion(event);
+	}
 
-	// try {
-	// 	changeEventMod(true, event.data.fd);
-	// }
-	// catch(const RunException& e) {
-	// 	e.runExcept();
-	// 	closeConnexion(event);
-	// 	throw;
-	// }
 }
 /*----------------------------------------------------------------------------*/
 

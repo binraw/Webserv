@@ -23,7 +23,7 @@ class Client
 		Server	*_clientServer;
 
 	private:
-		Request _request;
+		Request	_request;
 
 };
 
