@@ -11,6 +11,12 @@
 #include <unistd.h>
 #include "UtilParsing.hpp"
 #include "Request.hpp"
+#include <sstream>
+#include <fstream>
+#include <iostream>
+
+
+class Server;
 
 class Client /*: virtual public Server*/
 {
@@ -29,7 +35,7 @@ public:
     std::string _uri; // PATH DEMANDER
     std::string _requestType; // POST GET DELETE
     ServerConfig _config; // config du server en cours
-    
+
     std::string _response; // renvoi final au client
     
     std::string _contentBody; // body renvoyer au client
@@ -41,15 +47,16 @@ public:
 			_request = req;
 			_clientServer = NULL;
 		}
-		Client(){};
-		~Client(){};
+		// Client(){};
+    
+    ~Client() {};
+    Client &operator=(const Client &);
 
-		Request &getrequest(){
+	Request &getrequest(){
 			return _request;
 		};
-		Server	*_clientServer;
+	Server	*_clientServer;
 
-    Client(std::string file);
     std::string processResponse();
     int executeGetRequest();
     int writeGetResponse();
@@ -62,7 +69,7 @@ public:
     std::string buildDeleteResponse();
     void controlCodeResponse(int code);
     std::string buildErrorPage(int code);
-    void Client::buildContentType();
+    void buildContentType();
     std::map<std::string, std::string> initMapMime();
 
 
@@ -72,12 +79,9 @@ public:
     int save_file(const std::string& request_body);
     std::string extract_filename(const std::string& request_body);
 
-
-    ~Client();
-    Client &operator=(const Client &);
 };
 
-std::ostream & operator<<(std::ostream &o, Client &ref)
+std::ostream & operator<<(std::ostream &o, Client &ref);
 
 
 

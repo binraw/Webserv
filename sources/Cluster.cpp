@@ -146,12 +146,7 @@ void	Cluster::runCluster()
 						else if (events[i].events & EPOLLOUT) {
 							sendData(events[i]);
 						}
-						else if (eventsstd::ostream & operator<<(std::ostream &o, Client &ref)
-{
-	o	<< "CLIENT:\n"
-		<< ref.getrequest();
-	return o;
-}[i].events & (EPOLLHUP | EPOLLRDHUP))
+						else if (events[i].events & (EPOLLHUP | EPOLLRDHUP))
 							closeConnexion(events[i]);
 						else
 							std::cerr << "have to print EPOLLERR" << std::endl;

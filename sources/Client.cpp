@@ -1,6 +1,5 @@
 
 #include "Client.hpp"
-#include <sstream>
 
 // Client::Client(int fd, std::string request)
 // {
@@ -8,14 +7,9 @@
 
 // ok ne pas oublier de set script.pl comme fichier par default si l'utilisateru envoie juste cgi-bin/ comme chemin 
 
-Client::Client(std::string request)
-{
-
-    // voir si c'est possible de recuperer la config du server a ce niveau
-}
-Client::~Client()
-{
-}
+// Client::~Client(){
+//     ;
+// }
 
 Client &Client::operator=(const Client &)
 {
@@ -217,7 +211,8 @@ std::string Client::buildErrorPage(int code)
 {
     if (_config._errorPath != "none")
     {
-        std::ifstream file(_config._errorPath + UtilParsing::intToString(code) + "error.html");
+        std::string filePath = _config._errorPath + UtilParsing::intToString(code) + "error.html";
+        std::ifstream file(filePath.c_str());
         if (!file)
         {
             std::cerr << "Erreur ouverture file error code" << std::endl; // pour debug
@@ -234,19 +229,20 @@ std::string Client::buildErrorPage(int code)
     }
     else
     {
-        std::ifstream file("./error_path/" + UtilParsing::intToString(code) + "error.html");
-        if (!file)
+        std::string filePathDefault = "./error_path/" + UtilParsing::intToString(code) + "error.html";
+        std::ifstream fileDefault(filePathDefault.c_str());
+        if (!fileDefault)
         {
             std::cerr << "Erreur ouverture file error code" << std::endl; // pour debug
             return "";
         }
         std::string content;
         std::string line;
-        while (std::getline(file, line))
+        while (std::getline(fileDefault, line))
         {
             content += line + '\n';
         }
-        file.close();
+        fileDefault.close();
         return content;
     }
 
@@ -277,6 +273,7 @@ int Client::executePostRequest()
     {
        return 400; // la on retourne bad request car notre server ne supprote que ces deux type de POST. 
     }
+    return 500;
 }
 
 std::string Client::playCGI()

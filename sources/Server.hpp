@@ -4,6 +4,7 @@
 # include "webserv.hpp"
 # include "ServerConfig.hpp"
 # include "Client.hpp"
+class Client;
 
 class Server
 {
