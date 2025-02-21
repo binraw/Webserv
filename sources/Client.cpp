@@ -1,5 +1,6 @@
 
 #include "Client.hpp"
+#include <sstream>
 
 // Client::Client(int fd, std::string request)
 // {
@@ -21,6 +22,13 @@ Client &Client::operator=(const Client &)
     return *this;
 }
 
+
+std::ostream & operator<<(std::ostream &o, Client &ref)
+{
+	o	<< "CLIENT:\n"
+		<< ref.getrequest();
+	return o;
+}
 // -------------LIRE AVANT TOUT CHANGEMENT -----------------------------
 // l'idee ca va etre que la on a le body de chaque Method
 // maintenant il va falloir rajouter le header a chaque response 

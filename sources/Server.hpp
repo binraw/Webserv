@@ -11,25 +11,23 @@ class Server
 		Server(ServerConfig &, const std::string&);
 		Server(const Server &);
 		~Server();
+		Server() {};
 		Server	&operator=(const Server &);
 		bool 	operator<(const Server &other) const;
 
 		const ServerConfig	&getConfig() const;
 		const std::string	&getService() const;
+		std::map<int, Client>		&getClientList() const;
 		const std::set<std::string>	&getNameList() const;
-		// const std::map<int, Client>	&getClientList() const;
 		const std::set<std::string>	&getLocationPath() const;
 
 	private:
-		ServerConfig	_config;//contient un index pour avoir l'ordre de creation des serveurs virtuel suivant le fichier de config
-								//cette index est la uniquement pour pouvoir maper les server comme une key dans std::map
-		
+		ServerConfig	_config;
 		std::string				_service;		//service name(port)
 		std::set<std::string>	_nameList;		//localhost - serverExemple.com - www.serverExemple.fr
 		std::set<std::string>	_locationPath;	//websites handle by the server (/website/site1.com)
-		// std::map<int, Client>	_clientList;
-		// std::set<Location>	_locations
-
+		std::map<int, Client>	_clientList;
+		
 		void	setLocationPath();
 
 };

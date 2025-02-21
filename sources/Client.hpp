@@ -1,15 +1,16 @@
+
+
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
 #include <string>
-#include "ARequest.hpp"
 #include "Server.hpp"
 #include <sys/wait.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "parsing/UtilParsing.hpp"
-#include <sstream>
+#include "UtilParsing.hpp"
+#include "Request.hpp"
 
 class Client /*: virtual public Server*/
 {
@@ -18,6 +19,7 @@ private:
 
     std::string _nameFileTeleverser;
     std::string _contentFileTeleverser;
+    Request _request;
 
 
     
@@ -35,6 +37,17 @@ public:
     std::string _contentType; // champ obligatoire a renvoyer
     std::string _contentLength; // taille du body renvoyer au client
     std::map<std::string, std::string> _mimeMap; // map avec tout les mimes possible
+    Client(const Request &req) {
+			_request = req;
+			_clientServer = NULL;
+		}
+		Client(){};
+		~Client(){};
+
+		Request &getrequest(){
+			return _request;
+		};
+		Server	*_clientServer;
 
     Client(std::string file);
     std::string processResponse();
@@ -64,8 +77,9 @@ public:
     Client &operator=(const Client &);
 };
 
-
+std::ostream & operator<<(std::ostream &o, Client &ref)
 
 
 
 #endif
+
