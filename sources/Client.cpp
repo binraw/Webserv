@@ -65,9 +65,9 @@ int Client::checkRequest()
 
 int Client::executeGetRequest()
 {
-    if (_requestType.find("GET") != std::string::npos)
+    if (_request.gettype().find("GET") != std::string::npos)
     {
-        if (UtilParsing::fileExits(_uri))
+        if (UtilParsing::fileExits(_request.geturi()))
         {
             return writeGetResponse(); // la je rempli le futur body mais il faut remplir les en-tete
         }
@@ -79,9 +79,9 @@ int Client::executeGetRequest()
 
 int Client::writeGetResponse()
 {
-    if (_uri.find("..") != std::string::npos)
+    if (_request.geturi().find("..") != std::string::npos)
         return 404;
-    std::ifstream file(_uri.c_str());
+    std::ifstream file(_request.geturi().c_str());
     std::stringstream buffer;
     buffer << file.rdbuf();
     _contentBody = buffer.str();
@@ -92,9 +92,9 @@ int Client::writeGetResponse()
 
 int Client::executeDeleteRequest()
 {
-    if (_requestType.find("DELETE") != std::string::npos)
+    if (_request.gettype().find("DELETE") != std::string::npos)
     {
-        if (UtilParsing::fileExits(_uri))
+        if (UtilParsing::fileExits(_request.geturi()))
         {
             if (checkPossibilityFile() == 0)
                if (writeDeleteResponse() == 0)
@@ -108,7 +108,7 @@ int Client::executeDeleteRequest()
 
 int Client::writeDeleteResponse()
 {
-    if (remove(_uri.c_str()) == 0)
+    if (remove(_request.geturi().c_str()) == 0)
     {
         _contentBody = buildDeleteResponse();
         return 0;
@@ -121,15 +121,15 @@ std::string Client::buildDeleteResponse()
 {
     std::string output;
 
-    output = "<!DOCTYPE html>\n<html>\n<head><title>Page Title</title></head>\n<body><h1>Suppression de " + _uri + " effectué</h1></body>\n</html>";
+    output = "<!DOCTYPE html>\n<html>\n<head><title>Page Title</title></head>\n<body><h1>Suppression de " + _request.geturi() + " effectué</h1></body>\n</html>";
     return output;
 }
 
 int Client::checkPossibilityFile()
 {
-    if (_uri.find("upload/") != std::string::npos)
+    if (_request.geturi().find("upload/") != std::string::npos)
     {
-        if (_uri.find("..") == std::string::npos) // ici on verifie qu'il n'y a pas de ..
+        if (_request.geturi().find("..") == std::string::npos) // ici on verifie qu'il n'y a pas de ..
         {
             return 0;
         }
@@ -209,9 +209,9 @@ void Client::controlCodeResponse(int code)
 
 std::string Client::buildErrorPage(int code)
 {
-    if (_config._errorPath != "none")
+    if (_clientServer->getConfig()._errorPath != "none")
     {
-        std::string filePath = _config._errorPath + UtilParsing::intToString(code) + "error.html";
+        std::string filePath = _clientServer->getConfig()._errorPath + UtilParsing::intToString(code) + "error.html";
         std::ifstream file(filePath.c_str());
         if (!file)
         {
@@ -250,9 +250,9 @@ std::string Client::buildErrorPage(int code)
 
 int Client::executePostRequest()
 {
-	if (_requestType.find("POST") && _uri.find("/cgi-bin"))
+	if (_request.gettype().find("POST") && _request.geturi().find("/cgi-bin"))
 	{
-		if (UtilParsing::fileExits(_uri))
+		if (UtilParsing::fileExits(_request.geturi()))
 		{
 			_contentBody = playCGI();
             if (_contentBody.empty())
@@ -262,11 +262,11 @@ int Client::executePostRequest()
 		else
 			return 500;
 	}
-	else if (_requestType.find("POST") && _uri.find(_config._uploadPath) != std::string::npos)
+	else if (_request.gettype().find("POST") && _request.geturi().find(_clientServer->getConfig()._uploadPath) != std::string::npos)
 	{
-		if (UtilParsing::directoryExists(_config._uploadPath))
+		if (UtilParsing::directoryExists(_clientServer->getConfig()._uploadPath))
 		{
-			return save_file(_body);
+			return save_file(_request.getbody());
 		}
 	}
     else
@@ -297,7 +297,7 @@ std::string Client::playCGI()
         close(pipfd[0]);
         dup2(pipfd[1], STDOUT_FILENO); 
         close(pipfd[1]);
-        char* const args[] = {const_cast<char*>(_uri.c_str()), NULL};
+        char* const args[] = {const_cast<char*>(_request.geturi().c_str()), NULL};
         if (execv(args[0], args) == -1)  
         {
             std::cerr << "execv failed" << std::endl; // juste pour futur debug
@@ -426,7 +426,7 @@ std::map<std::string, std::string> Client::initMapMime()
 void Client::buildContentType()
 {
     std::string extension;
-    extension = UtilParsing::recoverExtension(_uri);
+    extension = UtilParsing::recoverExtension(_request.geturi());
     std::map<std::string, std::string>::iterator it = _mimeMap.find(extension);
     if (it != _mimeMap.end())
         _contentType = it->second;

@@ -30,14 +30,7 @@ private:
 
     
 public:
-
-    std::string _body; // Contenu envoyer du client
-    std::string _uri; // PATH DEMANDER
-    std::string _requestType; // POST GET DELETE
-    ServerConfig _config; // config du server en cours
-
     std::string _response; // renvoi final au client
-    
     std::string _contentBody; // body renvoyer au client
     std::string _codeResponse; // code de la response
     std::string _contentType; // champ obligatoire a renvoyer
@@ -47,8 +40,6 @@ public:
 			_request = req;
 			_clientServer = NULL;
 		}
-		// Client(){};
-    
     ~Client() {};
     Client &operator=(const Client &);
 

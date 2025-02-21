@@ -310,9 +310,9 @@ void	Cluster::sendData(const struct epoll_event &event)
 	if (fd == -1)
 		perror("OPENTEST");	
 	read(fd, buff, sizeof(buff));
-	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 400\r\n\r\n";
+	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 100000\r\n\r\n";
 	response += buff;
-
+	std::cout << response << std::endl;
 	ssize_t		bytes_sended = 0;
 	int			httpSize = response.size();
 
