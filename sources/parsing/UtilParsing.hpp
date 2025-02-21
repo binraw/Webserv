@@ -1,7 +1,9 @@
 #ifndef IPARSING_HPP
 # define IPARSING_HPP
 
-# include "webserv.hpp"
+# include "../includes/webserv.hpp"
+#include <fstream>
+#include <sys/stat.h>
 
 class UtilParsing
 {
@@ -41,7 +43,10 @@ class UtilParsing
         static std::vector<std::string>	cleanVectorClose(const std::vector<std::string> vec);
         static std::vector<std::string>	split(const std::string & line, const std::string & set); 
 		static std::vector<std::string>	splitSpecialDeleteKey(const std::string & line, const std::string & set);
-
+		static bool fileExits(const std::string &filename);
+		static bool directoryExists(const std::string &dirname);
+		static std::string intToString(int value);
+		static std::string recoverExtension(const std::string &filename);
 	private:
 		UtilParsing() {};
 };

@@ -5,7 +5,7 @@
 
 #include "webserv.hpp"
 #include "HttpConfig.hpp"
-
+#include "Client.hpp"
 #include "Server.hpp"
 
 // timeout client ne fonctionne pas correctement

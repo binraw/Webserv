@@ -19,7 +19,7 @@ Server::Server(ServerConfig & config, const std::string &service)
 	if (_nameList.empty() == true)
 		_nameList.insert("localhost");
 	setLocationPath();
-	_clientList.clear();
+	// _clientList.clear();
 }
 /*----------------------------------------------------------------------------*/
 
@@ -29,7 +29,7 @@ Server::Server(const Server &ref)
 	UtilParsing::deepCopieSet(_nameList, ref._nameList);
 	UtilParsing::deepCopieSet(_locationPath, ref._locationPath);
 	_service = ref._service;
-	_clientList = ref._clientList;
+	// _clientList = ref._clientList;
 }
 /*----------------------------------------------------------------------------*/
 

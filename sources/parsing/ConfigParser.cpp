@@ -58,6 +58,8 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
             serverConfig._clientMaxBodySize = UtilParsing::recoverValue(line, "client_max_body_size");
         else if (line.find("upload_path") != std::string::npos) 
             serverConfig._uploadPath = UtilParsing::recoverValue(line, "upload_path");
+        else if (line.find("error_path") != std::string::npos) 
+            serverConfig._errorPath = UtilParsing::recoverValue(line, "error_path");
         else if (line.find("location") != std::string::npos) 
         {
             LocationConfig locationConfig;
@@ -65,8 +67,12 @@ void ConfigParser::parseServerBlock(std::ifstream& file, ServerConfig& serverCon
             parseLocationBlock(file, locationConfig);
             serverConfig._locationConfig.push_back(locationConfig);
         } 
-        else if (line.find("}") != std::string::npos) 
+        else if (line.find("}") != std::string::npos)
+        {
+            if (serverConfig._errorPath.empty())
+                serverConfig._errorPath = std::string("none");
             break;
+        }
     }
 }
 
@@ -79,10 +85,17 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
             locationConfig._root = UtilParsing::recoverValue(line, "root");
         else if (line.find("index") != std::string::npos) 
             locationConfig._index = UtilParsing::recoverValue(line, "index");
-        else if (line.find("methods_accept") != std::string::npos) 
+        else if (line.find("methods_accept") != std::string::npos)
             locationConfig._methods = UtilParsing::splitSpecialDeleteKey(line, std::string(" "));
-        else if (line.find("}") != std::string::npos) 
+        else if (line.find("cgi_path") != std::string::npos)
+            locationConfig._cgipath = UtilParsing::recoverValue(line, "cgi_path");
+        else if (line.find("}") != std::string::npos)
+        {
+            if (locationConfig._cgipath.empty())
+                locationConfig._cgipath = std::string("none");
             break;
+        } 
+            
     }
 }
 

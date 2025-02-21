@@ -92,7 +92,12 @@
 //     return (0);
 // }
 
+//idee peut etre il va falloir check si les fihiers donne exemple index.html etc sont existant
+
+#include "ConfigParser.hpp"
+
 #include "Cluster.hpp"
+#include "Client.hpp"
 #include <cstring>
 #include <csignal>
 
