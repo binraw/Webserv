@@ -7,19 +7,14 @@
 #include "Cluster.hpp"
 #include "ConfigParser.hpp"
 
-#include <cstring>
-#include <cerrno>
-
 #include <sys/epoll.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
-
 
 /*	* ressources provisoirs
 */
 #include <csignal>
+#include <sstream>
 
 #define MAXEVENT	10
 #define BUFFERSIZE	2048
@@ -112,14 +107,6 @@ const HttpConfig & Cluster::getConfig() const {
 /*----------------------------------------------------------------------------*/
 
 /*	* server main loop
-	* MAXEVENT
-		. nb max d'evenement I/O qui peuvent etre rapportes simultanement
-		. un evenement signifie qu'un fd surveille par epoll est pret pour une operation d'I/O
-		. cela signifie que le fd : 
-			-> a des données disponibles en lecture
-			-> peut ecrire / envoyer des donnees sans bloquer
-			-> recoit une connexion sur un socket serveur (nouveau client donc ouverture socket client)
-			-> Déconnexion d'un client (fermeture d'un socket client)
 */
 void	Cluster::runCluster()
 {
@@ -133,9 +120,12 @@ void	Cluster::runCluster()
 		int nbEvents = epoll_wait(_epollFd, events, MAXEVENT, 777);
 		if (nbEvents == -1)
 			perror("\nepoll_wait");
-		else if (nbEvents > 0) {
-			for (int i = 0; i < nbEvents; i++) {
-				try {
+		else if (nbEvents > 0)
+		{
+			for (int i = 0; i < nbEvents; i++)
+			{
+				try
+				{
 					if (_serverSockets.count(events[i].data.fd) > 0)
 						acceptConnexion(events[i]);
 					else
@@ -184,7 +174,7 @@ Client * Cluster::addClient(const Request &req, const int fdClient)
 	try {
 		std::pair<std::map<int, Client>::iterator, bool> it;
 		it = current->getClientList().insert(std::pair<int, Client>(fdClient, Client(req)));
-		it.first->second._clientServer = current;
+		it.first->second.clientServer = current;
 		return &it.first->second;
 	}
 	catch(const std::exception& e) {
@@ -206,7 +196,7 @@ Client *	Cluster::findClient(int fdClient)
 	{
 		try {
 			client = &itServer->second.getClientList().at(fdClient);
-			client->_clientServer = &itServer->second;
+			client->clientServer = &itServer->second;
 		}
 		catch(const std::exception& e) {
 			;
@@ -237,12 +227,8 @@ void	Cluster::recvData(const struct epoll_event &event)
 	while (bytes_received == BUFFERSIZE)
 	{
 		bytes_received = recv(event.data.fd, buffer, BUFFERSIZE, 0);
-		if (bytes_received == 0)
-			break; // client closed connexion
-		if (bytes_received < 0) {
-			perror("recv");
-			break; // handle error
-		}
+		if (bytes_received <= 0)
+			break;
 		buff.append(buffer, bytes_received);
 	}
 	if (!buff.size())
@@ -280,6 +266,7 @@ void	Cluster::recvData(const struct epoll_event &event)
 	if (client->getrequest().getcontentlength() == client->getrequest().getbody().size())
 	{
 		try {
+			client->processResponse();
 			changeEventMod(false, event.data.fd);
 		}
 		catch(const RunException& e) {
@@ -294,6 +281,8 @@ void	Cluster::recvData(const struct epoll_event &event)
 }
 /*----------------------------------------------------------------------------*/
 
+/*	* Send data to the client and manage connexion (keep-Alive or not)
+*/
 void	Cluster::sendData(const struct epoll_event &event)
 {
 #ifdef TEST
@@ -303,34 +292,46 @@ void	Cluster::sendData(const struct epoll_event &event)
 				<< std::endl;
 #endif
 
-	char buff[BUFFERSIZE];
+
+	// int fd = open("./website/form.html", O_RDONLY);
+	// if (fd == -1)
+	// 	perror("OPENTEST");
+
+	// std::string response("\0");
+	// while (true) {
+	// 	ssize_t ret = read(fd, buff, 1);
+	// 	if (ret == 0)
+	// 		break;
+	// 	if (ret == -1){
+	// 		perror("read() in sendData");
+	// 		return;
+	// 	}
+	// 	response.append(buff, strlen(buff));
+	// }
+	// std::ostringstream convert;
+	// convert << response.length();
+	// response.insert(0, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + convert.str() + "\r\n\r\n");
+
+	char buff[BUFFERSIZE] = {'\0'};
 	memset(buff, '\0', sizeof(buff));
 
-	int fd = open("./website/form.html", O_RDONLY);
-	if (fd == -1)
-		perror("OPENTEST");	
-	read(fd, buff, sizeof(buff));
-	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 400\r\n\r\n";
-	response += buff;
+	Client	*client = findClient(event.data.fd);
+	if (!client)
+		std::cerr << RED "NO CLIENT" RESET << std::endl;
 
-	ssize_t		bytes_sended = 0;
-	int			httpSize = response.size();
-
-	
-	
-	
-	
-	while (bytes_sended != httpSize)
+	size_t		bytes_sended = 0;
+	std::cout << "IN SENDATA:\n" << *client << std::endl;
+	while (bytes_sended != client->_response.size())
 	{
-		ssize_t ret = send(event.data.fd, response.c_str(), response.length(), 0);
-		if (ret < 0) {
-			perror("send()");
+		ssize_t ret = send(event.data.fd, client->_response.c_str(), client->_response.length(), 0);
+		if (ret <= 0) {
 			break;
 		}
 		bytes_sended += ret;
-	} 
+	}
 	
-	Request &req = findClient(event.data.fd)->getrequest();
+	Request &req = client->getrequest();
+
 	if (req.getkeepalive() == true) {
 		req.clearRequest();
 		try {
@@ -345,12 +346,10 @@ void	Cluster::sendData(const struct epoll_event &event)
 	else {
 		closeConnexion(event);
 	}
-
 }
 /*----------------------------------------------------------------------------*/
 
 /*	* init servers from _serverconfig
-	*
 */
 void Cluster::setServersByPort()
 {
@@ -406,6 +405,7 @@ void	Cluster::setServerSockets()
 				freeaddrinfo(res);
 				throw InitException(__FILE__, __LINE__ - 2, "Error -> close()", 0);
 			}
+			freeaddrinfo(res);
 			e.setSockExcept();
 			std::cerr << (e.what() != NULL ? e.what() : "") << std::endl;
 
@@ -449,17 +449,23 @@ void	Cluster::setEpollFd()
 /*----------------------------------------------------------------------------*/
 
 /*	* get an availble address on an avaible service (port)
+	*
+	* ai_family = AF_INET6					-> Specifies that we use IPv6 addresses. With AI_V4MAPPED, this also allows support for IPv4
+	* ai_socktype = SOCK_STREAM				-> Indicates a socket for stream-based communication (connection-oriented, like TCP)
+	* ai_protocol = IPPROTO_TCP				-> Sets the transport protocol to TCP (Transmission Control Protocol)
+	* ai_flags = AI_PASSIVE | AI_V4MAPPED	-> AI_PASSIVE: returns an address usable by bind() to listen on all local interfaces
+											-> AI_V4MAPPED: allows accepting IPv4 connections as mapped IPv6 addresses
 */
 void	Cluster::safeGetAddr(const char *serviceName, struct addrinfo **res) const
 {
 	struct addrinfo	hints;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET6;					// Spécifie qu'on utilise des adresses IPv6. Avec AI_V4MAPPED, cela permettra aussi de supporter IPv4.
-	hints.ai_socktype = SOCK_STREAM;			// Indique un socket pour une communication par flux de données (orienté connexion, comme TCP).
-	hints.ai_protocol = IPPROTO_TCP;			// Définit le protocole de transport comme étant TCP (Transmission Control Protocol).
-	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;	// AI_PASSIVE : retourne une adresse utilisable par bind() pour écouter sur toutes les interfaces locales.
-												// AI_V4MAPPED : permet d'accepter des connexions IPv4 sous forme d'adresses IPv6 mappées (ex. ::ffff:192.168.1.1).
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_PASSIVE | AI_V4MAPPED;
+
 	int ret = getaddrinfo(NULL, serviceName, &hints, res);
 	if (ret != 0) {
 		std::string errorMsg = "Error -> safeGetAddr() on port [" + std::string(serviceName) + "]";
@@ -515,8 +521,7 @@ void	Cluster::acceptConnexion(const struct epoll_event &event) const
 				<< std::endl;
 #endif
 
-	int flags = O_NONBLOCK | FD_CLOEXEC;
-   	if (fcntl(clientSocket, F_SETFL, flags) == -1)
+   	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) == -1)
 	{
 		if (close(clientSocket) == -1)
 			perror("close() in acceptConnexion()");
@@ -578,7 +583,7 @@ void	Cluster::changeEventMod(const bool changeForRead, const int fd) const
 	memset(&ev, 0, sizeof(ev));
 	
 	ev.data.fd = fd;
-	ev.events |= EPOLLET | EPOLLHUP | EPOLLRDHUP | (changeForRead ? EPOLLIN : EPOLLOUT);
+	ev.events = EPOLLET | EPOLLHUP | EPOLLRDHUP | (changeForRead ? EPOLLIN : EPOLLOUT);
 	
 	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) == -1)
 		throw RunException(__FILE__, __LINE__ - 1, "Error epoll_ctl() in changeEventMod():");

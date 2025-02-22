@@ -200,6 +200,7 @@ std::string UtilParsing::intToString(int value)
 
 std::string UtilParsing::recoverExtension(const std::string &filename)
 {
+    std::cout << filename << std::endl;
     std::size_t start = filename.find_last_of(".");
     return filename.substr(start); // on renvoie avec le . l'extension car dasn la map on garde le .
 }

@@ -148,7 +148,7 @@ void	Request::clearRequest()
 	this->_contentLength = 0;
 	// this->_hostName.clear();
 	// this->_hostPort.clear();
-	// this->_keepAlive = false;
+	this->_keepAlive = false;
 	this->_requestType.clear();
 	this->_uri.clear();
 }
