@@ -281,6 +281,7 @@ void	Cluster::recvData(const struct epoll_event &event)
 	if (client->getrequest().getcontentlength() == client->getrequest().getbody().size())
 	{
 		try {
+			client->_response = client->processResponse();
 			changeEventMod(false, event.data.fd);
 		}
 		catch(const RunException& e) {
@@ -303,22 +304,23 @@ void	Cluster::sendData(const struct epoll_event &event)
 				<< BOLD BRIGHT_PURPLE "]\n" RESET
 				<< std::endl;
 #endif
-	char buff[4096];
-	memset(buff, '\0', sizeof(buff));
+	// char buff[4096];
+	// memset(buff, '\0', sizeof(buff));
 
-	int fd = open("./website/form.html", O_RDONLY);
-	if (fd == -1)
-		perror("OPENTEST");	
-	read(fd, buff, sizeof(buff));
-	std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 100000\r\n\r\n";
-	response += buff;
-	std::cout << response << std::endl;
+	// int fd = open("./website/form.html", O_RDONLY);
+	// if (fd == -1)
+	// 	perror("OPENTEST");	
+	// read(fd, buff, sizeof(buff));
+	// std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 100000\r\n\r\n";
+	// response += buff;
+	// std::cout << response << std::endl;
+	Client *client = findClient(event.data.fd);
 	ssize_t		bytes_sended = 0;
-	int			httpSize = response.size();
+	int			httpSize = client->_response.size();
 
 	while (bytes_sended != httpSize)
 	{
-		ssize_t ret = send(event.data.fd, response.c_str(), response.length(), 0);
+		ssize_t ret = send(event.data.fd, client->_response.c_str(), client->_response.length(), 0);
 		if (ret < 0) {
 			perror("send()");
 			break;
@@ -326,7 +328,7 @@ void	Cluster::sendData(const struct epoll_event &event)
 		bytes_sended += ret;
 	} 
 	
-	Client *client = findClient(event.data.fd);
+	// Client *client = findClient(event.data.fd);
 	client->getrequest().clearRequest();
 	closeConnexion(event);
 

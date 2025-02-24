@@ -1,0 +1,66 @@
+The configuration file structure is divided into several sections.  
+
+First, the entire configuration must be contained within an `http` block.  
+Braces `{}` should always appear on their own line.  
+
+### Required fields within the `http` block:  
+- `include`  
+- `default_type`  
+- `keepalive_timeout`  
+- `worker_connections`  
+- `listen`  
+
+Additionally, the configuration must include at least one `server` block (also enclosed within `{}`), which requires the following fields:  
+
+### Required fields within the `server` block:  
+- `server_name`  
+- `listen`  
+- `client_max_body_size`  
+
+### Optional field:  
+- `upload_path`  
+
+Each `server` block must contain at least one `location` block.  
+
+A `location` block begins with the `location` keyword followed by the access path (as referenced in the `default.conf` file). This block is also enclosed within `{}`.  
+
+### Required fields within the `location` block:  
+- `root`  
+- `index`  
+- `methods_accept`  
+
+### Optional field:  
+- `cgi_path`  
+
+This structure ensures a well-formed and functional configuration file.
+
+#### French Part
+
+Le patron du fichier de configuration se decoupe en plusieurs parties.
+D'abord l'entiereté de la configuration doit etre dans un bloc http. 
+sachant que les {} doivent toujours etre seul sur leur ligne.
+les champs obligatoire dans la configuration qui sont present dans le bloc http sont:
+
+-include
+-default_type
+-keepalive_timeout
+-worker_connexion
+-listen
+et minimun un bloc server (lui aussi délimité par des {} ) qui lui contient les champs obligatoire suivant:
+
+-server_name
+-listen
+-client_max_body_size
+non obligatoire:
+-upload_path
+
+le server doit lui aussi minimun avoir un bloc localisation.
+Le blog commence par le mot clef:
+location et sur la meme ligne il y aura le chemin d'accès (voir fichier 'default.conf)
+(lui aussi délimité par des {})
+
+-root
+-index
+-methods_accept
+non obligatoire:
+-cgi_path
