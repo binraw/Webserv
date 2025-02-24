@@ -1,4 +1,3 @@
-
 #include "Client.hpp"
 
 // Client::Client(int fd, std::string request)
@@ -46,13 +45,13 @@ std::string Client::processResponse()
 
 int Client::checkRequest() 
 {
-    if (_response.find("POST") != std::string::npos)
+    if (_request.gettype().find("POST") != std::string::npos)
         return executePostRequest();
-    else if (_response.find("GET") != std::string::npos)
+    else if (_request.gettype().find("GET") != std::string::npos)
     {
          return executeGetRequest();
     }
-    else if (_response.find("DELETE") != std::string::npos)
+    else if (_request.gettype().find("DELETE") != std::string::npos)
     {
         return executeDeleteRequest();
     }
@@ -63,31 +62,57 @@ int Client::checkRequest()
 }
 // le body de la requete POST sera different donc a voir pour le script cgi
 
-int Client::executeGetRequest()
-{
-    if (_request.gettype().find("GET") != std::string::npos)
-    {
-        if (UtilParsing::fileExits(_request.geturi()))
-        {
-            return writeGetResponse(); // la je rempli le futur body mais il faut remplir les en-tete
-        }
-        else
-            return 400;
-    }
-    return 404;
-}
+// int Client::executeGetRequest()
+// {
+//     if (_request.gettype().find("GET") != std::string::npos)
+//     {
+//         std::string locationPath = _clientServer->getLocationPath();
+//         if (locationPath.length() > 0) // ou une autre condition appropriée selon la logique métier
+//         {
+//             return writeGetResponse();
+//         }
+//         else
+//             return 400;
+//     }
+//     return 404;
+// }
+
+// int Client::writeGetResponse()
+// {
+//     if (_request.geturi().find("..") != std::string::npos)
+//         return 404;
+//     std::ifstream file(_request.geturi().c_str()); // ici je dois changer avec le chemin absolu 
+//     std::stringstream buffer;
+//     buffer << file.rdbuf();
+//     _contentBody = buffer.str();
+//     if (_contentBody.empty())
+//         return 404;
+//     return 200;
+// }
 
 int Client::writeGetResponse()
 {
     if (_request.geturi().find("..") != std::string::npos)
         return 404;
-    std::ifstream file(_request.geturi().c_str());
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    _contentBody = buffer.str();
-    if (_contentBody.empty())
-        return 404;
-    return 200;
+
+    std::string requestUri = _request.geturi();
+    const std::vector<LocationConfig>& locations = _clientServer->getConfig()._locationConfig;
+    
+    for (std::vector<LocationConfig>::const_iterator it = locations.begin(); it != locations.end(); ++it)
+    {
+        if (it->_path == requestUri)    
+        {
+            std::string fullPath = it->_root + it->_index;
+            std::ifstream file(fullPath.c_str());
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            _contentBody = buffer.str();
+            if (_contentBody.empty())
+                return 404;
+            return 200;
+        }
+    }
+    return 404;
 }
 
 int Client::executeDeleteRequest()
@@ -432,4 +457,22 @@ void Client::buildContentType()
         _contentType = it->second;
     else
         _contentType = "application/octet-stream";
+}
+// faire doc de fichier config
+
+// ici je refais la fct
+
+int Client::executeGetRequest()
+{
+    if (_request.gettype().find("GET") != std::string::npos)
+    {
+        const std::set<std::string>& locations = _clientServer->getLocationPath();
+        if (locations.find(_request.geturi()) != locations.end())
+        {
+            return writeGetResponse();
+        }
+        else
+            return 400;
+    }
+    return 404;
 }
