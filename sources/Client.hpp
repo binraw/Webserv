@@ -23,8 +23,6 @@ class Client /*: virtual public Server*/
 private:
     // les valeurs suivantes sont la pour utiliser la fct Upload
 
-    std::string _nameFileTeleverser;
-    std::string _contentFileTeleverser;
     Request _request;
 
 
@@ -36,10 +34,7 @@ public:
     std::string _contentType; // champ obligatoire a renvoyer
     std::string _contentLength; // taille du body renvoyer au client
     std::map<std::string, std::string> _mimeMap; // map avec tout les mimes possible
-    Client(const Request &req) {
-			_request = req;
-			_clientServer = NULL;
-		}
+    Client(const Request &req);
     ~Client() {};
     Client &operator=(const Client &);
 

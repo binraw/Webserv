@@ -4,6 +4,13 @@
 // {
 // }
 
+
+Client::Client(const Request &req) 
+{
+    _request = req;
+    _clientServer = NULL;
+    _mimeMap = initMapMime();
+}
 // ok ne pas oublier de set script.pl comme fichier par default si l'utilisateru envoie juste cgi-bin/ comme chemin 
 
 // Client::~Client(){
@@ -45,10 +52,12 @@ std::string Client::processResponse()
 
 int Client::checkRequest() 
 {
+    
     if (_request.gettype().find("POST") != std::string::npos)
         return executePostRequest();
     else if (_request.gettype().find("GET") != std::string::npos)
     {
+        std::cout << _request.gettype() << std::endl;
          return executeGetRequest();
     }
     else if (_request.gettype().find("DELETE") != std::string::npos)
@@ -102,7 +111,8 @@ int Client::writeGetResponse()
     {
         if (it->_path == requestUri)    
         {
-            std::string fullPath = it->_root + it->_index;
+            std::string fullPath = it->_root + "/" + it->_index;
+            std::cout << fullPath << std::endl;
             std::ifstream file(fullPath.c_str());
             std::stringstream buffer;
             buffer << file.rdbuf();
@@ -169,7 +179,7 @@ void Client::buildResponse()
 {
     int sizeBody = _contentBody.length();
     _contentLength = UtilParsing::intToString(sizeBody);
-    _response = "HTTP/1.1"  + _codeResponse + "\nContent-Type: " + _contentType + "\nContent-Length: " + _contentLength + "\r\n"
+    _response = "HTTP/1.1 "  + _codeResponse + "\nContent-Type: " + _contentType + "\nContent-Length: " + _contentLength + "\r\n"
                 + _contentBody;
 }
 
@@ -450,8 +460,10 @@ std::map<std::string, std::string> Client::initMapMime()
 
 void Client::buildContentType()
 {
+    // std::string extension;
+    // extension = UtilParsing::recoverExtension(_request.geturi());
     std::string extension;
-    extension = UtilParsing::recoverExtension(_request.geturi());
+    extension = ".html";
     std::map<std::string, std::string>::iterator it = _mimeMap.find(extension);
     if (it != _mimeMap.end())
         _contentType = it->second;
@@ -467,6 +479,14 @@ int Client::executeGetRequest()
     if (_request.gettype().find("GET") != std::string::npos)
     {
         const std::set<std::string>& locations = _clientServer->getLocationPath();
+        // 
+        // for (std::set<std::string>::const_iterator it = _clientServer->getLocationPath().begin();
+		// it != _clientServer->getLocationPath().end(); it++)
+        // {
+        //     std::cout << *it << std::endl;
+        // }
+
+        //
         if (locations.find(_request.geturi()) != locations.end())
         {
             return writeGetResponse();

@@ -247,6 +247,7 @@ void	Cluster::recvData(const struct epoll_event &event)
 		}
 		buff.append(buffer, bytes_received);
 	}
+	// std::cout << buff << std::endl; // ici pour voir la resquest complete
 	if (buff.size() == 0)
 		return;
 	Client *client = findClient(event.data.fd);
@@ -281,7 +282,7 @@ void	Cluster::recvData(const struct epoll_event &event)
 	if (client->getrequest().getcontentlength() == client->getrequest().getbody().size())
 	{
 		try {
-			client->_response = client->processResponse();
+			client->processResponse();
 			changeEventMod(false, event.data.fd);
 		}
 		catch(const RunException& e) {
@@ -317,7 +318,7 @@ void	Cluster::sendData(const struct epoll_event &event)
 	Client *client = findClient(event.data.fd);
 	ssize_t		bytes_sended = 0;
 	int			httpSize = client->_response.size();
-
+	// std::cout << client->_response << std::endl;
 	while (bytes_sended != httpSize)
 	{
 		ssize_t ret = send(event.data.fd, client->_response.c_str(), client->_response.length(), 0);
