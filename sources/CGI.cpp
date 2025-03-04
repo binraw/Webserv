@@ -42,50 +42,59 @@
 
 #include "Client.hpp"
 #include <cstring>
+#include "CGI.hpp"
 
 class ErrorCGI : virtual public std::exception 
 {
     public:
-        ErrorCGI(const std::string &message) : _message(message){}
-        virtual const char *	what() const throw() { return _message.c_str(); }
+        ErrorCGI(const std::string &message, int code) : _message(message), _code(code){}
+        virtual const char *	what() const throw() 
+        {
+            (void) _code;
+             return _message.c_str();
+        }
+        virtual ~ErrorCGI() throw() {};
+
     private:
         std::string _message;
-
+        int         _code;
 };
 
+
 // ici voir si il faut renvoyer une page error dans le catch
-void checkFileScript(const std::string &path, Server server, Request req)
+void processCGI(const std::string &path, Server server, Request req)
 {
     std::string response;
     try 
     {
         if (UtilParsing::fileExits(path) != 0)
-            throw ErrorCGI("");
+            throw ErrorCGI("Not found", 404);
         if (access(path.c_str(), X_OK) != 0)
-            throw ErrorCGI("");
+            throw ErrorCGI("Not found", 404);
         if (checkExtensionCGI(path, server) != 0)
-            throw ErrorCGI("");
+            throw ErrorCGI("Bad Gateway", 502);
         if (moveToDirectoryScript(extractDirectory(path)) != 0)
-            throw ErrorCGI("");
+            throw ErrorCGI("Internal server error", 500);
         response = executeCGI(path, server, req); // ici plus tard renvoyer directement dans la value response
         if (response.empty())
-            throw ErrorCGI("");
+            throw ErrorCGI("Bad Gateway", 502);
     }
     catch (const ErrorCGI& e)
     {
-
+         std::cerr << e.what() << std::endl;
     }
 }
 // fonction pour check le type d'extension du script demander pour verifier si le server la supporte
 // pareil la recuperer dans le parsing le nom par server  le nom du script cgi pour verifier son extension
 bool checkExtensionCGI(const std::string &path, Server server)
 {
-   std::string cgi_path = server.getConfig()._CgiPath;
+   std::string cgi_path = "support.pl";
 
     if (UtilParsing::recoverExtension(path) == UtilParsing::recoverExtension(cgi_path))
         return true;
     return false;
 }
+
 // fonction pour extract le nom du dossier
 std::string extractDirectory(const std::string &path)
 {
@@ -101,25 +110,21 @@ std::string extractDirectory(const std::string &path)
 bool moveToDirectoryScript(const std::string &directory)
 {
     if (chdir(directory.c_str()) != 0)
-    {
-        std::cerr << "Error move directory script." << std::endl;
         return false;
-    }
     return true;
 }
 
 // ici recuperer les values de l'env avec les valeurs de la request/server
-// ne pas oublier de delete tout le tab
 std::string _method,  _params, _contentType, _http, _httpReferer, _remoteAddr, _remotePort, _scriptName, _pathInfo;
 char** initEnv(Request req, Server server)
 {
       std::string environnement[] = {
         "REQUEST_METHOD=" + req.gettype(),
         "QUERY_STRING=" + req.getbody(),
-        "CONTENT_TYPE=" + _contentType,
+        "CONTENT_TYPE=" + _contentType, // content-type request
         "HTTP_HOST=" + req.gethostname(),
         "SCRIPT_NAME=" + server.getService(),
-        "PATH_INFO=" + _pathInfo, // 
+        "PATH_INFO=" + _pathInfo, // tout url 
     };
     int  environSize = sizeof(environnement) / sizeof(environnement[0]);
     char** environ = new char*[environSize + 1]; 
@@ -135,10 +140,8 @@ char** initEnv(Request req, Server server)
 }
 
 
-// voila pourquoi pour moi dans le sujet il y a ecrit :
-// "votre serveur devrait fonctionner avec un seul CGI"
-// car on donne le chemin de executable en dur et si on veut rajouter des langage soutenu 
-// alors il faut faire differente route lors de l'execution
+// route pour effectuer le pipe + fork neccessaire pour l'execution 
+// si erreur on renvoie juste un string vide car le controle se fait plus haut
 std::string playCGI(const std::string path, char** env)
 {
     std::string output;
@@ -154,28 +157,34 @@ std::string playCGI(const std::string path, char** env)
         return "";
     }
     else if (pid == 0) 
-    {
-        if (childProcess(path, env, pipfd) == 1)
-            exit(1);
-        exit(0);
-    } 
+        childProcess(path, env, pipfd); // ici des exit avant mais aucune utiliter
     else 
         output = parentProcess(pid, pipfd);
 
     return output;
 }
 
+// process du child du fork avec la recuperation du fichier a ouvrir etc 
+// a voir si ici il est possible d'avoir une autre facon juste le nom du fichier au lieu de le decouper ici
+// pour eviter les probleme ici
 int childProcess(const std::string path, char**env, int *pipfd)
 {
+    const char *filename;
     close(pipfd[0]);
     dup2(pipfd[1], STDOUT_FILENO); 
     close(pipfd[1]);
-    char *args[] = {"/usr/bin/perl", (char*)(path.c_str()), NULL};
-    if (execve(args[0],args , env) == -1)
+    std::string::size_type start = path.find_last_of("/");
+    if (start != std::string::npos)
+        filename = path.substr(start + 1).c_str();
+    else
+        filename = path.c_str();
+    const char *args[] = {"/usr/bin/perl", filename, NULL};
+    if (execve(args[0],(char* const*)args , env) == -1)
         return 1;
     return 0;
 }
-
+// le process parent qui va ecrire dans output le retour du script qui dans l'idee 
+// s'occupe de creer un body html
 std::string parentProcess(pid_t pid, int *pipfd)
 {
     std::string output;
@@ -203,4 +212,85 @@ std::string executeCGI(const std::string &path, Server server, Request req)
     env = initEnv(req, server);
     body = playCGI(path, env);
     return body;
+}
+
+// -------------------------ICI COMMENCE LA PARTIE TEST----------------------------
+
+
+void processCGITEST(const std::string &path)
+{
+    std::string response;
+    try 
+    {
+        if (UtilParsing::fileExits(path) != true) //ici voir mais a enlever le check normalement
+            throw ErrorCGI("Not found", 404);
+        if (access(path.c_str(), X_OK) != 0)
+            throw ErrorCGI("Not found", 404);
+        if (checkExtensionCGITEST(path) != true)
+            throw ErrorCGI("Bad Gateway", 502);
+        if (moveToDirectoryScript(extractDirectory(path)) != true)
+            throw ErrorCGI("Internal server error", 500);
+        response = executeCGITEST(path); 
+        if (response.empty())
+            throw ErrorCGI("Bad Gateway", 502);
+    }
+    catch (const ErrorCGI& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    std::cout << response << std::endl;
+}
+
+
+// ici on pourra rajouter d'autres option si on veut faire fonctionner d'autre type de CGI
+bool checkExtensionCGITEST(const std::string &path)
+{
+   std::string cgi_path = "support.pl";
+
+    if (UtilParsing::recoverExtension(path) == UtilParsing::recoverExtension(cgi_path))
+        return true;
+    return false;
+}
+
+std::string executeCGITEST(const std::string &path)
+{
+    char **env;
+    std::string body;
+    env = initEnvTEST();
+    body = playCGI(path, env);
+    freeEnv(env);
+    return body;
+}
+
+char** initEnvTEST()
+{
+      std::string environnement[] = {
+        "REQUEST_METHOD=POST",
+        "QUERY_STRING=value1=35",
+        "CONTENT_TYPE=text/html",
+        "HTTP_HOST=localhost",
+        "SCRIPT_NAME=script.pl",
+        "PATH_INFO=./cgi-bin/script.pl", 
+    };
+    int  environSize = sizeof(environnement) / sizeof(environnement[0]);
+    char** environTEST = new char*[environSize + 1]; 
+
+    for (int i = 0; i < environSize; i++) 
+    {
+        environTEST[i] = new char[environnement[i].size() + 1];
+        strcpy(environTEST[i], environnement[i].c_str());
+    }
+    environTEST[environSize] = NULL;
+
+    return environTEST;
+}
+void freeEnv(char** tab)
+{
+    int i = 0;
+    while (tab[i] != NULL)
+    {
+        delete[] tab[i];
+        i++;
+    }
+    delete[] tab;
 }
