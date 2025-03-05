@@ -206,14 +206,6 @@ std::string UtilParsing::recoverExtension(const std::string &filename)
     return filename.substr(start); // on renvoie avec le . l'extension car dasn la map on garde le .
 }
 
-
-
-
-
-// alors je pense partir sur des qu'un % alors recuperer les values collees
-// et convertir ca 
-// et retourner la string avec les changement
-// deja hexa n'a que 2 char donc trouver % + 1 et 2 a convertir et continuer a parcourir le str
 std::string UtilParsing::convertHexaToString(std::string value)
 {
     std::string strConvert;
@@ -241,6 +233,5 @@ int UtilParsing::decryptHexa(std::string value)
     std::stringstream ss;
     ss << std::hex << value;
     ss >> x;
-
     return x;
 }

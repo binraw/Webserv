@@ -304,3 +304,27 @@ std::string ParseUri(std::string uri)
         return "";
     return UtilParsing::convertHexaToString(uri.substr(start + 1));
 }
+
+std::string ParseBodyPost(std::string body, std::string contentType)
+{
+    if (contentType == "application/x-ww-form-urllencoded")
+        return body;
+    else if (contentType == "multipart/form-data")
+        return ParseMultipart(body, "weeeeeeessssssssssh");
+    else if (contentType == "text/plain")
+        return ParseText(body);
+    else
+        return body;
+}
+
+std::string ParseMultipart(std::string body, std::string boundary)
+{
+
+
+}
+
+
+std::string ParseText(std::string body)
+{
+    return body;
+}
