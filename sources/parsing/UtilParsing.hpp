@@ -47,6 +47,8 @@ class UtilParsing
 		static bool directoryExists(const std::string &dirname);
 		static std::string intToString(int value);
 		static std::string recoverExtension(const std::string &filename);
+		static std::string convertHexaToString(std::string value);
+		static int decryptHexa(std::string value);
 	private:
 		UtilParsing() {};
 };

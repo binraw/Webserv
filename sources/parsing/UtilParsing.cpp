@@ -2,6 +2,8 @@
 
 #include "UtilParsing.hpp"
 #include <cstring>
+#include <sstream>
+#include <iostream>
 
 bool	UtilParsing::isOnlySpace(const std::string & str)
 {
@@ -202,4 +204,43 @@ std::string UtilParsing::recoverExtension(const std::string &filename)
 {
     std::size_t start = filename.find_last_of(".");
     return filename.substr(start); // on renvoie avec le . l'extension car dasn la map on garde le .
+}
+
+
+
+
+
+// alors je pense partir sur des qu'un % alors recuperer les values collees
+// et convertir ca 
+// et retourner la string avec les changement
+// deja hexa n'a que 2 char donc trouver % + 1 et 2 a convertir et continuer a parcourir le str
+std::string UtilParsing::convertHexaToString(std::string value)
+{
+    std::string strConvert;
+    int number;
+    for(size_t i = 0; i < value.size(); i++)
+    {
+        if (value[i] == '%')
+        {
+            number = decryptHexa(value.substr(i + 1, 2));
+            char str = number;
+           if (strConvert.empty())
+                strConvert = value.substr(0, i);
+            strConvert += str;
+            i += 2; 
+        }
+    }
+    if (!strConvert.empty())
+        return strConvert + value.substr(value.find_last_of('%') + 3);
+    return value;
+}
+
+int UtilParsing::decryptHexa(std::string value)
+{
+    unsigned int x;
+    std::stringstream ss;
+    ss << std::hex << value;
+    ss >> x;
+
+    return x;
 }

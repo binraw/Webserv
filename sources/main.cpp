@@ -7,6 +7,7 @@
 #include "CGI.hpp"
 
 void hand(int, siginfo_t *, void *);
+int decryptHexa(std::string value);
 
 int main(void)
 {
@@ -14,7 +15,8 @@ int main(void)
 
     try 
     {
-        processCGITEST("./cgi-bin/script.pl");
+        std::string value = ParseUri("asasa?prenom=Pierre%21&nom=Durand&age=25&ville=Paris");
+       std::cout << value << std::endl;
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what() << std::endl

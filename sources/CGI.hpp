@@ -15,6 +15,7 @@ int childProcess(const std::string path, char**env, int *pipfd);
 std::string parentProcess(pid_t pid, int *pipfd);
 std::string executeCGI(const std::string &path, Server server, Request req);
 void freeEnv(char** tab);
+std::string ParseUri(std::string uri);
 
 //------------------PARTIE TEST EN DUR-------------------------
 
