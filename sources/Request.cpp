@@ -1,6 +1,4 @@
 
-
-
 /*	* les requetes
 	*
 	* ENTETES OBLIGATOIRES
@@ -35,26 +33,43 @@
 /*============================================================================*/
 
 /*	* if an error is detected throw an exception with the correct error code
-	* http version
-	* method type
-	* path to ressource
-	* Host error
+	* set keep_alive
+	* get content length
+	* get content type
+	* get uri and method
+	* get host
+	* get body (if detected)
 */
 Request::Request(const std::string &response)
-  : _keepAlive(response.find("keep-alive") == response.npos ? false : true)
+  : totalBytesReceived(0), totalBytessended(0),
+	_keepAlive(response.find("keep-alive") == response.npos ? false : true)
 {
 	size_t	idxBodySeparator = response.find(BODY_SEPARATOR);
-
-	std::vector<std::string>					tokenHeader;
-	std::vector<std::string>::const_iterator	itToken;
-
-	tokenHeader = UtilParsing::split(response.substr(0, idxBodySeparator + 1), "\r\n"); // extract header and split it
-	itToken = tokenHeader.begin();
+	if (!response.size() || idxBodySeparator == response.npos)
+		throw std::runtime_error("400 bad request empty request\n");
 
 	initContentLength(response);
-	initRequestLine(*itToken);
-	initHost(++itToken, tokenHeader.end());
-	setBody(response.substr(idxBodySeparator + 4));
+	initContentType(response);
+	
+	std::vector<std::string>					tokenHeader;
+	std::vector<std::string>::const_iterator	itToken;
+	try {
+		tokenHeader = UtilParsing::split(response.substr(0, idxBodySeparator), "\r\n"); // split header line by line
+	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << '\n';
+		throw std::runtime_error("error 500 in constructor request\n");
+	}
+	
+	itToken = tokenHeader.begin();
+	if (itToken != tokenHeader.end())
+	{
+		initRequestLine(*itToken);
+		initHost(++itToken, tokenHeader.end());
+	}
+	else
+	throw std::runtime_error("surprising 400 bad request\n");
+	setBody(response, response.size());
 }
 /*----------------------------------------------------------------------------*/
 
@@ -73,11 +88,15 @@ Request & Request::operator=(const Request &ref)
 	{
 		_keepAlive = ref._keepAlive;
 		_contentLength = ref._contentLength;
+		_contentType = ref._contentType;
 		_uri = ref._uri;
 		_hostName = ref._hostName;
 		_hostPort = ref._hostPort;
 		_requestType = ref._requestType;
 		_body = ref._body;
+		totalBytesReceived = ref.totalBytesReceived;
+		totalBytessended = ref.totalBytessended;
+		_bound = ref._bound;
 	}
 	return *this;
 }
@@ -92,6 +111,8 @@ std::ostream & operator<<(std::ostream & o, Request &ref)
 		<< "_hostPort: [" << ref.gethostport() << "]" << std::endl
 		<< "_keepAlive: [" << (ref.getkeepalive() == true ? "true" : "false") << "]" << std::endl
 		<< "_contentLength: [" << ref.getcontentlength() << "]" << std::endl
+		<< "_contentType: [" << (ref.getcontenttype().empty() ? "" : ref.getcontenttype()) << "]" << std::endl
+		<< "_bound: [" << ref.getbound() << "]" << std::endl
 		<< std::endl
 		<< "BODY :\n" << ref.getbody() << RESET;
 	return o;
@@ -132,99 +153,240 @@ std::string&	Request::getbody() {
 }
 /*----------------------------------------------------------------------------*/
 
+const std::string&	Request::getbound() const {
+	return _bound;
+}
+/*----------------------------------------------------------------------------*/
+
+const std::string&	Request::getbody()	const {
+	return _body;
+}
+/*----------------------------------------------------------------------------*/
+
 size_t	Request::getcontentlength()	const {
 	return _contentLength;
 }
 /*----------------------------------------------------------------------------*/
 
-void	Request::setBody(const std::string &body) {
-	_body = body;
+const std::string	&Request::getcontenttype()	const {
+	return _contentType;
 }
 /*----------------------------------------------------------------------------*/
 
 void	Request::clearRequest()
 {
-	this->_body.clear();
-	this->_contentLength = 0;
-	this->_hostName.clear();
-	this->_hostPort.clear();
-	this->_keepAlive = false;
-	this->_requestType.clear();
-	this->_uri.clear();
+	totalBytesReceived = 0;
+	totalBytessended = 0;
+
+	_keepAlive = false;
+	_contentLength = 0;
+	_uri.clear();
+	_hostName.clear();
+	_hostPort.clear();
+	_requestType.clear();
+	_body.clear();
+	_contentType.clear();
+	_bound.clear();	
 }
 /*----------------------------------------------------------------------------*/
-
 
 /*============================================================================*/
 						/*### PRIVATE METHODS ###*/
 /*============================================================================*/
 
 /*	* check validity of the request line (METHOD PATH_TO_RESSOURCE PROTOCOL_VERSION)
+	*
+	* extract the method (GET POST DELETE)
+	* check the HTTP protocole version HTTP/1.1
+	* extract the uri
+	*
 	* throw exception with the correct error code
 */
 void	Request::initRequestLine(const std::string &requestLine)
 {
-	_requestType = requestLine.substr(0, requestLine.find_first_of(" "));
-	//throw exception with error 415 -> Unsupported Media Type : Format de requête non supporté pour une méthode et une ressource données.
-	if (_requestType.empty() == true) {
-		std::cerr << RED "throw exception with error 415 in initRequestLine()" RESET << std::endl;
-		throw std::exception();
+	try {
+		_requestType = requestLine.substr(0, requestLine.find_first_of(" "));
+	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << '\n';
+		throw std::runtime_error("throw exception with error 500 internal error in initRequestLine()\n");
 	}
 
-	//throw exception with error 400 -> Bad request : protocol non supporte
-	if (requestLine.find(PROTOCOL_VERION) == std::string::npos) {
-		std::cerr << RED "throw exception with error 400 in initRequestLine() : " YELLOW << requestLine << RESET << std::endl;
-		throw std::exception();
-	}
+	if (_requestType.empty() == true || requestLine.find(PROTOCOL_VERION) == std::string::npos)
+		throw std::runtime_error("throw 400 bad req in initRequestLine() unsupported protocol version\n");
 
-	//error maybe impossible
-	size_t	idx = requestLine.find_first_of("/");
-	if (idx == std::string::npos) {
-		std::cerr << RED "\'/\' DOESN'T FIND IN requestLine in function initRequestLine()" RESET << std::endl;
-		throw std::exception();
+	size_t	idx = requestLine.find_first_of(" ");
+	if (idx == std::string::npos)
+		throw std::runtime_error("function initRequestLine() throw 400 bad req");
+	
+	try {
+		idx++;	// place le curseur sur le premier caractere de l'uri
+		_uri = requestLine.substr(idx, requestLine.find_first_of(' ', idx) - idx);
 	}
-	_uri = requestLine.substr(idx, requestLine.find_first_of(' ', idx) - idx);
+	catch(const std::exception& e) {
+		std::cerr << e.what() << '\n';
+		throw std::runtime_error("throw 500 internal error in initRequestLine()");
+	}
 }
 
 /*	* extract the hostname and the host port required by the client
 */
 void	Request::initHost(std::vector<std::string>::const_iterator &itToken, std::vector<std::string>::const_iterator itEnd)
 {
-	while (itToken != itEnd) {
+	while (itToken != itEnd)
+	{
 		if (itToken->find("Host") != itToken->npos)
 			break;
 		itToken++;
 	}
-	if (itToken == itEnd) {
-		std::cerr << RED "NO HOST in initHost()" << std::endl; // manage error
-		return;
-	}
+	if (itToken == itEnd)
+		throw std::runtime_error("400 Bad request no host specified\n");
 	
-	_hostName.clear();
-	_hostPort.clear();
-	size_t idxSpace = itToken->find_last_of(" ");
-	size_t idxSemicolon = itToken->find_last_of(":");
-	_hostName = itToken->substr(idxSpace + 1, idxSemicolon - idxSpace - 1);
-	_hostPort = itToken->substr(idxSemicolon + 1, itToken->length() - idxSemicolon);
+	try {
+		size_t idxSpace = itToken->find_last_of(" ");
+		size_t idxSemicolon = itToken->find_last_of(":");
+
+		_hostName = itToken->substr(idxSpace + 1, idxSemicolon - idxSpace - 1);
+		_hostPort = itToken->substr(idxSemicolon + 1, itToken->length() - idxSemicolon);
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << e.what() << std::endl;
+		throw std::runtime_error("500 internal error\n");
+	}
 }
 /*----------------------------------------------------------------------------*/
 
+/*	* get size of the body
+*/
 void	Request::initContentLength(const std::string &response)
 {
 	size_t idx = response.find("Content-Length");
-	
 	if (idx == response.npos) {
 		_contentLength = 0;
 		return ;
 	}
+	idx = response.find_first_of("0123456789", idx);
+	if (idx != response.npos && !response[idx]) {
+		_contentLength = 0;
+		return ;
+	}
 	try {
-		idx = response.find_first_of(' ', idx) + 1;
-		std::stringstream ss(response.substr(idx, response.length() - response.find_first_of(' ', idx)));
-		ss >> _contentLength;
+		_contentLength = UtilParsing::convertBodySize(response.substr(idx, response.length() - \
+													response.find_first_of("0123456789", idx)));
 	}
-	catch(const std::exception& e) {
-		std::cerr << e.what() << " Error\n" __FILE__ " : "<< __LINE__;
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		throw std::runtime_error("error 500 initContentLength() request constructor\n");
 	}
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* 3 types value possible (help for the parsing of arguments)
+	*
+	* application/x-www-form-urlencoded
+		-> Default setting. All characters are encoded before sent
+			.spaces are converted to "+" symbols
+			.special characters are converted to ASCII HEX values (ex: %20 == ASCII ' ' 32)
+	* multipart/form-data
+		-> necessary if the user will upload a file through the form
+			. body is detached from url
+	* text/plain
+		-> Sending data without any encoding at all. Not recommended
+	
+	for each of them, data is in a specific format in the request
+*/
+void	Request::initContentType(const std::string &response)
+{
+	_contentType.clear();
+	_bound.clear();
+
+	size_t	idx = response.find("Content-Type");
+	if (idx == response.npos)
+		return;
+	if ((idx = response.find_first_of(' ', idx)) == response.npos) {
+		_contentType = DFLT_CONTENT_TYPE;
+		return;
+	}
+
+	try {
+		idx++;
+		_contentType = response.substr(idx, response.find_first_of("\r\n", idx) - idx);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		throw std::runtime_error("500 internal error in initContentType in " __FILE__);
+	}
+}
+/*----------------------------------------------------------------------------*/
+
+#include <stdlib.h>
+
+size_t	Request::skipHeader(const std::string &body)
+{
+	size_t	idx = body.find(_bound);
+	if (idx == body.npos)
+		idx = body.find(BODY_SEPARATOR);
+	else
+		idx = body.find(BODY_SEPARATOR, idx);
+	if (idx == body.npos) {
+		// std::cout << body << std::endl;
+		// exit(130);
+		// throw std::runtime_error("Error 400 bad request format in skipHeader() in " __FILE__);
+		return 0;
+	}
+
+	return idx + 4;
+}
+/*----------------------------------------------------------------------------*/
+
+void	Request::setBody(const std::string &body, ssize_t bodySize)
+{
+	(void) bodySize;
+	if (_requestType.compare("GET") == 0)
+		return;
+
+	if (body.find("multipart/form-data") != body.npos)
+		extractBound(body);
+
+	size_t idx = skipHeader(body);
+	if (!idx)
+		_body.append(body);
+	else
+		_body = body.substr(idx, body.size() - idx);
+}
+/*----------------------------------------------------------------------------*/
+
+/*	* get the delimiter for query POST type multipart/form-data (----webKit)
+*/
+void	Request::extractBound(const std::string &contentType)
+{
+	size_t idx = contentType.find("boundary=", contentType.find("multipart/form-data"));
+	if (idx == contentType.npos)
+		throw std::runtime_error("400 bad request in " __FILE__ " no body separator found");
+
+	try {
+		idx += 9;
+		_bound = contentType.substr(idx, contentType.find("\r\n", idx) - idx);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		throw std::runtime_error("500 internal error in " __FILE__);
+	}
+}
+/*----------------------------------------------------------------------------*/
+
+/*	*
+	*
+	* 
+*/
+void	Request::checkRequestValidity()
+{
+	std::cout	<< this->_body.size() << std::endl
+				<< this->_contentLength << std::endl;
 }
 /*----------------------------------------------------------------------------*/
 

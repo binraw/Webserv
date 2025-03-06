@@ -23,5 +23,6 @@ void processCGITEST(const std::string &path);
 bool checkExtensionCGITEST(const std::string &path);
 std::string executeCGITEST(const std::string &path);
 char** initEnvTEST();
+std::string playCGITEST(const std::string path, char** env);
 
 #endif

@@ -38,6 +38,8 @@ class UtilParsing
 		static std::string	trim(const std::string& str);
 		static std::string	trimSemicolon(const std::string& str);
 		static std::string	recoverValue(std::string line, std::string key);
+		static size_t	safeMultiply(size_t value, size_t factor);
+		static size_t	convertBodySize(const std::string &);
 
         static std::vector<std::string>	cleanVector(const std::vector<std::string> vec);
         static std::vector<std::string>	cleanVectorClose(const std::vector<std::string> vec);

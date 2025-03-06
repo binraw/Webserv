@@ -1,38 +1,39 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
-use strict;
-use warnings;
 use CGI;
-use File::Basename;
 
+$query = new CGI;
 
-#a voir si je dois rajouter des element dans la requete quon renvoi au server
-# car la je renvoi seulement content-type + les balises html
+$upload_dir = "./upload"; # a voir si on veut le mettre ailleurs
+$filename = $query->param("") #ici mettre le nom de la balise
+$email_adress = $query->param("") #ici aussi 
+$upload_filehandle = $query->upload("")
 
-my $cgi = CGI->new;
-print $cgi->header('text/html');
-my $filehandle = $cgi->upload('fileToUpload');
-if (defined $filehandle) 
+open UPLOADFILE, ">$upload_dir/$filename";
+
+while (<$upload_filehandle>)
 {
-    my $filename = $cgi->param('fileToUpload');
-    my $upload_dir = '/uploads';
-    my $filepath = "$upload_dir/" . basename($filename);
-
-    open(my $out, '>', $filepath) or die "Impossible open file: $!";
-    while (my $bytesread = <$filehandle>) 
-    {
-        print $out $bytesread;
-    }
-    close($out);
-
-    print "<html><body>";
-    print "<h1>Your file '$filename' has been uploaded successfully. accept!</h1>";
-    print "<p></p>";
-    print "</body></html>";
-} 
-else 
-{
-    print "<html><body>";
-    print "<h1>Error Upload</h1>";
-    print "</body></html>";
+    print UPLOADFILE;
 }
+close UPLOADFILE;
+
+print $query->header ( ); #ici je ne sais pas si c'est a definir ou si il existe deja une value
+print <<END_HTML;
+
+<HTML>
+<HEAD>
+<TITLE>Thanks!</TITLE>
+</HEAD>
+
+<BODY>
+
+<P>Thanks for uploading your photo!</P>
+<P>Your email address: $email_address</P>
+<P>Your photo:</P>
+<img src="/upload/$filename" border="0">
+
+</BODY>
+</HTML>
+
+END_HTML
+

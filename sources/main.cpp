@@ -7,7 +7,7 @@
 #include "CGI.hpp"
 
 void hand(int, siginfo_t *, void *);
-int decryptHexa(std::string value);
+std::string		executeCgi(char		**env);
 
 int main(void)
 {
@@ -15,8 +15,9 @@ int main(void)
 
     try 
     {
-        std::string value = ParseUri("asasa?prenom=Pierre%21&nom=Durand&age=25&ville=Paris");
-       std::cout << value << std::endl;
+        char **env = initEnvTEST();
+        executeCgi(env);
+
     }
     catch(const std::exception& e) {
         std::cerr	<< YELLOW << e.what() << std::endl

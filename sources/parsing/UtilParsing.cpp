@@ -4,6 +4,7 @@
 #include <cstring>
 #include <sstream>
 #include <iostream>
+#include <limits>
 
 bool	UtilParsing::isOnlySpace(const std::string & str)
 {
@@ -235,3 +236,45 @@ int UtilParsing::decryptHexa(std::string value)
     ss >> x;
     return x;
 }
+size_t UtilParsing::convertBodySize(const std::string& strBodySize)
+{
+    size_t result;
+    size_t idx = strBodySize.find_first_not_of("0123456789");
+    
+    if (idx == std::string::npos || idx == 0) {
+        throw;
+    }
+
+    std::stringstream ss(strBodySize.substr(0, idx));
+    if (!(ss >> result)) {
+        throw std::runtime_error("Error stringstream conversion\n");
+    }
+
+    char unit = strBodySize[idx];
+    switch (unit)
+    {
+        case 'K': // Kilobytes -> result * 1024
+            result = safeMultiply(result, 1024);
+            break;
+        case 'M': // Megabytes -> result * 1024 * 1024
+            result = safeMultiply(result, 1024);
+            result = safeMultiply(result, 1024);
+            break;
+        case 'G': // Gigabytes -> result * 1024 * 1024 * 1024
+            result = safeMultiply(result, 1024);
+            result = safeMultiply(result, 1024);
+            result = safeMultiply(result, 1024);
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
+size_t UtilParsing::safeMultiply(size_t value, size_t factor) {
+    if (value > std::numeric_limits<size_t>::max() / factor) {
+        throw std::overflow_error("Multiplication overflow");
+    }
+    return value * factor;
+}
+

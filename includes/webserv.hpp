@@ -1,4 +1,3 @@
-
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
 
@@ -33,14 +32,22 @@
 /* ---		   DEFAULT VALUES  	   	  --- */
 /* -------------------------------------- */
 
-# define DFLT_TIMEOUT		65
-# define DFLT_UPLOAD		"./uploads"
-# define DFLT_WORKCONNEX	1024
+# define DFLT_TIMEOUT		"65"
+# define DFLT_WORKCONNEX	"1024"
 # define DFLT_BACKLOG		20
-# define DFLT_TYPE			"application/octet-stream"
+# define DFLT_BODYSIZE		1000
+# define DFLT_METHOD		"GET POST DELETE"
+# define DFLT_HOSTNAME		"localhost"
+# define DFLT_MIME_TYPE		"application/octet-stream"
+# define DFLT_CONTENT_TYPE	"application/x-www-form-urlencoded"
 
-# ifndef DFLT_LISTENPORT
-	# define DFLT_LISTENPORT	"8000"
-#endif
+/* -------------------------------------- */
+/* ---		   OTHER VALUES  	   	  --- */
+/* -------------------------------------- */
+
+# define HTTP_ALLOW_CHARS	"_:%.,\\/\"\'?!(){}[]@<>=-+*#$&`|^"\
+							"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+							"abcdefghijklmnopqrstuvwxyz" \
+							"0123456789"
 
 #endif

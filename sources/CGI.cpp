@@ -115,30 +115,32 @@ bool moveToDirectoryScript(const std::string &directory)
     return true;
 }
 
-// ici recuperer les values de l'env avec les valeurs de la request/server
+// changement tout les args seront dans le body dans tout les cas
+// meme dans le cas d'une requet get
+// donc juste a faire une convert hexa sur les args si c'est une get
 std::string _method,  _params, _contentType, _http, _httpReferer, _remoteAddr, _remotePort, _scriptName, _pathInfo;
-char** initEnv(Request req, Server server)
-{
-      std::string environnement[] = {
-        "REQUEST_METHOD=" + req.gettype(),
-        "QUERY_STRING=" + (req.gettype().compare("GET") == 0) ? ParseUri(req.geturi())  : req.getbody(),
-        "CONTENT_TYPE=" + _contentType, // content-type request
-        "HTTP_HOST=" + req.gethostname(),
-        "SCRIPT_NAME=" + server.getService(),
-        "PATH_INFO=" + _pathInfo, // tout url 
-    };
-    int  environSize = sizeof(environnement) / sizeof(environnement[0]);
-    char** environ = new char*[environSize + 1]; 
+// char** initEnv(Request req, Server server)
+// {
+//       std::string environnement[] = {
+//         "REQUEST_METHOD=" + req.gettype(),
+//         "QUERY_STRING=" + (req.gettype().compare("GET") == 0) ? ParseUri(req.geturi())  : req.getbody(),
+//         "CONTENT_TYPE=" + _contentType, // content-type request
+//         "HTTP_HOST=" + req.gethostname(),
+//         "SCRIPT_NAME=" + server.getService(),
+//         "PATH_INFO=" + _pathInfo, // tout url 
+//     };
+//     int  environSize = sizeof(environnement) / sizeof(environnement[0]);
+//     char** environ = new char*[environSize + 1]; 
 
-    for (int i = 0; i < environSize; i++) 
-    {
-        environ[i] = new char[environnement[i].size() + 1];
-        strcpy(environ[i], environnement[i].c_str());
-    }
-    environ[environSize] = NULL;
+//     for (int i = 0; i < environSize; i++) 
+//     {
+//         environ[i] = new char[environnement[i].size() + 1];
+//         strcpy(environ[i], environnement[i].c_str());
+//     }
+//     environ[environSize] = NULL;
 
-    return environ;
-}
+//     return environ;
+// }
 
 
 // route pour effectuer le pipe + fork neccessaire pour l'execution 
@@ -157,20 +159,51 @@ std::string playCGI(const std::string path, char** env)
         close(pipfd[1]);
         return "";
     }
-    else if (pid == 0) 
-        childProcess(path, env, pipfd); // ici des exit avant mais aucune utiliter
+    else if (pid == 0)
+        childProcess(path, env, pipfd);
+
     else 
         output = parentProcess(pid, pipfd);
 
     return output;
 }
 
-// process du child du fork avec la recuperation du fichier a ouvrir etc 
-// a voir si ici il est possible d'avoir une autre facon juste le nom du fichier au lieu de le decouper ici
-// pour eviter les probleme ici
+
+// je dois enfaite creer un fichier tempo
+// qui va avoir tout lee body de la request POST
+
+int childProcessPostTEST(const std::string path, char**env, int *pipfd)
+{
+    const char *filename;
+    std::FILE *tempfile = std::tmpfile();
+    long fdIn = fileno(tempfile);
+    std::string body = "{\"name\": \" John Doe\"}";
+    write(fdIn, body.c_str(), body.size());
+    lseek(fdIn, 0, SEEK_SET);
+    close(fdIn); // Fermer fdIn après avoir écrit les données
+
+    dup2(pipfd[0], STDIN_FILENO); // Dupliquer pipfd[0] sur STDIN_FILENO
+    close(pipfd[0]); // Fermer pipfd[0]
+    dup2(pipfd[1], STDOUT_FILENO); // Dupliquer pipfd[1] sur STDOUT_FILENO
+    close(pipfd[1]); // Fermer pipfd[1]
+
+    std::string::size_type start = path.find_last_of("/");
+    if (start != std::string::npos)
+        filename = path.substr(start + 1).c_str();
+    else
+        filename = path.c_str();
+    const char *args[] = {"/usr/bin/perl", filename, NULL};
+    if (execve(args[0],(char* const*)args , env) == -1)
+        return 1;
+    return 0;
+}
+
+
+// ici avec les arg dans query_string
 int childProcess(const std::string path, char**env, int *pipfd)
 {
     const char *filename;
+
     close(pipfd[0]);
     dup2(pipfd[1], STDOUT_FILENO); 
     close(pipfd[1]);
@@ -218,29 +251,29 @@ std::string parentProcess(pid_t pid, int *pipfd)
 // -------------------------ICI COMMENCE LA PARTIE TEST----------------------------
 
 
-// void processCGITEST(const std::string &path)
-// {
-//     std::string response;
-//     try 
-//     {
-//         if (UtilParsing::fileExits(path) != true) //ici voir mais a enlever le check normalement
-//             throw ErrorCGI("Not found", 404);
-//         if (access(path.c_str(), X_OK) != 0)
-//             throw ErrorCGI("Not found", 404);
-//         if (checkExtensionCGITEST(path) != true)
-//             throw ErrorCGI("Bad Gateway", 502);
-//         if (moveToDirectoryScript(extractDirectory(path)) != true)
-//             throw ErrorCGI("Internal server error", 500);
-//         response = executeCGITEST(path); 
-//         if (response.empty())
-//             throw ErrorCGI("Bad Gateway", 502);
-//     }
-//     catch (const ErrorCGI& e)
-//     {
-//         std::cerr << e.what() << std::endl;
-//     }
-//     std::cout << response << std::endl;
-// }
+void processCGITEST(const std::string &path)
+{
+    std::string response;
+    try 
+    {
+        if (UtilParsing::fileExits(path) != true) //ici voir mais a enlever le check normalement
+            throw ErrorCGI("Not found", 404);
+        if (access(path.c_str(), X_OK) != 0)
+            throw ErrorCGI("Not found", 404);
+        if (checkExtensionCGITEST(path) != true)
+            throw ErrorCGI("Bad Gateway", 502);
+        if (moveToDirectoryScript(extractDirectory(path)) != true)
+            throw ErrorCGI("Internal server error", 500);
+        response = executeCGITEST(path); 
+        if (response.empty())
+            throw ErrorCGI("Bad Gateway", 502);
+    }
+    catch (const ErrorCGI& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    std::cout << response << std::endl;
+}
 
 
 // ici on pourra rajouter d'autres option si on veut faire fonctionner d'autre type de CGI
@@ -258,7 +291,7 @@ std::string executeCGITEST(const std::string &path)
     char **env;
     std::string body;
     env = initEnvTEST();
-    body = playCGI(path, env);
+    body = playCGITEST(path, env);
     freeEnv(env);
     return body;
 }
@@ -296,6 +329,55 @@ void freeEnv(char** tab)
     delete[] tab;
 }
 
+// int childProcessPostTEST(const std::string path, char**env, int *pipfd)
+// {
+//     const char *filename;
+//     std::FILE *tempfile = std::tmpfile();
+//     long fdIn = fileno(tempfile);
+//     std::string body = "{\"name\": \" John Doe\"}";
+//     write(fdIn, body.c_str(), body.size());
+//     lseek(fdIn, 0, SEEK_SET); // la je ne suis pas sur de devoir remettre a 0 apes avoir ecrit
+//     dup2(pipfd[0], fdIn); 
+//     close(pipfd[0]);
+//     close(fdIn);
+//     dup2(pipfd[1], STDOUT_FILENO); 
+//     close(pipfd[1]);
+//     std::string::size_type start = path.find_last_of("/");
+//     if (start != std::string::npos)
+//         filename = path.substr(start + 1).c_str();
+//     else
+//         filename = path.c_str();
+//     const char *args[] = {"/usr/bin/perl", filename, NULL};
+//     if (execve(args[0],(char* const*)args , env) == -1)
+//         return 1;
+//     return 0;
+// }
+
+
+// int childProcessPostTEST(const std::string path, char**env, int *pipfd)
+// {
+//     const char *filename;
+//     std::FILE *tempfile = std::tmpfile();
+//     long fdIn = fileno(tempfile);
+//     std::string body = "{\"name\": \" John Doe\"}";
+//     write(fdIn, body.c_str(), body.size());
+//     close(fdIn);
+//     lseek(pipfd[0], 0, SEEK_SET);
+//     dup2(pipfd[0], STDIN_FILENO);
+//     close(pipfd[0]);
+//     dup2(pipfd[1], STDOUT_FILENO); 
+//     close(pipfd[1]);
+//     std::string::size_type start = path.find_last_of("/");
+//     if (start != std::string::npos)
+//         filename = path.substr(start + 1).c_str();
+//     else
+//         filename = path.c_str();
+//     const char *args[] = {"/usr/bin/perl", filename, NULL};
+//     if (execve(args[0],(char* const*)args , env) == -1)
+//         return 1;
+//     return 0;
+// }
+
 
 std::string ParseUri(std::string uri)
 {
@@ -305,26 +387,130 @@ std::string ParseUri(std::string uri)
     return UtilParsing::convertHexaToString(uri.substr(start + 1));
 }
 
-std::string ParseBodyPost(std::string body, std::string contentType)
+std::string playCGITEST(const std::string path, char** env)
 {
-    if (contentType == "application/x-ww-form-urllencoded")
-        return body;
-    else if (contentType == "multipart/form-data")
-        return ParseMultipart(body, "weeeeeeessssssssssh");
-    else if (contentType == "text/plain")
-        return ParseText(body);
-    else
-        return body;
+    std::string output;
+    int pipfd[2];
+    int			saveStdin;
+	int			saveStdout;
+    saveStdin = dup(STDIN_FILENO);
+	saveStdout = dup(STDOUT_FILENO);
+
+    if (pipe(pipfd) == -1)
+        return "";
+    pid_t pid = fork();
+    if (pid < 0)
+    {
+        close(pipfd[0]);
+        close(pipfd[1]);
+        return "";
+    }
+    else if (pid == 0) 
+        childProcessPostTEST(path, env, pipfd);
+    else 
+        output = parentProcess(pid, pipfd);
+    dup2(saveStdin, STDIN_FILENO);
+	dup2(saveStdout, STDOUT_FILENO);
+    close(saveStdin);
+	close(saveStdout);
+
+    return output;
 }
 
-std::string ParseMultipart(std::string body, std::string boundary)
+// std::string ParseBodyPost(std::string body, std::string contentType)
+// {
+//     if (contentType == "application/x-ww-form-urllencoded")
+//         return body;
+//     else if (contentType == "multipart/form-data")
+//         return ParseMultipart(body, "weeeeeeessssssssssh");
+//     else if (contentType == "text/plain")
+//         return ParseText(body);
+//     else
+//         return body;
+// }
+
+// std::string ParseMultipart(std::string body, std::string boundary)
+// {
+
+
+// }
+
+
+// std::string ParseText(std::string body)
+// {
+//     return body;
+// }
+
+
+// recuperation d'un code pour pouvoir comparer :
+
+std::string		executeCgi(char		**env) 
 {
+	pid_t		pid;
+	int			saveStdin;
+	int			saveStdout;
+	std::string	newBody;
+    std::string body = "{\"name\": \"John Doe\", \"age\": 30}";
 
 
-}
+	saveStdin = dup(STDIN_FILENO);
+	saveStdout = dup(STDOUT_FILENO);
 
+	FILE	*fIn = tmpfile();
+	FILE	*fOut = tmpfile();
+	long	fdIn = fileno(fIn);
+	long	fdOut = fileno(fOut);
+	int		ret = 1;
 
-std::string ParseText(std::string body)
-{
-    return body;
+	write(fdIn, body.c_str(), body.size());
+	lseek(fdIn, 0, SEEK_SET);
+
+	pid = fork();
+
+	if (pid == -1)
+	{
+		return ("Status: 500\r\n\r\n");
+	}
+	else if (!pid)
+	{
+		const char *args[]  = {"script.pl", NULL};
+
+		dup2(fdIn, STDIN_FILENO);
+		dup2(fdOut, STDOUT_FILENO);
+		execve("/bin/perl", (char* const*)args, env);
+		write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
+	}
+	else
+	{
+		char	buffer[1024] = {0};
+
+		waitpid(-1, NULL, 0);
+		lseek(fdOut, 0, SEEK_SET);
+
+		ret = 1;
+		while (ret > 0)
+		{
+			memset(buffer, 0, 1024);
+			ret = read(fdOut, buffer, 1024 - 1);
+			newBody += buffer;
+		}
+	}
+
+	dup2(saveStdin, STDIN_FILENO);
+	dup2(saveStdout, STDOUT_FILENO);
+	fclose(fIn);
+	fclose(fOut);
+	close(fdIn);
+	close(fdOut);
+	close(saveStdin);
+	close(saveStdout);
+
+	for (size_t i = 0; env[i]; i++)
+		delete[] env[i];
+	delete[] env;
+
+	if (!pid)
+		exit(0);
+
+	return (newBody);
 }
