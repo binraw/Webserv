@@ -444,73 +444,176 @@ std::string playCGITEST(const std::string path, char** env)
 
 // recuperation d'un code pour pouvoir comparer :
 
-std::string		executeCgi(char		**env) 
+
+// std::string executeCgi(char **env) {
+//     int pipefd[2];
+//     pid_t pid;
+//     std::string newBody;
+//     std::string body = "objectif=Creation+de+site+web+pour+entreprise\\&design=oui\\&rdv=non\\&delai=2+mois\\&maintenance=oui\\&SEO=non";
+//     // Créer un pipe
+//     if (pipe(pipefd) == -1) {
+//         return ("Status: 500\r\n\r\n");
+//     }
+
+//     pid = fork();
+
+//     if (pid == -1) {
+//         return ("Status: 500\r\n\r\n");
+//     } else if (!pid) {
+
+//         close(pipefd[1]);
+
+
+//         dup2(pipefd[0], STDIN_FILENO);
+
+//         const char *args[] = {"./cgi-bin/script.pl", NULL};
+//         execve("/usr/bin/perl", (char *const *)args, env);
+
+
+//         write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
+//         exit(0);
+//     } else {
+
+//         close(pipefd[0]);
+//         // std::cout << body << std::endl;
+//         write(pipefd[1], body.c_str(), body.size());
+
+
+//         close(pipefd[1]);
+
+
+//         waitpid(pid, NULL, 0);
+
+//         char buffer[1024];
+//         int ret;
+//         while ((ret = read(pipefd[0], buffer, 1024)) > 0) 
+//         {
+//             newBody += std::string(buffer, ret);
+//         }
+//         close(pipefd[0]);
+//     }
+
+//     return newBody;
+// }
+
+
+std::string executeCgi(char **env) 
 {
-	pid_t		pid;
-	int			saveStdin;
-	int			saveStdout;
-	std::string	newBody;
-    std::string body = "{\"name\": \"John Doe\", \"age\": 30}";
+    int pipefd[2];
+    pid_t pid;
+    std::string newBody;
+    std::string body = "objectif=Creation+de+site+web+pour+entreprisedesign=ouirdv=nondelai=2+moismaintenance=ouiSEO=non";
 
 
-	saveStdin = dup(STDIN_FILENO);
-	saveStdout = dup(STDOUT_FILENO);
-
-	FILE	*fIn = tmpfile();
-	FILE	*fOut = tmpfile();
-	long	fdIn = fileno(fIn);
-	long	fdOut = fileno(fOut);
-	int		ret = 1;
-
-	write(fdIn, body.c_str(), body.size());
-	lseek(fdIn, 0, SEEK_SET);
-
-	pid = fork();
-
-	if (pid == -1)
-	{
-		return ("Status: 500\r\n\r\n");
-	}
-	else if (!pid)
-	{
-		const char *args[]  = {"script.pl", NULL};
-
-		dup2(fdIn, STDIN_FILENO);
-		dup2(fdOut, STDOUT_FILENO);
-		execve("/bin/perl", (char* const*)args, env);
-		write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
-	}
-	else
-	{
-		char	buffer[1024] = {0};
-
-		waitpid(-1, NULL, 0);
-		lseek(fdOut, 0, SEEK_SET);
-
-		ret = 1;
-		while (ret > 0)
-		{
-			memset(buffer, 0, 1024);
-			ret = read(fdOut, buffer, 1024 - 1);
-			newBody += buffer;
-		}
-	}
-
-	dup2(saveStdin, STDIN_FILENO);
-	dup2(saveStdout, STDOUT_FILENO);
-	fclose(fIn);
-	fclose(fOut);
-	close(fdIn);
-	close(fdOut);
-	close(saveStdin);
-	close(saveStdout);
-
-	for (size_t i = 0; env[i]; i++)
-		delete[] env[i];
-	delete[] env;
-
-	if (!pid)
-		exit(0);
-
-	return (newBody);
+if (pipe(pipefd) == -1) 
+{
+    return ("Status: 500\r\n\r\n");
 }
+
+pid = fork();
+
+if (pid == -1) 
+{
+    return ("Status: 500\r\n\r\n");
+} 
+else if (!pid) 
+{
+
+    close(pipefd[1]);
+
+    dup2(pipefd[0], STDIN_FILENO); 
+
+    close(pipefd[0]); 
+
+    const char *args[] = {"./cgi-bin/script.pl", NULL};
+    execve("/usr/bin/perl", (char *const *)args, env);
+
+    write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
+    exit(0);
+} 
+else 
+{
+    close(pipefd[0]); 
+
+    write(pipefd[1], body.c_str(), body.size());
+
+    close(pipefd[1]); 
+
+
+    waitpid(pid, NULL, 0);
+
+    char buffer[1024];
+    int ret;
+    std::cout << "rentre" << std::endl;
+    while ((ret = read(pipefd[0], buffer, 1024)) > 0) 
+    {
+        std::cout << "valeur de buffer : " << buffer << std::endl;
+        newBody += std::string(buffer, ret);
+    }
+    close(pipefd[0]);
+}
+
+    return newBody;
+}
+
+
+
+// std::string executeCgi(char **env) 
+// {
+//     int pipe_in[2], pipe_out[2];
+//     pid_t pid;
+//     std::string newBody;
+
+//     // Données POST bien formatées
+//     std::string body = "objectif=Creation+de+site+web+pour+entreprise";
+
+//     // Créer deux pipes : un pour envoyer les données, un pour lire les résultats
+//     if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1) {
+//         return "Status: 500\r\n\r\n";
+//     }
+
+//     if ((pid = fork()) == -1) {
+//         return "Status: 500\r\n\r\n";
+//     }
+
+//     if (pid == 0) { // Processus enfant
+//         close(pipe_in[1]); // Fermer l'extrémité écriture de pipe_in
+//         close(pipe_out[0]); // Fermer l'extrémité lecture de pipe_out
+
+//         dup2(pipe_in[0], STDIN_FILENO);  // Rediriger STDIN
+//         dup2(pipe_out[1], STDOUT_FILENO); // Rediriger STDOUT
+
+//         close(pipe_in[0]);
+//         close(pipe_out[1]);
+
+//         const char *args[] = {"/usr/bin/perl", "./cgi-bin/script.pl", NULL};
+//         execve(args[0], (char *const *)args, env);
+
+//         // Si execve échoue
+//         _exit(1);
+//     } 
+//     else 
+//     { 
+//         close(pipe_in[0]); // Fermer l'extrémité lecture de pipe_in
+//         close(pipe_out[1]); // Fermer l'extrémité écriture de pipe_out
+
+//         // Envoyer les données POST
+//         write(pipe_in[1], body.c_str(), body.size());
+//         close(pipe_in[1]); // Fin de l'envoi
+
+//         // Lire la réponse CGI
+//         char buffer[1024];
+//         int ret;
+//         while ((ret = read(pipe_out[0], buffer, sizeof(buffer))) > 0) {
+//             newBody.append(buffer, ret);
+//         }
+//         close(pipe_out[0]);
+
+//         // Attendre la fin du processus enfant
+//         waitpid(pid, NULL, 0);
+//     }
+//     std::cout << "valeur de new body :" << newBody << std::endl;
+//     return newBody;
+// }
+
+
