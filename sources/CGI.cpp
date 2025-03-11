@@ -1,4 +1,3 @@
-
 // check l'existance du file a l'endroit donner (on a deja la fct)
 // check si le script demander est executable avant tout (avec access)
 // verifier aussi l'extension appeler est celle gerer par le server
@@ -499,59 +498,70 @@ std::string playCGITEST(const std::string path, char** env)
 
 std::string executeCgi(char **env) 
 {
-    int pipefd[2];
+    int pipe_in[2], pipe_out[2];
     pid_t pid;
     std::string newBody;
-    std::string body = "objectif=Creation+de+site+web+pour+entreprisedesign=ouirdv=nondelai=2+moismaintenance=ouiSEO=non";
+    std::string body = "objectif=Creation+de+site+web+pour+entreprise&design=oui&rdv=non";
 
-
-if (pipe(pipefd) == -1) 
-{
-    return ("Status: 500\r\n\r\n");
-}
-
-pid = fork();
-
-if (pid == -1) 
-{
-    return ("Status: 500\r\n\r\n");
-} 
-else if (!pid) 
-{
-
-    close(pipefd[1]);
-
-    dup2(pipefd[0], STDIN_FILENO); 
-
-    close(pipefd[0]); 
-
-    const char *args[] = {"./cgi-bin/script.pl", NULL};
-    execve("/usr/bin/perl", (char *const *)args, env);
-
-    write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
-    exit(0);
-} 
-else 
-{
-    close(pipefd[0]); 
-
-    write(pipefd[1], body.c_str(), body.size());
-
-    close(pipefd[1]); 
-
-
-    waitpid(pid, NULL, 0);
-
-    char buffer[1024];
-    int ret;
-    std::cout << "rentre" << std::endl;
-    while ((ret = read(pipefd[0], buffer, 1024)) > 0) 
-    {
-        std::cout << "valeur de buffer : " << buffer << std::endl;
-        newBody += std::string(buffer, ret);
+    // Création des deux pipes
+    if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1) {
+        return "Status: 500\r\n\r\n";
     }
-    close(pipefd[0]);
-}
+
+    pid = fork();
+    if (pid == -1) {
+        return "Status: 500\r\n\r\n";
+    }
+
+    if (pid == 0) // Processus enfant
+    { 
+        // Fermeture des extrémités non utilisées
+        close(pipe_in[1]);
+        close(pipe_out[0]);
+
+        // Redirection des entrées/sorties standards
+        dup2(pipe_in[0], STDIN_FILENO);
+        dup2(pipe_out[1], STDOUT_FILENO);
+
+        // Fermeture des descripteurs dupliqués
+        close(pipe_in[0]);
+        close(pipe_out[1]);
+
+        // Exécution du script Perl
+        const char *args[] = {"/usr/bin/perl", "./cgi-bin/script.pl", NULL};
+        execve(args[0], (char *const *)args, env);
+        
+        // En cas d'échec de execve
+        write(STDERR_FILENO, "CGI execution failed\n", 20);
+        _exit(1);
+    }
+    else // Processus parent
+    { 
+        // Fermeture des extrémités non utilisées
+        close(pipe_in[0]);
+        close(pipe_out[1]);
+
+        // Envoi des données POST au script
+        write(pipe_in[1], body.c_str(), body.length());
+        close(pipe_in[1]); // Signale la fin des données
+
+        // Lecture de la sortie du script
+        char buffer[4096];
+        ssize_t bytes_read;
+        while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1)) > 0) {
+            buffer[bytes_read] = '\0';
+            newBody.append(buffer);
+        }
+        close(pipe_out[0]);
+
+        // Attente de la fin du processus enfant
+        int status;
+        waitpid(pid, &status, 0);
+
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+            return "Status: 500\r\n\r\n";
+        }
+    }
 
     return newBody;
 }
