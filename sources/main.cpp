@@ -16,7 +16,7 @@ int main(void)
     try 
     {
         char **env = initEnvTEST();
-       std::cout << "valeur retour : \n" << executeCgi(env) << std::endl;
+       std::cout << "valeur retour : \n" << executeCgiTEST(env) << std::endl;
 
     }
     catch(const std::exception& e) {

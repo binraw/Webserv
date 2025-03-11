@@ -39,6 +39,7 @@
 // REMOTE_ADDR: Spécifie l'adresse IP du client qui a envoyé la requête
 // REMOTE_PORT: Spécifie le port utilisé par le client pour envoyer la requête
 
+// si un probleme d'affichage pour le retour du script ne pas oubier de verifier le content length
 #include "Client.hpp"
 #include <cstring>
 #include "CGI.hpp"
@@ -171,31 +172,31 @@ std::string playCGI(const std::string path, char** env)
 // je dois enfaite creer un fichier tempo
 // qui va avoir tout lee body de la request POST
 
-int childProcessPostTEST(const std::string path, char**env, int *pipfd)
-{
-    const char *filename;
-    std::FILE *tempfile = std::tmpfile();
-    long fdIn = fileno(tempfile);
-    std::string body = "{\"name\": \" John Doe\"}";
-    write(fdIn, body.c_str(), body.size());
-    lseek(fdIn, 0, SEEK_SET);
-    close(fdIn); // Fermer fdIn après avoir écrit les données
+// int childProcessPostTEST(const std::string path, char**env, int *pipfd)
+// {
+//     const char *filename;
+//     std::FILE *tempfile = std::tmpfile();
+//     long fdIn = fileno(tempfile);
+//     std::string body = "{\"name\": \" John Doe\"}";
+//     write(fdIn, body.c_str(), body.size());
+//     lseek(fdIn, 0, SEEK_SET);
+//     close(fdIn); // Fermer fdIn après avoir écrit les données
 
-    dup2(pipfd[0], STDIN_FILENO); // Dupliquer pipfd[0] sur STDIN_FILENO
-    close(pipfd[0]); // Fermer pipfd[0]
-    dup2(pipfd[1], STDOUT_FILENO); // Dupliquer pipfd[1] sur STDOUT_FILENO
-    close(pipfd[1]); // Fermer pipfd[1]
+//     dup2(pipfd[0], STDIN_FILENO); // Dupliquer pipfd[0] sur STDIN_FILENO
+//     close(pipfd[0]); // Fermer pipfd[0]
+//     dup2(pipfd[1], STDOUT_FILENO); // Dupliquer pipfd[1] sur STDOUT_FILENO
+//     close(pipfd[1]); // Fermer pipfd[1]
 
-    std::string::size_type start = path.find_last_of("/");
-    if (start != std::string::npos)
-        filename = path.substr(start + 1).c_str();
-    else
-        filename = path.c_str();
-    const char *args[] = {"/usr/bin/perl", filename, NULL};
-    if (execve(args[0],(char* const*)args , env) == -1)
-        return 1;
-    return 0;
-}
+//     std::string::size_type start = path.find_last_of("/");
+//     if (start != std::string::npos)
+//         filename = path.substr(start + 1).c_str();
+//     else
+//         filename = path.c_str();
+//     const char *args[] = {"/usr/bin/perl", filename, NULL};
+//     if (execve(args[0],(char* const*)args , env) == -1)
+//         return 1;
+//     return 0;
+// }
 
 
 // ici avec les arg dans query_string
@@ -238,6 +239,63 @@ std::string parentProcess(pid_t pid, int *pipfd)
         return "";
 }
 
+
+// rajouter le nom du script a appele de facon modulable
+std::string executeCgi(Request req, char **env) 
+{
+    int pipe_in[2];
+    int pipe_out[2];
+    pid_t pid;
+    std::string newBody;
+
+    if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1) 
+    {
+        return "Status: 500\r\n\r\n";
+    }
+
+    pid = fork();
+    if (pid == -1) 
+    {
+        close(pipe_in[0]); close(pipe_in[1]);
+        close(pipe_out[0]); close(pipe_out[1]);
+        return "Status: 500\r\n\r\n";
+    }
+
+    if (pid == 0)
+    { 
+        close(pipe_in[1]);
+        close(pipe_out[0]);
+        dup2(pipe_in[0], STDIN_FILENO);
+        close(pipe_in[0]);
+        dup2(pipe_out[1], STDOUT_FILENO);
+        close(pipe_out[1]);
+        const char *args[] = {"/usr/bin/perl", "./cgi-bin/script.pl", NULL}; // ici
+        execve(args[0], (char *const *)args, env);
+        _exit(1); // ici gestion d'erreur 
+    }
+    else 
+    {
+        close(pipe_in[0]);
+        close(pipe_out[1]);
+        write(pipe_in[1], req.getbody().c_str(), req.getbody().length());
+        close(pipe_in[1]);
+        char buffer[4096];
+        ssize_t bytes_read;   
+        while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1)) > 0) 
+        {
+            buffer[bytes_read] = '\0';
+            newBody.append(buffer);
+        }
+        close(pipe_out[0]);
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+            return "Status: 500\r\n\r\n";
+    }
+
+    return newBody;
+}
+
 // std::string executeCGI(const std::string &path, Server server, Request req)
 // {
 //     char **env;
@@ -250,29 +308,29 @@ std::string parentProcess(pid_t pid, int *pipfd)
 // -------------------------ICI COMMENCE LA PARTIE TEST----------------------------
 
 
-void processCGITEST(const std::string &path)
-{
-    std::string response;
-    try 
-    {
-        if (UtilParsing::fileExits(path) != true) //ici voir mais a enlever le check normalement
-            throw ErrorCGI("Not found", 404);
-        if (access(path.c_str(), X_OK) != 0)
-            throw ErrorCGI("Not found", 404);
-        if (checkExtensionCGITEST(path) != true)
-            throw ErrorCGI("Bad Gateway", 502);
-        if (moveToDirectoryScript(extractDirectory(path)) != true)
-            throw ErrorCGI("Internal server error", 500);
-        response = executeCGITEST(path); 
-        if (response.empty())
-            throw ErrorCGI("Bad Gateway", 502);
-    }
-    catch (const ErrorCGI& e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
-    std::cout << response << std::endl;
-}
+// void processCGITEST(const std::string &path)
+// {
+//     std::string response;
+//     try 
+//     {
+//         if (UtilParsing::fileExits(path) != true) //ici voir mais a enlever le check normalement
+//             throw ErrorCGI("Not found", 404);
+//         if (access(path.c_str(), X_OK) != 0)
+//             throw ErrorCGI("Not found", 404);
+//         if (checkExtensionCGITEST(path) != true)
+//             throw ErrorCGI("Bad Gateway", 502);
+//         if (moveToDirectoryScript(extractDirectory(path)) != true)
+//             throw ErrorCGI("Internal server error", 500);
+//         response = executeCGITEST(path); 
+//         if (response.empty())
+//             throw ErrorCGI("Bad Gateway", 502);
+//     }
+//     catch (const ErrorCGI& e)
+//     {
+//         std::cerr << e.what() << std::endl;
+//     }
+//     std::cout << response << std::endl;
+// }
 
 
 // ici on pourra rajouter d'autres option si on veut faire fonctionner d'autre type de CGI
@@ -285,22 +343,23 @@ bool checkExtensionCGITEST(const std::string &path)
     return false;
 }
 
-std::string executeCGITEST(const std::string &path)
-{
-    char **env;
-    std::string body;
-    env = initEnvTEST();
-    body = playCGITEST(path, env);
-    freeEnv(env);
-    return body;
-}
+// std::string executeCGITEST(const std::string &path)
+// {
+//     char **env;
+//     std::string body;
+//     env = initEnvTEST();
+//     body = playCGITEST(path, env);
+//     freeEnv(env);
+//     return body;
+// }
 
 char** initEnvTEST()
 {
       std::string environnement[] = {
         "REQUEST_METHOD=POST",
+        "CONTENT_LENGTH=1000",
         "QUERY_STRING=value1=35",
-        "CONTENT_TYPE=text/html",
+        "CONTENT_TYPE=application/x-www-form-urlencoded",
         "HTTP_HOST=localhost",
         "SCRIPT_NAME=script.pl",
         "PATH_INFO=./cgi-bin/script.pl", 
@@ -386,35 +445,35 @@ std::string ParseUri(std::string uri)
     return UtilParsing::convertHexaToString(uri.substr(start + 1));
 }
 
-std::string playCGITEST(const std::string path, char** env)
-{
-    std::string output;
-    int pipfd[2];
-    int			saveStdin;
-	int			saveStdout;
-    saveStdin = dup(STDIN_FILENO);
-	saveStdout = dup(STDOUT_FILENO);
+// std::string playCGITEST(const std::string path, char** env)
+// {
+//     std::string output;
+//     int pipfd[2];
+//     int			saveStdin;
+// 	int			saveStdout;
+//     saveStdin = dup(STDIN_FILENO);
+// 	saveStdout = dup(STDOUT_FILENO);
 
-    if (pipe(pipfd) == -1)
-        return "";
-    pid_t pid = fork();
-    if (pid < 0)
-    {
-        close(pipfd[0]);
-        close(pipfd[1]);
-        return "";
-    }
-    else if (pid == 0) 
-        childProcessPostTEST(path, env, pipfd);
-    else 
-        output = parentProcess(pid, pipfd);
-    dup2(saveStdin, STDIN_FILENO);
-	dup2(saveStdout, STDOUT_FILENO);
-    close(saveStdin);
-	close(saveStdout);
+//     if (pipe(pipfd) == -1)
+//         return "";
+//     pid_t pid = fork();
+//     if (pid < 0)
+//     {
+//         close(pipfd[0]);
+//         close(pipfd[1]);
+//         return "";
+//     }
+//     else if (pid == 0) 
+//         childProcessPostTEST(path, env, pipfd);
+//     else 
+//         output = parentProcess(pid, pipfd);
+//     dup2(saveStdin, STDIN_FILENO);
+// 	dup2(saveStdout, STDOUT_FILENO);
+//     close(saveStdin);
+// 	close(saveStdout);
 
-    return output;
-}
+//     return output;
+// }
 
 // std::string ParseBodyPost(std::string body, std::string contentType)
 // {
@@ -444,186 +503,60 @@ std::string playCGITEST(const std::string path, char** env)
 // recuperation d'un code pour pouvoir comparer :
 
 
-// std::string executeCgi(char **env) {
-//     int pipefd[2];
-//     pid_t pid;
-//     std::string newBody;
-//     std::string body = "objectif=Creation+de+site+web+pour+entreprise\\&design=oui\\&rdv=non\\&delai=2+mois\\&maintenance=oui\\&SEO=non";
-//     // Créer un pipe
-//     if (pipe(pipefd) == -1) {
-//         return ("Status: 500\r\n\r\n");
-//     }
-
-//     pid = fork();
-
-//     if (pid == -1) {
-//         return ("Status: 500\r\n\r\n");
-//     } else if (!pid) {
-
-//         close(pipefd[1]);
-
-
-//         dup2(pipefd[0], STDIN_FILENO);
-
-//         const char *args[] = {"./cgi-bin/script.pl", NULL};
-//         execve("/usr/bin/perl", (char *const *)args, env);
-
-
-//         write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
-//         exit(0);
-//     } else {
-
-//         close(pipefd[0]);
-//         // std::cout << body << std::endl;
-//         write(pipefd[1], body.c_str(), body.size());
-
-
-//         close(pipefd[1]);
-
-
-//         waitpid(pid, NULL, 0);
-
-//         char buffer[1024];
-//         int ret;
-//         while ((ret = read(pipefd[0], buffer, 1024)) > 0) 
-//         {
-//             newBody += std::string(buffer, ret);
-//         }
-//         close(pipefd[0]);
-//     }
-
-//     return newBody;
-// }
-
-
-std::string executeCgi(char **env) 
+std::string executeCgiTEST(char **env) 
 {
-    int pipe_in[2], pipe_out[2];
+    int pipe_in[2];
+    int pipe_out[2];
     pid_t pid;
     std::string newBody;
     std::string body = "objectif=Creation+de+site+web+pour+entreprise&design=oui&rdv=non";
 
-    // Création des deux pipes
-    if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1) {
+    if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1) 
+    {
         return "Status: 500\r\n\r\n";
     }
 
     pid = fork();
-    if (pid == -1) {
+    if (pid == -1) 
+    {
+        close(pipe_in[0]); close(pipe_in[1]);
+        close(pipe_out[0]); close(pipe_out[1]);
         return "Status: 500\r\n\r\n";
     }
 
-    if (pid == 0) // Processus enfant
+    if (pid == 0)
     { 
-        // Fermeture des extrémités non utilisées
         close(pipe_in[1]);
         close(pipe_out[0]);
-
-        // Redirection des entrées/sorties standards
         dup2(pipe_in[0], STDIN_FILENO);
+        close(pipe_in[0]);
         dup2(pipe_out[1], STDOUT_FILENO);
-
-        // Fermeture des descripteurs dupliqués
-        close(pipe_in[0]);
         close(pipe_out[1]);
-
-        // Exécution du script Perl
-        const char *args[] = {"/usr/bin/perl", "./cgi-bin/script.pl", NULL};
+        const char *args[] = {"/usr/bin/perl", "./cgi-bin/scriptQuery.pl", NULL};
         execve(args[0], (char *const *)args, env);
-        
-        // En cas d'échec de execve
-        write(STDERR_FILENO, "CGI execution failed\n", 20);
-        _exit(1);
+        _exit(1); // ici gestion d'erreur 
     }
-    else // Processus parent
-    { 
-        // Fermeture des extrémités non utilisées
+    else 
+    {
         close(pipe_in[0]);
         close(pipe_out[1]);
-
-        // Envoi des données POST au script
         write(pipe_in[1], body.c_str(), body.length());
-        close(pipe_in[1]); // Signale la fin des données
-
-        // Lecture de la sortie du script
+        close(pipe_in[1]);
         char buffer[4096];
-        ssize_t bytes_read;
-        while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1)) > 0) {
+        ssize_t bytes_read;   
+        while ((bytes_read = read(pipe_out[0], buffer, sizeof(buffer) - 1)) > 0) 
+        {
             buffer[bytes_read] = '\0';
             newBody.append(buffer);
         }
         close(pipe_out[0]);
-
-        // Attente de la fin du processus enfant
         int status;
         waitpid(pid, &status, 0);
-
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
             return "Status: 500\r\n\r\n";
-        }
     }
 
     return newBody;
 }
-
-
-
-// std::string executeCgi(char **env) 
-// {
-//     int pipe_in[2], pipe_out[2];
-//     pid_t pid;
-//     std::string newBody;
-
-//     // Données POST bien formatées
-//     std::string body = "objectif=Creation+de+site+web+pour+entreprise";
-
-//     // Créer deux pipes : un pour envoyer les données, un pour lire les résultats
-//     if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1) {
-//         return "Status: 500\r\n\r\n";
-//     }
-
-//     if ((pid = fork()) == -1) {
-//         return "Status: 500\r\n\r\n";
-//     }
-
-//     if (pid == 0) { // Processus enfant
-//         close(pipe_in[1]); // Fermer l'extrémité écriture de pipe_in
-//         close(pipe_out[0]); // Fermer l'extrémité lecture de pipe_out
-
-//         dup2(pipe_in[0], STDIN_FILENO);  // Rediriger STDIN
-//         dup2(pipe_out[1], STDOUT_FILENO); // Rediriger STDOUT
-
-//         close(pipe_in[0]);
-//         close(pipe_out[1]);
-
-//         const char *args[] = {"/usr/bin/perl", "./cgi-bin/script.pl", NULL};
-//         execve(args[0], (char *const *)args, env);
-
-//         // Si execve échoue
-//         _exit(1);
-//     } 
-//     else 
-//     { 
-//         close(pipe_in[0]); // Fermer l'extrémité lecture de pipe_in
-//         close(pipe_out[1]); // Fermer l'extrémité écriture de pipe_out
-
-//         // Envoyer les données POST
-//         write(pipe_in[1], body.c_str(), body.size());
-//         close(pipe_in[1]); // Fin de l'envoi
-
-//         // Lire la réponse CGI
-//         char buffer[1024];
-//         int ret;
-//         while ((ret = read(pipe_out[0], buffer, sizeof(buffer))) > 0) {
-//             newBody.append(buffer, ret);
-//         }
-//         close(pipe_out[0]);
-
-//         // Attendre la fin du processus enfant
-//         waitpid(pid, NULL, 0);
-//     }
-//     std::cout << "valeur de new body :" << newBody << std::endl;
-//     return newBody;
-// }
 
 

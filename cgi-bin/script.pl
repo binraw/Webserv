@@ -1,15 +1,13 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
 use CGI;
 
+# Créer un nouvel objet CGI
+my $cgi = CGI->new;
 
-
-my $cgi = CGI->new();
-
-my $obj = $cgi->param('objectif');
-
-print $obj;
-
-
+my $objectif = $cgi->param('objectif') || "";
 # le body qui est necessaire pour le fonctionnnement du script
-# "objectif=Creation+de+site+web+pour+entreprise&design=oui&rdv=non&delai=2+mois&maintenance=oui&SEO=non"
+
+print "<p>Nous avons bien reçu votre demande concernant: <strong>$objectif</strong>.</p>\n";
