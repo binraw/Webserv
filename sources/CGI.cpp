@@ -142,7 +142,7 @@ char** initEnv(Request req, Server server)
 
 
 
-std::string playCgi(Request req, char **env) 
+std::string playCgi(const std::string &path, Request req, char **env) 
 {
     int pipe_in[2];
     int pipe_out[2];
@@ -158,7 +158,12 @@ std::string playCgi(Request req, char **env)
         return "Status: 500\r\n\r\n";
     }
     if (pid == 0)
-        childProcessCgi(env, pipe_in, pipe_out);
+    {
+        if (UtilParsing::recoverExtension(path) == ".pl")
+            childProcessCgi(env, pipe_in, pipe_out);
+        else
+            childProcessCgiPy(env, pipe_in, pipe_out);
+    }
     else 
         return parentProcessCgi(req, pid, pipe_in, pipe_out);
 
@@ -178,13 +183,24 @@ std::string executeCGI(const std::string &path, Server server, Request req)
 {
     char **env;
     std::string body;
+    if (controlContentBodyReq(req) == -1)
+        throw ErrorCGI("No Content", 204);
     env = initEnv(req, server);
-    body = playCgi(req, env);
+    body = playCgi(path, req, env);
     if (env)
         freeEnv(env);
     return body;
 }
 
+int controlContentBodyReq(Request req)
+{
+    if (req.gettype().compare("POST"))
+    {
+        if (req.getbody().empty())
+            return -1;
+    }
+    return 0;
+}
 
 // rajouter le nom du script a appele de facon modulable
 void childProcessCgi(char**env, int *pipe_in, int *pipe_out)
@@ -200,13 +216,30 @@ void childProcessCgi(char**env, int *pipe_in, int *pipe_out)
     _exit(1); // ici gestion d'erreur 
 }
 
+
+// rajouter le nom du script a appele de facon modulable
+void childProcessCgiPy(char**env, int *pipe_in, int *pipe_out)
+{
+    close(pipe_in[1]);
+    close(pipe_out[0]);
+    dup2(pipe_in[0], STDIN_FILENO);
+    close(pipe_in[0]);
+    dup2(pipe_out[1], STDOUT_FILENO);
+    close(pipe_out[1]);
+    const char *args[] = {"/usr/bin/python3", "./cgi-bin/script.py", NULL}; // ici
+    execve(args[0], (char *const *)args, env);
+    _exit(1); // ici gestion d'erreur 
+}
+
+
+
 std::string parentProcessCgi(Request req, pid_t pid, int *pipe_in, int *pipe_out)
 {
     std::string newBody;
 
     close(pipe_in[0]);
     close(pipe_out[1]);
-    write(pipe_in[1], req.getbody().c_str(), req.getbody().length());
+    write(pipe_in[1], req.getbody().c_str(), req.getbody().length()); // avant check si le body envoyer a un content sinon renvoyer error 204 No content
     close(pipe_in[1]);
     newBody = createBody(pipe_out);
     close(pipe_out[0]);

@@ -10,7 +10,7 @@ void processCGI(const std::string &path, Server server, Request req);
 std::string extractDirectory(const std::string &path);
 bool moveToDirectoryScript(const std::string &directory);
 char** initEnv(Request req, Server server);
-std::string playCgi(Request req, char **env);
+std::string playCgi(const std::string &path, Request req, char **env);
 std::string executeCGI(const std::string &path, Server server, Request req);
 void freeEnv(char** tab);
 std::string ParseUri(std::string uri);
@@ -18,6 +18,7 @@ void childProcessCgi(char**env, int *pipe_in, int *pipe_out);
 std::string parentProcessCgi(Request req, pid_t pid, int *pipe_in, int *pipe_out);
 std::string createBody(int *pipe_out);
 void closePipe(int *pipe_in, int *pipe_out);
+int controlContentBodyReq(Request req);
 
 //------------------PARTIE TEST EN DUR-------------------------
 
