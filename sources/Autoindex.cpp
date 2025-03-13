@@ -6,4 +6,5 @@
 // et un body modulable
 // ensuite juste un send au bon client et response
 
+// utilisation de : opendir, readdir and closedir pour lister les fichiers
 

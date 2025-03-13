@@ -318,13 +318,13 @@ std::string Client::playCGI()
 
     if (pipe(pipfd) == -1)
     {
-        std::cerr << "Error pipe CGI" << std::endl; // juste pour futur debug
+        std::cerr << "Error pipe CGI" << std::endl; 
         return "";
     }
     pid_t pid = fork();
     if (pid < 0)
     {
-        std::cerr << "fork failled" << std::endl; // juste pour futur debug
+        std::cerr << "fork failled" << std::endl; 
         return "";
     }
     else if (pid == 0) 
@@ -335,7 +335,7 @@ std::string Client::playCGI()
         char* const args[] = {const_cast<char*>(_request.geturi().c_str()), NULL};
         if (execv(args[0], args) == -1)  
         {
-            std::cerr << "execv failed" << std::endl; // juste pour futur debug
+            std::cerr << "execv failed" << std::endl; 
             return "";
         }
     } 
@@ -496,3 +496,23 @@ int Client::executeGetRequest()
     }
     return 404;
 }
+
+
+/*
+    Analyser l’URL et déterminer si le fichier demandé correspond à un CGI
+    Apres je dois verifie si le fichier en question est executable
+    creer le processus enfant 
+    envoyer au cgi les parametre dans sa sortie in
+    plusieurs variable d'environnement a set:
+    REQUEST_METHOD
+    CONTENT_LENGTH
+    QUERY_STRING
+    PATH_INFO
+    SCRIPT_FILENAME
+    je dois voir exactement a quoi elle vont me servir
+    dans le processus enfant je dois execvE avec comme chemin le /bin correspondant au CGI soutenu par le server
+    car oui il ne faut qu'UN SEUL type de langage sur le sujet
+    (bien executer dans le bon repertoire avec chdir)
+    la suite je verrais apres avoir mis ca en place
+*/
+
