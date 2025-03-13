@@ -7,4 +7,20 @@
 // ensuite juste un send au bon client et response
 
 // utilisation de : opendir, readdir and closedir pour lister les fichiers
+#include "Server.hpp"
+#include <string>
 
+
+int controlAutoIndex(Server server, std::string path)
+{
+    const std::set<std::string>& locations = server.getLocationPath();
+    
+    if (locations.find(path) != locations.end())
+        return 0;
+    return -1; 
+}
+
+std::string BuildPageAutoIndex()
+{
+    
+}
