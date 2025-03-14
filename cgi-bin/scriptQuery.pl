@@ -28,12 +28,12 @@ if ($query)
 
 my $body = "<HTML>
 <HEAD>
-<TITLE>Thanks!</TITLE>
+<TITLE>Info Client</TITLE>
 </HEAD>
 
 <BODY>
 
-<P>Thanks for uploading your photo!</P>
+
 <P>Your email address: $value1</P>
 <P>Your adress : $value2</P>
 </BODY>

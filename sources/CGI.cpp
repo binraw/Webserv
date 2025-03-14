@@ -44,21 +44,7 @@
 #include <cstring>
 #include "CGI.hpp"
 
-class ErrorCGI : virtual public std::exception 
-{
-    public:
-        ErrorCGI(const std::string &message, int code) : _message(message), _code(code){}
-        virtual const char *	what() const throw() 
-        {
-            (void) _code;
-             return _message.c_str();
-        }
-        virtual ~ErrorCGI() throw() {};
 
-    private:
-        std::string _message;
-        int         _code;
-};
 
 
 // ici voir si il faut renvoyer une page error dans le catch
@@ -122,22 +108,22 @@ char** initEnv(Request req, Server server)
       std::string environnement[] = 
       {
         "REQUEST_METHOD=" + req.gettype(),
-        "QUERY_STRING=" + (req.gettype().compare("GET") == 0) ? ParseUri(req.geturi())  : " ", // si c'est une get je mets rien apres a voir si on met une valeur ou pas
+        "QUERY_STRING=" + ((req.gettype().compare("GET") == 0) ? ParseUri(req.geturi())  : " "), // si c'est une get je mets rien apres a voir si on met une valeur ou pas
         "CONTENT_TYPE=" + _contentType, // content-type request
         "HTTP_HOST=" + req.gethostname(),
         "SCRIPT_NAME=" + server.getService(), // ici le nom du script je pense pas que ce soit bon
         "PATH_INFO=" + req.geturi(), // tout url 
     };
     int  environSize = sizeof(environnement) / sizeof(environnement[0]);
-    char** environ = new char*[environSize + 1]; 
+    char** envCGI = new char*[environSize + 1]; 
     for (int i = 0; i < environSize; i++) 
     {
-        environ[i] = new char[environnement[i].size() + 1];
-        strcpy(environ[i], environnement[i].c_str());
+        envCGI[i] = new char[environnement[i].size() + 1];
+        strcpy(envCGI[i], environnement[i].c_str());
     }
-    environ[environSize] = NULL;
+    envCGI[environSize] = NULL;
 
-    return environ;
+    return envCGI;
 }
 
 

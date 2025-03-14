@@ -9,7 +9,7 @@ param2 = params.get('adresse', [None])[0]
 
 body = """<HTML>
 <HEAD>
-<TITLE>Thanks!</TITLE>
+<TITLE>Info Client</TITLE>
 </HEAD>
 
 <BODY>

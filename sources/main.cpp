@@ -7,7 +7,7 @@
 #include "CGI.hpp"
 
 void hand(int, siginfo_t *, void *);
-std::string		executeCgi(char		**env);
+
 
 int main(void)
 {
@@ -15,8 +15,7 @@ int main(void)
 
     try 
     {
-        char **env = initEnvTEST();
-       std::cout << "valeur retour : \n" << executeCgiTEST(env) << std::endl;
+     std::cout << processAutoIndexTEST("./sources/parsing") << std::endl;
 
     }
     catch(const std::exception& e) {

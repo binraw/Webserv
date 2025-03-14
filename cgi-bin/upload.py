@@ -28,7 +28,7 @@ with open(os.path.join(upload_dir, filename), 'wb') as upload_file:
 body = f"""
 <HTML>
 <HEAD>
-<TITLE>Thanks!</TITLE>
+<TITLE>Telechargement Valide</TITLE>
 </HEAD>
 
 <BODY>
@@ -46,5 +46,5 @@ body = f"""
 print("Content-Type: text/html; charset=utf-8")
 print("Content-Length: {}".format(len(body)))
 print("HTTP/1.1 200 OK")
-print()
+# print()
 print(body)

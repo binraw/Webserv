@@ -26,7 +26,7 @@ close $upload_filehandle;
 
 my $body = "<HTML>
 <HEAD>
-<TITLE>Thanks!</TITLE>
+<TITLE>Upload valid</TITLE>
 </HEAD>
 
 <BODY>
