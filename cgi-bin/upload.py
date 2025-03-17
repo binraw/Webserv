@@ -1,8 +1,8 @@
 import cgi
-import cgitb
+
 import os
 
-cgitb.enable()
+
 
 
 query = cgi.FieldStorage()
@@ -46,5 +46,5 @@ body = f"""
 print("Content-Type: text/html; charset=utf-8")
 print("Content-Length: {}".format(len(body)))
 print("HTTP/1.1 200 OK")
-# print()
+
 print(body)

@@ -1,5 +1,5 @@
 from cgi import FieldStorage
-import sys
+
 
 
 form = FieldStorage()
