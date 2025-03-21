@@ -22,7 +22,7 @@ int controlAutoIndex(Server server, std::string path)
     return -1; 
 }
 
-std::string processAutoIndex(Server server, std::string path)
+std::string processAutoIndex(Server server, std::string path) // path ici c'est le nom du dossier donc en theori uri ?
 {
     DIR *dir;
     std::string body;
@@ -87,3 +87,33 @@ std::string processAutoIndexTEST(std::string path)
     closedir(dir);
     return response;
 }
+
+
+// EXPLICATIONS REDIRECTIONS
+
+/*
+
+Il semble que les redirections commence par : rewrite  
+et si c'est une redirection permanente alors on rajoute le flag : permanent
+a la fin. 
+
+
+les redirections en https ne fonctionne pas exactement pareil car elle sont dans le 
+bloc server et vont avec un 'return' en mot clef en premier suivit du code 
+exemple : 
+ return 301 https://domain.fr
+
+apres verification il semblerait que les redirections dites normale peuvent elles aussi
+commencer par 'return'.
+
+
+Redirection de toutes les URL qui commencent par /ancienne-url
+rewrite ^/ancienne-url(.*)$ /nouvelle-url$1 permanent;
+
+ Exemples de redirections :
+ /ancienne-url -> /nouvelle-url
+ /ancienne-url/autre-chose -> /nouvelle-url/autre-chose
+ /ancienne-url/autre-chose/encore-une-chose -> /nouvelle-url/autre-chose/encore-une-chose
+
+*/
+

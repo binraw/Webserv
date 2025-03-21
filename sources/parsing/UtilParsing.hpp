@@ -51,6 +51,7 @@ class UtilParsing
 		static std::string recoverExtension(const std::string &filename);
 		static std::string convertHexaToString(std::string value);
 		static int decryptHexa(std::string value);
+		static std::string cleanOldPath(std::string value);
 	private:
 		UtilParsing() {};
 };

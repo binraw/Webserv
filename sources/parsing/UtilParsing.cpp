@@ -278,3 +278,13 @@ size_t UtilParsing::safeMultiply(size_t value, size_t factor) {
     return value * factor;
 }
 
+// fct pour clean le std::string du ^ de l'ancien path
+// a voir si vraiment utile ou si on part du principe qu'on utilise directement par default
+// le newpath 
+std::string UtilParsing::cleanOldPath(std::string value)
+{
+  size_t pos = value.find_first_of('^');
+  if (pos == std::string::npos) // si il n'y a pas de ^ je pense quon peut renvoyer toute la value et le pas compter comme une erreur
+    return value;
+  return value.substr(pos + 1);
+}

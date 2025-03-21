@@ -1,53 +1,8 @@
-// check l'existance du file a l'endroit donner (on a deja la fct)
-// check si le script demander est executable avant tout (avec access)
-// verifier aussi l'extension appeler est celle gerer par le server
-// se deplacer dans le bon repertoire avant d'exec le script
-
-// construire le header ? ou il sera construit dans les cgi ? 
-// je pense qu'il faut en formatter un par default
-// une possibilite de creer un fichier env ? pas sur de cette info ca serait sans doute 
-//un truc en plus a pouvoir 
-// set mais bon dans le sujet pas tres utile
-
-// la fragmentation sera fais avant ou je dois l'implementer dans le processus question a explorer
-
-// infos trouvees:
-// Tous les segments de chemin restants sont transmis au script dans la variable d'environnement PATH_INFO.
-
-// Le mot-clé chunked dans l' en-tête Transfer-Encoding est utilisé pour indiquer un transfert fragmenté.
-//La transmission se termine lorsqu'un fragment de longueur nulle est reçu.
-// la fonction: fcntl peut etre utile si il faut bloquer l'acces d'un fichier pendant un processus
-// mais actuellement je sais pas si c'est vraiment utile
-
-
-// apres des recherche je trouve qu'il faut justement defenir notre propre environnement avec les info envoyer 
-// du processus parent pour le processus enfant.
-// les diffenrente values presente pour l'env serait : 
-// REQUEST_METHOD: Spécifie la méthode HTTP utilisée pour accéder au script
-// QUERY_STRING: Contient les données de la requête HTTP sous forme de chaîne de caractères 
-// (par exemple, param1=value1&param2=value2)
-// CONTENT_TYPE: Spécifie le type de contenu de la requête HTTP
-// CONTENT_LENGTH: Spécifie la longueur des données de la requête HTTP
-// HTTP_HOST: Spécifie le nom d'hôte du serveur Web
-// SCRIPT_NAME: Spécifie le nom du script CGI
-// PATH_INFO: Spécifie les informations de chemin supplémentaires qui ont été passées au script
-// (par exemple, /path/to/resource)
-
-
-// ces 3 la je ne sais pas si on les rajoute car je crois qu'ils optionnel
-// HTTP_REFERER: Spécifie l'URL de la page Web qui a envoyé la requête
-// REMOTE_ADDR: Spécifie l'adresse IP du client qui a envoyé la requête
-// REMOTE_PORT: Spécifie le port utilisé par le client pour envoyer la requête
-
-// si un probleme d'affichage pour le retour du script ne pas oubier de verifier le content length
 #include "Client.hpp"
 #include <cstring>
 #include "CGI.hpp"
 
 
-
-
-// ici voir si il faut renvoyer une page error dans le catch
 void processCGI(const std::string &path, Server server, Request req)
 {
     std::string response;
@@ -76,8 +31,11 @@ bool checkExtensionCGI(const std::string &path, Server server)
 {
     (void)server;
    std::string cgi_path = "support.pl";
+   std::string cgi_path_other = "support.py";
 
     if (UtilParsing::recoverExtension(path) == UtilParsing::recoverExtension(cgi_path))
+        return true;
+    else if (UtilParsing::recoverExtension(path) == UtilParsing::recoverExtension(cgi_path_other))
         return true;
     return false;
 }
@@ -107,10 +65,10 @@ char** initEnv(Request req, Server server)
 {
       std::string environnement[] = 
       {
-        "REQUEST_METHOD=" + req.gettype(),
-        "QUERY_STRING=" + ((req.gettype().compare("GET") == 0) ? ParseUri(req.geturi())  : " "), // si c'est une get je mets rien apres a voir si on met une valeur ou pas
-        "CONTENT_TYPE=" + _contentType, // content-type request
-        "HTTP_HOST=" + req.gethostname(),
+        "REQUEST_METHOD=" + req.getheader().requestType,
+        "QUERY_STRING=" + ((req.getheader().requestType.compare("GET") == 0) ? ParseUri(req.getheader().uri)  : " "), // si c'est une get je mets rien apres a voir si on met une valeur ou pas
+        "CONTENT_TYPE=" + req.getbody().contentType, // content-type request
+        "HTTP_HOST=" + req.getheader().hostName,
         "SCRIPT_NAME=" + server.getService(), // ici le nom du script je pense pas que ce soit bon
         "PATH_INFO=" + req.geturi(), // tout url 
     };
@@ -180,8 +138,8 @@ std::string executeCGI(const std::string &path, Server server, Request req)
 
 int controlContentBodyReq(Request req)
 {
-    if (req.gettype().compare("POST"))
-        if (req.getbody().empty())
+    if (req.getheader().requestType.compare("POST"))
+        if (req.getbody().body.empty())
             return -1;
     return 0;
 }
@@ -195,7 +153,7 @@ void childProcessCgi(char**env, int *pipe_in, int *pipe_out)
     close(pipe_in[0]);
     dup2(pipe_out[1], STDOUT_FILENO);
     close(pipe_out[1]);
-    const char *args[] = {"/usr/bin/perl", "./cgi-bin/script.pl", NULL}; // ici
+    const char *args[] = {"/usr/bin/perl", "./cgi-bin/script.pl", NULL}; // utiliser uri ou une var script name sans doute la meme qui est utiliser pour voir l'extension plus haut
     execve(args[0], (char *const *)args, env);
     _exit(1); // ici gestion d'erreur 
 }
@@ -210,7 +168,7 @@ void childProcessCgiPy(char**env, int *pipe_in, int *pipe_out)
     close(pipe_in[0]);
     dup2(pipe_out[1], STDOUT_FILENO);
     close(pipe_out[1]);
-    const char *args[] = {"/usr/bin/python3", "./cgi-bin/script.py", NULL}; // ici
+    const char *args[] = {"/usr/bin/python3", "./cgi-bin/script.py", NULL}; // utiliser uri ou une var script name sans doute la meme qui est utiliser pour voir l'extension plus haut
     execve(args[0], (char *const *)args, env);
     _exit(1); // ici gestion d'erreur 
 }
@@ -223,7 +181,7 @@ std::string parentProcessCgi(Request req, pid_t pid, int *pipe_in, int *pipe_out
 
     close(pipe_in[0]);
     close(pipe_out[1]);
-    write(pipe_in[1], req.getbody().c_str(), req.getbody().length()); // avant check si le body envoyer a un content sinon renvoyer error 204 No content
+    write(pipe_in[1], req.getbody().body.c_str(), req.getbody().contentLength); // avant check si le body envoyer a un content sinon renvoyer error 204 No content
     close(pipe_in[1]);
     newBody = createBody(pipe_out);
     close(pipe_out[0]);

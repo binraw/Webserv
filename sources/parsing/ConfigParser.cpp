@@ -99,6 +99,28 @@ void ConfigParser::parseLocationBlock(std::ifstream& file, LocationConfig& locat
     }
 }
 
+/*
+    Problematique : La redirection impact une location donc elle va remplacer son chemin.
+    Mais ca peut etre definie dans le bloc server avec la fonction que jai faite en dessous 
+    avec le nom de l'ancienne loca preceder de ^ . 
+    Mais si c'est defini dans location alors le: rewrite ^ /nouveau-url permanent
+
+
+*/
+
+void ConfigParser::redirectionServer(std::string line, Server& server)
+{
+    std::vector<std::string> paths;
+
+    paths = UtilParsing::splitSpecialDeleteKey(line, std::string(" ")); // ici les deux paths sans rewrite
+    server.oldpath = UtilParsing::cleanOldPath(paths[0]);
+    server.newpath = paths[1];
+    if (!server.oldpath || !server.newpath)
+        throw;
+        server.redir = true;
+}
+
+
 void ConfigParser::controlStructFile(std::ifstream& file)
 {
     std::string line;
